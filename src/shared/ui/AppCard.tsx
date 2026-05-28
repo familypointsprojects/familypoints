@@ -14,21 +14,21 @@ export const AppCard = ({ children, style }: AppCardProps) => (
 const styles = StyleSheet.create({
   card: {
     backgroundColor: FP.card,
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 16,
     gap: 12,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.07,
-        shadowRadius: 10,
+        shadowColor: '#12314A',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
       },
       android: {
         elevation: 3,
       },
       web: {
-        boxShadow: '0 2px 14px rgba(0,0,0,0.07)',
+        boxShadow: '0 4px 14px rgba(18,49,74,0.08)',
       },
     }),
   },

@@ -6,14 +6,14 @@ import { useFamilyPoints } from '@/shared/state';
 import { AppButton, AppCard, AppScreen, AppTextInput, SectionTitle, StatusBadge } from '@/shared/ui';
 
 const AVATAR_COLORS = [
-  '#58A4B0',
-  '#E88C7D',
-  '#7DB87A',
-  '#9B8BD4',
-  '#E8B44A',
-  '#E07B54',
-  '#5B8DB8',
-  '#C47EB5',
+  '#1E9E86', // teal
+  '#EF5A24', // orange
+  '#F5B225', // gold
+  '#2BA84A', // green
+  '#3E8ED0', // blue
+  '#7C6BD6', // purple
+  '#E86A9C', // pink
+  '#12314A', // navy
 ];
 
 const CreateChildScreen = () => {
@@ -134,7 +134,7 @@ const CreateChildScreen = () => {
       />
       {isLoading && (
         <View style={styles.loader}>
-          <ActivityIndicator color="#58A4B0" />
+          <ActivityIndicator color="#1E9E86" />
         </View>
       )}
 
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     width: 48,
   },
   colorDotSelected: {
-    borderColor: '#1F2933',
+    borderColor: '#12314A',
     borderWidth: 3,
   },
   colorCheck: {
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#ECE7DF',
+    borderTopColor: '#ECE3CF',
   },
   avatar: {
     alignItems: 'center',
@@ -195,12 +195,12 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   previewName: {
-    color: '#1F2933',
+    color: '#12314A',
     fontSize: 20,
     fontWeight: '800',
   },
   errorText: {
-    color: '#C0392B',
+    color: '#E2483B',
     fontSize: 14,
     marginTop: 8,
   },

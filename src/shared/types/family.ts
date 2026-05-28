@@ -45,7 +45,7 @@ export type TaskSubmission = {
   proofNote?: string;
 };
 
-export type RewardType = 'screen_time' | 'experience' | 'toy' | 'treat';
+export type RewardType = 'screen_time' | 'experience' | 'toy' | 'treat' | 'wish';
 
 export type Reward = {
   id: string;
@@ -67,11 +67,15 @@ export type RewardRedemption = {
   requestedAt: string;
 };
 
+export type WishStatus = 'pending' | 'approved' | 'rejected';
+
 export type Wish = {
   id: string;
   titleKey?: TranslationKey;
   title?: string;
   price: number;
+  childId?: string;
+  status?: WishStatus;
 };
 
 export type PointTransactionType = 'earn' | 'spend' | 'penalty' | 'manual_adjustment';

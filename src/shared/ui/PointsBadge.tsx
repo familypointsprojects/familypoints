@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   text: {
-    color: '#92400E',
+    color: '#8A5A06',
     fontSize: 13,
     fontWeight: '800',
   },

@@ -1,19 +1,20 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { TranslationKey, useLanguage } from '@/shared/i18n';
 import { useFamilyPoints } from '@/shared/state';
 import { RewardType } from '@/shared/types/family';
 import { AppButton, AppCard, AppScreen, AppTextInput, SectionTitle } from '@/shared/ui';
 
-const rewardTypes: RewardType[] = ['screen_time', 'experience', 'toy', 'treat'];
+const rewardTypes: RewardType[] = ['screen_time', 'experience', 'toy', 'treat', 'wish'];
 
 const rewardTypeLabelKeys: Record<RewardType, TranslationKey> = {
   screen_time: 'rewardType.screen_time',
   experience: 'rewardType.experience',
   toy: 'rewardType.toy',
   treat: 'rewardType.treat',
+  wish: 'rewardType.wish',
 };
 
 const CreateRewardScreen = () => {
@@ -22,15 +23,26 @@ const CreateRewardScreen = () => {
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
   const [type, setType] = useState<RewardType>('experience');
-  const isValid = title.trim().length > 0 && Number(price) > 0;
+  const [isSaving, setIsSaving] = useState(false);
+  const priceValue = Number(price);
+  const isValid = title.trim().length > 0 && priceValue > 0;
 
-  const handleSubmit = () => {
-    if (!isValid) {
+  const handleSubmit = async () => {
+    if (!isValid || isSaving) {
       return;
     }
 
-    createReward({ title: title.trim(), price: Number(price), type });
-    router.replace('/parent/rewards');
+    setIsSaving(true);
+
+    try {
+      await createReward({ title: title.trim(), price: priceValue, type });
+      router.replace('/parent/rewards');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      Alert.alert(t('common.error'), message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -46,7 +58,7 @@ const CreateRewardScreen = () => {
         <AppTextInput
           label={t('common.price')}
           value={price}
-          onChangeText={setPrice}
+          onChangeText={(value) => setPrice(value.replace(/[^\d]/g, ''))}
           placeholder={t('parent.rewards.pricePlaceholder')}
           keyboardType="number-pad"
         />
@@ -61,7 +73,11 @@ const CreateRewardScreen = () => {
             />
           ))}
         </View>
-        <AppButton title={t('parent.rewards.create')} onPress={handleSubmit} disabled={!isValid} />
+        <AppButton
+          title={isSaving ? t('common.saving') : t('parent.rewards.create')}
+          onPress={handleSubmit}
+          disabled={!isValid || isSaving}
+        />
       </AppCard>
     </AppScreen>
   );

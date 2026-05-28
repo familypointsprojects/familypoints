@@ -19,6 +19,10 @@ export type SignInInput = {
   password: string;
 };
 
+export type SignUpInput = SignInInput & {
+  parentName: string;
+};
+
 export type SignInAsChildInput = {
   token: string;
 };
@@ -26,6 +30,7 @@ export type SignInAsChildInput = {
 export type AuthService = {
   getSession: () => Promise<AuthSession | null>;
   signIn: (input: SignInInput) => Promise<AuthSession>;
+  signUp: (input: SignUpInput) => Promise<AuthSession>;
   signInDemoRole: (input: SignInDemoRoleInput) => Promise<AuthSession>;
   signInAsChild: (input: SignInAsChildInput) => Promise<AuthSession>;
   signOut: () => Promise<void>;

@@ -1,0 +1,151 @@
+import React from 'react';
+import Svg, { Circle, Ellipse, Line, Path, Rect } from 'react-native-svg';
+
+type BrandLogoProps = {
+  size?: number;
+};
+
+/**
+ * easyQuest brand mark — gold "Q" with treasure-map scroll,
+ * red summit flag, compass, mountain scene and trail.
+ * Vector port of design/assets/easyquest-logo-mark.svg.
+ */
+export const BrandLogo: React.FC<BrandLogoProps> = ({ size = 64 }) => (
+  <Svg width={size} height={size} viewBox="0 0 400 400">
+    {/* Flag pole */}
+    <Rect x={100} y={22} width={7} height={160} rx={3} fill="#1A2433" />
+    {/* Red flag */}
+    <Path
+      d="M107 28 Q140 36 165 42 Q145 60 165 72 Q140 70 107 80 Z"
+      fill="#EF5424"
+      stroke="#A8341A"
+      strokeWidth={4}
+      strokeLinejoin="round"
+    />
+    {/* Parchment scroll */}
+    <Path
+      d="M55 140 Q40 145 40 165 L40 340 Q40 365 65 370 L325 370 Q360 368 365 345 L365 175 Q360 145 335 145 L80 145 Q60 142 55 140 Z"
+      fill="#EAD9AE"
+      stroke="#A87E40"
+      strokeWidth={5}
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M40 335 Q40 365 65 370 L325 370 Q360 368 365 345 L365 335 Z"
+      fill="#C8AE78"
+      opacity={0.4}
+    />
+    {/* Scroll curls */}
+    <Ellipse cx={55} cy={155} rx={22} ry={12} fill="#D9C49A" stroke="#A87E40" strokeWidth={4} />
+    <Ellipse cx={55} cy={155} rx={11} ry={5} fill="#A87E40" />
+    <Ellipse cx={345} cy={358} rx={22} ry={12} fill="#D9C49A" stroke="#A87E40" strokeWidth={4} />
+    <Ellipse cx={345} cy={358} rx={11} ry={5} fill="#A87E40" />
+    {/* Dashed trail on parchment */}
+    <Path
+      d="M90 295 Q140 265 200 290 Q260 312 305 280"
+      fill="none"
+      stroke="#8B5E2E"
+      strokeWidth={4}
+      strokeDasharray="7 9"
+      strokeLinecap="round"
+    />
+    <Circle cx={90} cy={295} r={6} fill="#8B5E2E" />
+    {/* X marker */}
+    <Line x1={298} y1={265} x2={320} y2={295} stroke="#A23410" strokeWidth={6} strokeLinecap="round" />
+    <Line x1={320} y1={265} x2={298} y2={295} stroke="#A23410" strokeWidth={6} strokeLinecap="round" />
+    {/* Green leaves */}
+    <Path
+      d="M315 130 Q360 95 385 55 Q345 65 310 110 Z"
+      fill="#3FAE7E"
+      stroke="#1E6E4F"
+      strokeWidth={2.5}
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M335 160 Q380 140 395 105 Q355 110 325 145 Z"
+      fill="#5BC196"
+      stroke="#2D8062"
+      strokeWidth={2.5}
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M325 180 Q370 175 388 145 Q352 145 320 165 Z"
+      fill="#3FAE7E"
+      stroke="#1E6E4F"
+      strokeWidth={2.5}
+      strokeLinejoin="round"
+    />
+    {/* Gold Q ring */}
+    <Circle cx={200} cy={215} r={125} fill="#F6B72A" stroke="#A66A0B" strokeWidth={9} />
+    {/* Q tail */}
+    <Path
+      d="M278 295 L350 365 L312 388 L240 318 Z"
+      fill="#F6B72A"
+      stroke="#A66A0B"
+      strokeWidth={9}
+      strokeLinejoin="round"
+    />
+    {/* Inner gold border */}
+    <Circle cx={200} cy={215} r={80} fill="none" stroke="#A66A0B" strokeWidth={5} />
+    {/* Inner scene */}
+    <Circle cx={200} cy={215} r={76} fill="#1C5E6E" />
+    {/* Moon arc */}
+    <Path
+      d="M148 213 A53 53 0 0 1 252 213"
+      fill="none"
+      stroke="#9FE0D0"
+      strokeWidth={3}
+      opacity={0.45}
+    />
+    {/* Mountain */}
+    <Path
+      d="M135 275 L195 168 L245 235 L270 275 Z"
+      fill="#143F50"
+      stroke="#0A2A36"
+      strokeWidth={2}
+      strokeLinejoin="round"
+    />
+    <Path d="M195 168 L245 235 L195 235 Z" fill="#1F5E72" opacity={0.7} />
+    {/* Snow cap */}
+    <Path
+      d="M195 168 L213 192 L177 192 Z"
+      fill="#E8FAF4"
+      stroke="#9FE0D0"
+      strokeWidth={1.5}
+      strokeLinejoin="round"
+    />
+    {/* Orange trail to summit */}
+    <Path
+      d="M155 272 Q175 245 180 220 Q190 195 195 173"
+      fill="none"
+      stroke="#F2A83B"
+      strokeWidth={6}
+      strokeLinecap="round"
+    />
+    {/* Summit flag */}
+    <Line x1={195} y1={168} x2={195} y2={138} stroke="#0A2A36" strokeWidth={3.5} strokeLinecap="round" />
+    <Path d="M195 140 L218 148 L195 156 Z" fill="#EF5424" stroke="#A8341A" strokeWidth={1.5} />
+    {/* Stars */}
+    <Circle cx={155} cy={180} r={2.5} fill="#FCE9B6" />
+    <Circle cx={245} cy={195} r={3} fill="#FCE9B6" />
+    <Circle cx={160} cy={245} r={2} fill="#FCE9B6" />
+    <Circle cx={255} cy={240} r={2.5} fill="#FCE9B6" />
+    {/* Compass */}
+    <Circle cx={95} cy={320} r={46} fill="#E7C45A" stroke="#A66A0B" strokeWidth={5} />
+    <Circle cx={95} cy={320} r={44} fill="none" stroke="#FCD063" strokeWidth={2} opacity={0.7} />
+    <Circle cx={95} cy={320} r={34} fill="#1C5E6E" stroke="#0A2A36" strokeWidth={2} />
+    <Line x1={95} y1={289} x2={95} y2={296} stroke="#FCE9B6" strokeWidth={2.5} strokeLinecap="round" />
+    <Line x1={95} y1={344} x2={95} y2={351} stroke="#FCE9B6" strokeWidth={2.5} strokeLinecap="round" />
+    <Line x1={64} y1={320} x2={71} y2={320} stroke="#FCE9B6" strokeWidth={2.5} strokeLinecap="round" />
+    <Line x1={119} y1={320} x2={126} y2={320} stroke="#FCE9B6" strokeWidth={2.5} strokeLinecap="round" />
+    <Path
+      d="M95 290 L107 320 L95 350 L83 320 Z"
+      fill="#FBE3C0"
+      stroke="#A8841A"
+      strokeWidth={1.5}
+      strokeLinejoin="round"
+    />
+    <Path d="M95 290 L107 320 L95 320 Z" fill="#EF5424" />
+    <Circle cx={95} cy={320} r={4} fill="#F6B72A" stroke="#A66A0B" strokeWidth={1.5} />
+  </Svg>
+);

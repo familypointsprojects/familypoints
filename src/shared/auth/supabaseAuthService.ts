@@ -7,6 +7,20 @@ import type { AuthService, AuthSession } from './types';
 
 const CHILD_SESSION_KEY = '@family_points/child_session';
 
+const getStoredChildSession = async (): Promise<AuthSession | null> => {
+  try {
+    const raw = await AsyncStorage.getItem(CHILD_SESSION_KEY);
+
+    if (raw) {
+      return JSON.parse(raw) as AuthSession;
+    }
+  } catch {
+    // ignore
+  }
+
+  return null;
+};
+
 const buildSession = (profileId: string, name: string, role: string): AuthSession => ({
   profileId,
   role: role === 'child' ? 'child' : 'parent',
@@ -16,14 +30,10 @@ const buildSession = (profileId: string, name: string, role: string): AuthSessio
 
 export const supabaseAuthService: AuthService = {
   getSession: async () => {
-    // Сначала проверяем сохранённую child-сессию
-    try {
-      const raw = await AsyncStorage.getItem(CHILD_SESSION_KEY);
-      if (raw) {
-        return JSON.parse(raw) as AuthSession;
-      }
-    } catch {
-      // ignore
+    const childSession = await getStoredChildSession();
+
+    if (childSession) {
+      return childSession;
     }
 
     const supabase = getSupabaseClient();
@@ -47,6 +57,8 @@ export const supabaseAuthService: AuthService = {
   },
 
   signIn: async ({ email, password }) => {
+    await AsyncStorage.removeItem(CHILD_SESSION_KEY);
+
     const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
@@ -65,6 +77,38 @@ export const supabaseAuthService: AuthService = {
     }
 
     return buildSession(profile.id as string, profile.name as string, profile.role as string);
+  },
+
+  signUp: async ({ email, password, parentName }) => {
+    await AsyncStorage.removeItem(CHILD_SESSION_KEY);
+
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+    });
+
+    if (error || !data.user) {
+      throw new Error(error?.message ?? 'Registration failed');
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+
+    if (!sessionData.session) {
+      throw new Error('Account created. Please confirm your email, then sign in.');
+    }
+
+    const { error: profileError } = await supabase.from('profiles').insert({
+      id: data.user.id,
+      name: parentName.trim(),
+      role: 'parent',
+    });
+
+    if (profileError) {
+      throw new Error(`Failed to create parent profile: ${profileError.message}`);
+    }
+
+    return buildSession(data.user.id, parentName.trim(), 'parent');
   },
 
   signInAsChild: async ({ token }) => {
@@ -107,17 +151,15 @@ export const supabaseAuthService: AuthService = {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const childSession = await getStoredChildSession();
+
+      if (childSession) {
+        callback(childSession);
+        return;
+      }
+
       // Если нет Supabase-сессии — проверяем child-сессию в AsyncStorage
       if (!session) {
-        try {
-          const raw = await AsyncStorage.getItem(CHILD_SESSION_KEY);
-          if (raw) {
-            callback(JSON.parse(raw) as AuthSession);
-            return;
-          }
-        } catch {
-          // ignore
-        }
         callback(null);
         return;
       }

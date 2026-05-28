@@ -1,9 +1,17 @@
 export { AppButton } from './AppButton';
+export { AppBottomNavigation } from './AppBottomNavigation';
 export { AppCard } from './AppCard';
+export { AppHeaderMenu } from './AppHeaderMenu';
 export { AppScreen } from './AppScreen';
 export { AppTextInput } from './AppTextInput';
+export { BottomActionBar } from './BottomActionBar';
+export type { BottomActionItem } from './BottomActionBar';
+export { BrandLogo } from './BrandLogo';
 export { EmptyState } from './EmptyState';
+export { FocusLiftCard } from './FocusLiftCard';
 export { LanguageToggle } from './LanguageToggle';
 export { PointsBadge } from './PointsBadge';
 export { SectionTitle } from './SectionTitle';
+export { SegmentedControl } from './SegmentedControl';
+export type { SegmentedControlOption } from './SegmentedControl';
 export { StatusBadge } from './StatusBadge';

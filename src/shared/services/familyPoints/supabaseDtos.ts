@@ -5,6 +5,7 @@ import type {
   TaskStatus,
   UserRole,
 } from '@/shared/types/family';
+import type { FavoriteGoalType } from '@/shared/state/types';
 
 export type ProfileRow = {
   id: string;
@@ -83,6 +84,7 @@ export type WishRow = {
   title: string;
   price: number;
   is_archived: boolean;
+  status?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -108,4 +110,12 @@ export type RewardRedemptionRow = {
   requested_at: string;
   reviewed_by: string | null;
   reviewed_at: string | null;
+};
+
+export type FavoriteGoalRow = {
+  child_id: string;
+  target_type: FavoriteGoalType;
+  target_id: string;
+  created_at: string;
+  updated_at: string;
 };

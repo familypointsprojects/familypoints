@@ -1,4 +1,5 @@
 export { FamilyPointsProvider, useFamilyPoints } from './FamilyPointsProvider';
+export { useActiveChild } from './useActiveChild';
 export type {
   AddWishInput,
   CreateRewardInput,

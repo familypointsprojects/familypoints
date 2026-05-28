@@ -1,4 +1,4 @@
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, ReactNode } from 'react';
 import { router, usePathname } from 'expo-router';
 import {
   Pressable,
@@ -13,9 +13,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FP } from '@/constants/theme';
 import { useLanguage } from '@/shared/i18n';
+import { AppHeaderMenu } from '@/shared/ui/AppHeaderMenu';
 import { LanguageToggle } from '@/shared/ui/LanguageToggle';
+import { shouldShowBottomNavigation } from '@/shared/ui/bottomNavigationRoutes';
 
 type AppScreenProps = PropsWithChildren<{
+  bottomBar?: ReactNode;
   title?: string;
   subtitle?: string;
   showBackButton?: boolean;
@@ -26,12 +29,18 @@ export const AppScreen = ({
   title,
   subtitle,
   showBackButton,
+  bottomBar,
   children,
   contentStyle,
 }: AppScreenProps) => {
   const pathname = usePathname();
   const { t } = useLanguage();
-  const shouldShowBackButton = showBackButton ?? pathname !== '/';
+  const isDashboard = pathname === '/parent/dashboard' || pathname === '/child/dashboard';
+  const isWelcome = pathname === '/';
+  const hasBottomNavigationSpace =
+    bottomBar !== undefined || shouldShowBottomNavigation(pathname);
+  const shouldShowBackButton =
+    showBackButton ?? (pathname !== '/' && !isDashboard && !hasBottomNavigationSpace);
 
   const handleBackPress = () => {
     try {
@@ -48,38 +57,62 @@ export const AppScreen = ({
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={[styles.content, contentStyle]}>
-        <View style={styles.topBar}>
-          {shouldShowBackButton ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={handleBackPress}
-              style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
-              <Text style={styles.backText}>{t('common.back')}</Text>
-            </Pressable>
-          ) : (
-            <View />
-          )}
-          <LanguageToggle />
-        </View>
-
-        {Boolean(title || subtitle) && (
-          <View style={styles.header}>
-            {Boolean(title) && <Text style={styles.title}>{title}</Text>}
-            {Boolean(subtitle) && <Text style={styles.subtitle}>{subtitle}</Text>}
+    <View style={styles.screenRoot}>
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
+        <ScrollView
+          alwaysBounceHorizontal={false}
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.content,
+            hasBottomNavigationSpace && styles.contentWithBottomBar,
+            contentStyle,
+          ]}
+          directionalLockEnabled
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          scrollIndicatorInsets={hasBottomNavigationSpace ? styles.scrollIndicatorInsets : undefined}>
+          <View style={styles.topBar}>
+            {shouldShowBackButton ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={handleBackPress}
+                style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
+                <Text style={styles.backText}>{t('common.back')}</Text>
+              </Pressable>
+            ) : (
+              <View style={styles.topBarSpacer} />
+            )}
+            {isWelcome ? <LanguageToggle /> : <AppHeaderMenu />}
           </View>
-        )}
-        {children}
-      </ScrollView>
-    </SafeAreaView>
+
+          {Boolean(title || subtitle) && (
+            <View style={styles.header}>
+              {Boolean(title) && <Text style={styles.title}>{title}</Text>}
+              {Boolean(subtitle) && <Text style={styles.subtitle}>{subtitle}</Text>}
+            </View>
+          )}
+          {children}
+        </ScrollView>
+      </SafeAreaView>
+      {bottomBar && <View style={styles.bottomBar}>{bottomBar}</View>}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
+  screenRoot: {
     backgroundColor: FP.bg,
+    flex: 1,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  safeArea: {
+    backgroundColor: FP.bg,
+    flex: 1,
+    minHeight: 0,
+  },
+  scroll: {
+    flex: 1,
   },
   content: {
     width: '100%',
@@ -87,6 +120,20 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     padding: 20,
     gap: 16,
+  },
+  contentWithBottomBar: {
+    paddingBottom: 148,
+  },
+  bottomBar: {
+    bottom: 0,
+    elevation: 30,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    zIndex: 30,
+  },
+  scrollIndicatorInsets: {
+    bottom: 148,
   },
   header: {
     gap: 6,
@@ -97,6 +144,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
+  },
+  topBarSpacer: {
+    width: 42,
   },
   backButton: {
     alignSelf: 'flex-start',

@@ -7,10 +7,13 @@ import type {
   Task,
   TaskSubmission,
   Wish,
+  WishStatus,
 } from '@/shared/types/family';
+import type { FavoriteGoal } from '@/shared/state/types';
 
 import type {
   ChildRow,
+  FavoriteGoalRow,
   FamilyRow,
   PointTransactionRow,
   ProfileRow,
@@ -81,6 +84,7 @@ export const mapTaskSubmissionRowToTaskSubmission = (
   childId: row.child_id,
   status: row.status,
   submittedAt: row.submitted_at,
+  proofNote: row.photo_url ?? undefined,
 });
 
 export const mapTaskSubmissionToCreatePayload = (
@@ -115,6 +119,8 @@ export const mapWishRowToWish = (row: WishRow): Wish => ({
   id: row.id,
   title: row.title,
   price: row.price,
+  childId: row.child_id,
+  status: (row.status as WishStatus | undefined) ?? 'pending',
 });
 
 export const mapWishToCreatePayload = (
@@ -135,6 +141,12 @@ export const mapPointTransactionRowToPointTransaction = (
   points: row.points,
   type: row.type,
   createdAt: row.created_at,
+});
+
+export const mapFavoriteGoalRowToFavoriteGoal = (row: FavoriteGoalRow): FavoriteGoal => ({
+  childId: row.child_id,
+  type: row.target_type,
+  itemId: row.target_id,
 });
 
 export const mapPointTransactionToCreatePayload = (

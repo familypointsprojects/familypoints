@@ -19,7 +19,7 @@ export const childProfile: ChildProfile = {
   id: 'child-1',
   name: 'Mia',
   role: 'child',
-  avatarColor: '#58A4B0',
+  avatarColor: '#1E9E86',
 };
 
 export const family: Family = {

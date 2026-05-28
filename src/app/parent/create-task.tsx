@@ -79,14 +79,14 @@ export default CreateTaskScreen;
 const styles = StyleSheet.create({
   message: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#E3DDD2',
+    borderColor: '#ECE3CF',
     borderRadius: 8,
     borderWidth: 1,
     gap: 8,
     padding: 16,
   },
   messageText: {
-    color: '#34444C',
+    color: '#12314A',
     fontSize: 14,
     lineHeight: 20,
   },

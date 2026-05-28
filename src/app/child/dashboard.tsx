@@ -2,38 +2,113 @@ import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useLanguage } from '@/shared/i18n';
-import { childProfile } from '@/shared/mocks';
-import { useFamilyPoints } from '@/shared/state';
-import { AppButton, AppCard, AppScreen, PointsBadge, SectionTitle } from '@/shared/ui';
-import { getTaskTitle, getWishTitle } from '@/shared/utils/content';
-import { getBalance, getNearestWish, getProgressPercent } from '@/shared/utils/points';
-import { getActiveTasks } from '@/shared/utils/tasks';
+import { useActiveChild, useFamilyPoints } from '@/shared/state';
+import {
+  AppButton,
+  AppCard,
+  AppScreen,
+  PointsBadge,
+  SectionTitle,
+  StatusBadge,
+} from '@/shared/ui';
+import { getRewardTitle, getTaskTitle, getWishTitle } from '@/shared/utils/content';
+import { getFavoriteGoalForChild } from '@/shared/utils/favoriteGoals';
+import { getBalance, getNearestWish, getPotentialPoints, getProgressPercent } from '@/shared/utils/points';
+import { getAvailableTasksForChild } from '@/shared/utils/tasks';
+import { getVisibleWishes } from '@/shared/utils/wishes';
 
 const ChildDashboardScreen = () => {
   const { t } = useLanguage();
-  const { pointTransactions, tasks, wishes } = useFamilyPoints();
-  const balance = getBalance(pointTransactions, childProfile.id);
-  const nearestWish = getNearestWish(wishes, balance);
-  const activeTasks = getActiveTasks(tasks);
-  const progress = nearestWish ? getProgressPercent(balance, nearestWish.price) : 0;
+  const { activeChildId, activeChildName } = useActiveChild();
+  const {
+    hasHydrated,
+    favoriteGoals,
+    pointTransactions,
+    rewardRedemptions,
+    rewards,
+    taskSubmissions,
+    tasks,
+    wishes,
+  } = useFamilyPoints();
+
+  if (!hasHydrated) {
+    return (
+      <AppScreen
+        title={t('child.dashboard.title', { name: activeChildName || t('common.child') })}
+        subtitle={t('child.dashboard.subtitle')}>
+        <AppCard>
+          <Text style={styles.meta}>{t('common.loading')}</Text>
+        </AppCard>
+      </AppScreen>
+    );
+  }
+
+  const balance = getBalance(pointTransactions, activeChildId);
+  const potentialPoints = getPotentialPoints(tasks, taskSubmissions, activeChildId);
+  const visibleWishes = getVisibleWishes(wishes, rewards, rewardRedemptions);
+  const nearestWish = getNearestWish(visibleWishes, balance);
+  const favoriteGoal = getFavoriteGoalForChild(favoriteGoals, activeChildId);
+  const favoriteReward =
+    favoriteGoal?.type === 'reward'
+      ? rewards.find((reward) => reward.id === favoriteGoal.itemId && reward.isActive !== false)
+      : undefined;
+  const favoriteWish =
+    favoriteGoal?.type === 'wish'
+      ? visibleWishes.find(
+          (wish) => wish.id === favoriteGoal.itemId && (wish.status ?? 'pending') === 'approved',
+        )
+      : undefined;
+  const dashboardGoal =
+    favoriteReward
+      ? {
+          title: getRewardTitle(favoriteReward, t),
+          price: favoriteReward.price,
+          sectionTitle: t('child.dashboard.favoriteGoal'),
+          typeLabel: t('common.rewards'),
+        }
+      : favoriteWish
+        ? {
+            title: getWishTitle(favoriteWish, t),
+            price: favoriteWish.price,
+            sectionTitle: t('child.dashboard.favoriteGoal'),
+            typeLabel: t('common.wishes'),
+          }
+        : nearestWish
+          ? {
+              title: getWishTitle(nearestWish, t),
+              price: nearestWish.price,
+              sectionTitle: t('common.nearestWish'),
+              typeLabel: t('common.wishlist'),
+            }
+          : undefined;
+  const activeTasks = getAvailableTasksForChild(tasks, taskSubmissions, activeChildId);
+  const progress = dashboardGoal ? getProgressPercent(balance, dashboardGoal.price) : 0;
 
   return (
     <AppScreen
-      title={t('child.dashboard.title', { name: childProfile.name })}
+      title={t('child.dashboard.title', { name: activeChildName || t('common.child') })}
       subtitle={t('child.dashboard.subtitle')}>
       <AppCard>
         <SectionTitle title={t('common.balance')} />
         <Text style={styles.balance}>
           {balance} {t('common.pointsShort')}
         </Text>
+        {potentialPoints > 0 && (
+          <Text style={styles.potential}>
+            {t('child.dashboard.potentialPoints', { points: potentialPoints })}
+          </Text>
+        )}
       </AppCard>
 
-      {nearestWish && (
+      {dashboardGoal && (
         <AppCard>
-          <SectionTitle title={t('common.nearestWish')} />
-          <Text style={styles.title}>{getWishTitle(nearestWish, t)}</Text>
+          <SectionTitle
+            title={dashboardGoal.sectionTitle}
+            action={<StatusBadge label={dashboardGoal.typeLabel} />}
+          />
+          <Text style={styles.title}>{dashboardGoal.title}</Text>
           <Text style={styles.meta}>
-            {t('child.dashboard.progressSummary', { balance, price: nearestWish.price })}
+            {t('child.dashboard.progressSummary', { balance, price: dashboardGoal.price })}
           </Text>
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${progress}%` }]} />
@@ -65,32 +140,6 @@ const ChildDashboardScreen = () => {
         ))}
       </AppCard>
 
-      <AppCard>
-        <SectionTitle title={t('common.quickActions')} />
-        <View style={styles.actions}>
-          <AppButton title={t('common.tasks')} onPress={() => router.push('/child/tasks')} />
-          <AppButton
-            title={t('common.rewards')}
-            variant="secondary"
-            onPress={() => router.push('/child/rewards')}
-          />
-          <AppButton
-            title={t('common.wishes')}
-            variant="secondary"
-            onPress={() => router.push('/child/wishes')}
-          />
-          <AppButton
-            title={t('common.balance')}
-            variant="ghost"
-            onPress={() => router.push('/child/balance')}
-          />
-          <AppButton
-            title={t('common.settings')}
-            variant="ghost"
-            onPress={() => router.push('/settings')}
-          />
-        </View>
-      </AppCard>
     </AppScreen>
   );
 };
@@ -99,33 +148,39 @@ export default ChildDashboardScreen;
 
 const styles = StyleSheet.create({
   balance: {
-    color: '#1F2933',
+    color: '#12314A',
     fontSize: 42,
     fontWeight: '900',
   },
   title: {
-    color: '#1F2933',
+    color: '#12314A',
     fontSize: 20,
     fontWeight: '900',
   },
   meta: {
-    color: '#5F6C72',
+    color: '#6B7B86',
     fontSize: 14,
     lineHeight: 20,
   },
+  potential: {
+    color: '#1E9E86',
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: 2,
+  },
   progressTrack: {
-    backgroundColor: '#E8ECEE',
+    backgroundColor: '#E7D5AC',
     borderRadius: 8,
     height: 12,
     overflow: 'hidden',
   },
   progressFill: {
-    backgroundColor: '#58A4B0',
+    backgroundColor: '#1E9E86',
     height: 12,
   },
   taskRow: {
     alignItems: 'center',
-    borderTopColor: '#ECE7DF',
+    borderTopColor: '#ECE3CF',
     borderTopWidth: 1,
     flexDirection: 'row',
     gap: 12,
@@ -136,14 +191,11 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   taskTitle: {
-    color: '#1F2933',
+    color: '#12314A',
     fontSize: 16,
     fontWeight: '800',
   },
   smallButton: {
     minWidth: 96,
-  },
-  actions: {
-    gap: 10,
   },
 });

@@ -6,6 +6,16 @@ import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-nati
 import { useAuth } from '@/shared/auth';
 import { AppButton, AppCard, AppScreen, SectionTitle, StatusBadge } from '@/shared/ui';
 
+const INVITE_TOKEN_PATTERN = /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i;
+
+const normalizeInviteToken = (value: string | string[] | undefined): string => {
+  const rawValue = Array.isArray(value) ? value[0] : value;
+  const trimmedValue = rawValue?.trim() ?? '';
+  const match = trimmedValue.match(INVITE_TOKEN_PATTERN);
+
+  return match?.[0] ?? trimmedValue;
+};
+
 const ScanInviteScreen = () => {
   const { signInAsChild } = useAuth();
   const { token: tokenFromLink } = useLocalSearchParams<{ token?: string }>();
@@ -17,13 +27,15 @@ const ScanInviteScreen = () => {
   const [scanning, setScanning] = useState(false);
 
   const handleToken = async (token: string) => {
-    if (!token.trim()) return;
+    const inviteToken = normalizeInviteToken(token);
+
+    if (!inviteToken) return;
 
     setIsLoading(true);
     setError('');
 
     try {
-      const session = await signInAsChild({ token: token.trim() });
+      const session = await signInAsChild({ token: inviteToken });
       router.replace(session.role === 'child' ? '/child/dashboard' : '/parent/dashboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Неверная или устаревшая ссылка');
@@ -40,9 +52,10 @@ const ScanInviteScreen = () => {
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     setScanning(false);
-    const match = data.match(/invite\/([a-f0-9-]{36})/);
-    if (match) {
-      handleToken(match[1]);
+    const inviteToken = normalizeInviteToken(data);
+
+    if (inviteToken) {
+      handleToken(inviteToken);
     } else {
       setError('Неверный QR-код. Попросите родителя сгенерировать новый.');
     }
@@ -53,7 +66,7 @@ const ScanInviteScreen = () => {
       <AppScreen title="Вход" subtitle="Проверяем приглашение...">
         <AppCard>
           <View style={styles.center}>
-            <ActivityIndicator size="large" color="#58A4B0" />
+            <ActivityIndicator size="large" color="#1E9E86" />
             <Text style={styles.meta}>Входим в профиль...</Text>
           </View>
         </AppCard>
@@ -98,7 +111,7 @@ const ScanInviteScreen = () => {
           placeholder="Вставьте код из ссылки"
           autoCapitalize="none"
           autoCorrect={false}
-          placeholderTextColor="#9BA8AE"
+          placeholderTextColor="#6B7B86"
         />
         <AppButton
           title="Войти"
@@ -125,11 +138,11 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   meta: {
-    color: '#5F6C72',
+    color: '#6B7B86',
     fontSize: 14,
   },
   errorText: {
-    color: '#C0392B',
+    color: '#E2483B',
     fontSize: 14,
     marginTop: 8,
   },
@@ -142,9 +155,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   input: {
-    backgroundColor: '#F5F0E8',
+    backgroundColor: '#FBF6EA',
     borderRadius: 8,
-    color: '#1F2933',
+    color: '#12314A',
     fontSize: 14,
     marginBottom: 12,
     padding: 12,

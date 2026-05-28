@@ -10,10 +10,10 @@ type StatusBadgeProps = {
 };
 
 const toneStyles: Record<StatusTone, { bg: string; color: string }> = {
-  success: { bg: FP.greenLight,  color: '#065F46' },
-  warning: { bg: FP.accentLight, color: '#92400E' },
+  success: { bg: FP.greenLight,  color: '#1C7A33' },
+  warning: { bg: FP.accentLight, color: '#8A5A06' },
   muted:   { bg: FP.muted,       color: FP.textSub },
-  danger:  { bg: FP.redLight,    color: '#991B1B' },
+  danger:  { bg: FP.redLight,    color: '#A3271B' },
 };
 
 export const StatusBadge = ({ label, tone = 'muted' }: StatusBadgeProps) => {

@@ -35,7 +35,7 @@ const containerStyles: Record<AppButtonVariant, ViewStyle> = {
 const textStyles: Record<AppButtonVariant, TextStyle> = {
   primary:   { color: FP.white },
   secondary: { color: FP.primary },
-  accent:    { color: FP.white },
+  accent:    { color: FP.ink2 },
   danger:    { color: FP.white },
   ghost:     { color: FP.primary },
 };

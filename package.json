@@ -1,5 +1,5 @@
 {
-  "name": "family-points",
+  "name": "easyquest",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
@@ -34,10 +34,13 @@
     "react-native-url-polyfill": "^3.0.0",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.8.3",
+    "whatwg-fetch": "^3.6.20",
     "ws": "^8.21.0"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~56.0.4",
     "typescript": "~6.0.3"
   },
   "scripts": {

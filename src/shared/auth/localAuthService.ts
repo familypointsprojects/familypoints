@@ -48,6 +48,9 @@ export const localAuthService: AuthService = {
   signIn: async () => {
     throw new Error('Email sign-in is not available in local mode. Use demo login.');
   },
+  signUp: async () => {
+    throw new Error('Email sign-up is not available in local mode. Use demo login.');
+  },
   signInDemoRole: async (input) => {
     const session = createDemoSession(input);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(session));

@@ -8,12 +8,19 @@ import {
 } from 'react';
 
 import { authService } from './authService';
-import type { AuthSession, SignInAsChildInput, SignInDemoRoleInput, SignInInput } from './types';
+import type {
+  AuthSession,
+  SignInAsChildInput,
+  SignInDemoRoleInput,
+  SignInInput,
+  SignUpInput,
+} from './types';
 
 type AuthContextValue = {
   session: AuthSession | null;
   hasHydrated: boolean;
   signIn: (input: SignInInput) => Promise<AuthSession>;
+  signUp: (input: SignUpInput) => Promise<AuthSession>;
   signInDemoRole: (input: SignInDemoRoleInput) => Promise<AuthSession>;
   signInAsChild: (input: SignInAsChildInput) => Promise<AuthSession>;
   signOut: () => Promise<void>;
@@ -26,10 +33,16 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = authService.subscribeToAuthChanges?.((nextSession) => {
-      setSession(nextSession);
-      setHasHydrated(true);
-    });
+    let unsubscribe: (() => void) | undefined;
+
+    try {
+      unsubscribe = authService.subscribeToAuthChanges?.((nextSession) => {
+        setSession(nextSession);
+        setHasHydrated(true);
+      });
+    } catch (error) {
+      console.warn('Failed to subscribe to auth changes', error);
+    }
 
     if (unsubscribe) {
       return unsubscribe;
@@ -64,6 +77,11 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       hasHydrated,
       signIn: async (input) => {
         const nextSession = await authService.signIn(input);
+        setSession(nextSession);
+        return nextSession;
+      },
+      signUp: async (input) => {
+        const nextSession = await authService.signUp(input);
         setSession(nextSession);
         return nextSession;
       },

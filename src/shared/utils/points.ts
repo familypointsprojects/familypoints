@@ -1,4 +1,19 @@
-import { PointTransaction, Wish } from '@/shared/types/family';
+import { PointTransaction, Task, TaskSubmission, Wish } from '@/shared/types/family';
+
+export const getPotentialPoints = (
+  taskList: Task[],
+  submissions: TaskSubmission[],
+  childId: string,
+): number => {
+  const pendingTaskIds = new Set(
+    submissions
+      .filter((s) => s.childId === childId && s.status === 'pending')
+      .map((s) => s.taskId),
+  );
+  return taskList
+    .filter((task) => pendingTaskIds.has(task.id))
+    .reduce((sum, task) => sum + task.points, 0);
+};
 
 export const getBalance = (transactions: PointTransaction[], childId: string): number =>
   transactions
@@ -14,8 +29,10 @@ export const getProgressPercent = (balance: number, price: number): number => {
 };
 
 export const getNearestWish = (wishList: Wish[], balance: number): Wish | undefined =>
-  [...wishList].sort((first, second) => {
-    const firstRemaining = Math.max(first.price - balance, 0);
-    const secondRemaining = Math.max(second.price - balance, 0);
-    return firstRemaining - secondRemaining;
-  })[0];
+  [...wishList]
+    .filter((wish) => wish.status === 'approved' && wish.price > 0)
+    .sort((first, second) => {
+      const firstRemaining = Math.max(first.price - balance, 0);
+      const secondRemaining = Math.max(second.price - balance, 0);
+      return firstRemaining - secondRemaining;
+    })[0];

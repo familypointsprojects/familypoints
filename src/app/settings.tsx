@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useState } from 'react';
 
 import { useAuth } from '@/shared/auth';
 import { useLanguage } from '@/shared/i18n';
-import { familyPointsDataSource } from '@/shared/services/familyPoints';
+import { familyPointsDataSource, isFamilyPointsBackendConfigured } from '@/shared/services/familyPoints';
 import { isSupabaseConfigured } from '@/shared/services/supabase';
 import { useFamilyPoints } from '@/shared/state';
 import { AppButton, AppCard, AppScreen, AppTextInput, SectionTitle, StatusBadge } from '@/shared/ui';
@@ -12,21 +12,10 @@ import { AppButton, AppCard, AppScreen, AppTextInput, SectionTitle, StatusBadge 
 const SettingsScreen = () => {
   const { t } = useLanguage();
   const { session, signOut } = useAuth();
-  const { resetDemoData, familyName, updateFamilyName, activeFamilyId } = useFamilyPoints();
+  const { familyName, updateFamilyName, activeFamilyId } = useFamilyPoints();
 
   const [isEditingFamily, setIsEditingFamily] = useState(false);
   const [editedFamilyName, setEditedFamilyName] = useState('');
-
-  const handleResetDemoData = () => {
-    Alert.alert(t('demo.resetTitle'), t('demo.resetMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('demo.resetConfirm'),
-        style: 'destructive',
-        onPress: resetDemoData,
-      },
-    ]);
-  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -110,7 +99,7 @@ const SettingsScreen = () => {
                 ? t('settings.sourceSupabase')
                 : t('settings.sourceLocal')
             }
-            tone={familyPointsDataSource === 'supabase' ? 'success' : 'muted'}
+            tone={isFamilyPointsBackendConfigured ? 'success' : 'warning'}
           />
         </View>
         <View style={styles.row}>
@@ -124,9 +113,8 @@ const SettingsScreen = () => {
       </AppCard>
 
       <AppCard>
-        <SectionTitle title={t('settings.demoTools')} />
+        <SectionTitle title={t('settings.account')} />
         <View style={styles.stack}>
-          <AppButton title={t('demo.reset')} variant="secondary" onPress={handleResetDemoData} />
           <AppButton
             title={t('auth.signOut')}
             variant="danger"
@@ -155,19 +143,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   label: {
-    color: '#34444C',
+    color: '#12314A',
     flex: 1,
     fontSize: 15,
     fontWeight: '800',
   },
   familyName: {
-    color: '#1F2933',
+    color: '#12314A',
     flex: 1,
     fontSize: 18,
     fontWeight: '900',
   },
   meta: {
-    color: '#5F6C72',
+    color: '#6B7B86',
     fontSize: 14,
     lineHeight: 20,
   },

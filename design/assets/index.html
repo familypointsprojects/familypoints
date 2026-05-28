@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>EasyQuest — Лого и иконки</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{margin:0;padding:60px 32px;background:#F6EEDD;font-family:'Nunito',-apple-system,system-ui,sans-serif;color:#15263A;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:42px;}
+.section{display:flex;flex-direction:column;gap:16px;}
+h2{font-size:13px;font-weight:900;letter-spacing:2.5px;color:#6B7B86;margin:0;text-transform:uppercase;}
+.logo-card{display:flex;align-items:center;gap:36px;padding:38px 44px;background:#FFFFFF;border-radius:26px;box-shadow:0 8px 28px rgba(18,49,74,0.08);}
+.logo-card img{width:260px;height:260px;flex:none;}
+.wm{font-size:92px;font-weight:900;letter-spacing:-2px;line-height:1;}
+.wm .e{color:#15263A;}.wm .q{color:#1E9E86;}
+.tag{font-size:18px;font-weight:900;letter-spacing:4px;margin-top:18px;color:#15263A;}
+.tag .d{color:#F4B12C;margin:0 6px;}
+.icons-row{display:grid;grid-template-columns:repeat(5,1fr);gap:24px;padding:36px 44px;background:#FFFFFF;border-radius:26px;box-shadow:0 8px 28px rgba(18,49,74,0.08);}
+.icon-cell{display:flex;flex-direction:column;align-items:center;gap:14px;}
+.icon-cell img{width:120px;height:120px;}
+.icon-cell b{font-size:13px;font-weight:900;letter-spacing:2.5px;color:#1E9E86;text-transform:uppercase;}
+.hint{font-size:14px;color:#15263A;padding:18px 22px;background:#E3F3EE;border-left:4px solid #1E9E86;border-radius:10px;line-height:1.55;}
+.hint b{font-weight:900;}
+.hint code{font-family:'SF Mono',Menlo,monospace;font-size:13px;background:#FFFFFF;padding:2px 6px;border-radius:4px;}
+.files-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.files-grid div{font-family:'SF Mono',Menlo,monospace;font-size:12.5px;color:#6B7B86;padding:10px 14px;background:#FBF6EA;border-radius:8px;border:1px solid #ECE3CF;}
+.files-grid b{color:#15263A;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="section">
+<h2>Лого · logo lockup</h2>
+<div class="logo-card">
+<img src="easyquest-logo-mark.svg" alt="EasyQuest mark"/>
+<div>
+<div class="wm"><span class="e">Easy</span><span class="q">Quest</span></div>
+<div class="tag">ЗАДАНИЯ<span class="d">●</span>БАЛЛЫ<span class="d">●</span>НАГРАДЫ<span class="d">●</span>ВМЕСТЕ</div>
+</div>
+</div>
+</div>
+<div class="section">
+<h2>Иконки меню · 5 quest icons</h2>
+<div class="icons-row">
+<div class="icon-cell"><img src="icon-zadaniya.svg" alt="Задания"/><b>Задания</b></div>
+<div class="icon-cell"><img src="icon-dostizheniya.svg" alt="Достижения"/><b>Достижения</b></div>
+<div class="icon-cell"><img src="icon-bally.svg" alt="Баллы"/><b>Баллы</b></div>
+<div class="icon-cell"><img src="icon-nagrady.svg" alt="Награды"/><b>Награды</b></div>
+<div class="icon-cell"><img src="icon-vmeste.svg" alt="Вместе"/><b>Вместе</b></div>
+</div>
+</div>
+<div class="hint"><b>Как переиспользовать в Figma:</b> перетащи любой <code>.svg</code> файл из папки <code>design/assets/</code> прямо на холст Figma. Файл импортируется как редактируемая векторная группа — каждая фигура становится отдельным слоем, цвета и формы можно править прямо в Figma. Подходит для создания компонентов и Variants.</div>
+<div class="section">
+<h2>Файлы</h2>
+<div class="files-grid">
+<div><b>easyquest-logo-lockup.svg</b> — полный лого со словом и тэглайном</div>
+<div><b>easyquest-logo-mark.svg</b> — только знак (для иконки приложения)</div>
+<div><b>icon-zadaniya.svg</b> — карта с тропой и крестиком</div>
+<div><b>icon-dostizheniya.svg</b> — щит со звездой</div>
+<div><b>icon-bally.svg</b> — золотая монета со звездой</div>
+<div><b>icon-nagrady.svg</b> — сундук с замком</div>
+<div><b>icon-vmeste.svg</b> — семья с сердцем</div>
+<div><b>index.html</b> — эта страница-превью</div>
+</div>
+</div>
+</div>
+</body>
+</html>

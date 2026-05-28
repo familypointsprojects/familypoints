@@ -66,7 +66,7 @@ create table rewards (
   family_id uuid not null references families(id) on delete cascade,
   title text not null,
   price integer not null check (price > 0),
-  type text not null check (type in ('screen_time', 'experience', 'toy', 'treat')),
+  type text not null check (type in ('screen_time', 'experience', 'toy', 'treat', 'wish')),
   is_active boolean not null default true,
   created_by uuid not null references profiles(id),
   created_at timestamptz not null default now(),
@@ -77,7 +77,7 @@ create table wishes (
   id uuid primary key default gen_random_uuid(),
   child_id uuid not null references children(id) on delete cascade,
   title text not null,
-  price integer not null check (price > 0),
+  price integer not null check (price >= 0),
   is_archived boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -106,6 +106,14 @@ create table reward_redemptions (
   reviewed_at timestamptz
 );
 
+create table favorite_goals (
+  child_id uuid primary key references children(id) on delete cascade,
+  target_type text not null check (target_type in ('reward', 'wish')),
+  target_id uuid not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table point_transactions
   add constraint point_transactions_reward_redemption_fk
   foreign key (source_reward_redemption_id)
@@ -117,3 +125,4 @@ create index task_submissions_child_id_status_idx on task_submissions(child_id, 
 create index rewards_family_id_is_active_idx on rewards(family_id, is_active);
 create index wishes_child_id_is_archived_idx on wishes(child_id, is_archived);
 create index point_transactions_child_id_created_at_idx on point_transactions(child_id, created_at desc);
+create index favorite_goals_target_idx on favorite_goals(target_type, target_id);

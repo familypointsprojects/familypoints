@@ -1,3 +1,4 @@
+import type { AuthSession } from '@/shared/auth/types';
 import type {
   ChildProfile,
   PointTransaction,
@@ -16,6 +17,7 @@ export type FamilyPointsState = {
   rewards: Reward[];
   rewardRedemptions: RewardRedemption[];
   wishes: Wish[];
+  favoriteGoals: FavoriteGoal[];
   pointTransactions: PointTransaction[];
   redeemedRewardIds: string[];
   children: ChildProfile[];
@@ -23,6 +25,14 @@ export type FamilyPointsState = {
   activeParentId?: string;
   activeChildId?: string;
   familyName?: string;
+};
+
+export type FavoriteGoalType = 'reward' | 'wish';
+
+export type FavoriteGoal = {
+  childId: string;
+  type: FavoriteGoalType;
+  itemId: string;
 };
 
 export type CreateTaskInput = {
@@ -44,6 +54,10 @@ export type SetTaskStatusInput = {
   status: TaskStatus;
 };
 
+export type DeleteTaskInput = {
+  taskId: string;
+};
+
 export type CreateRewardInput = {
   title: string;
   price: number;
@@ -58,6 +72,16 @@ export type SetRewardActiveInput = {
 export type AddWishInput = {
   title: string;
   price: number;
+  childId?: string;
+};
+
+export type ApproveWishInput = {
+  wishId: string;
+  price: number;
+};
+
+export type RejectWishInput = {
+  wishId: string;
 };
 
 export type SubmitTaskInput = {
@@ -72,6 +96,16 @@ export type ReviewSubmissionInput = {
 
 export type RedeemRewardInput = {
   rewardId: string;
+  childId: string;
+};
+
+export type SetFavoriteGoalInput = {
+  childId: string;
+  type: FavoriteGoalType;
+  itemId: string;
+};
+
+export type ClearFavoriteGoalInput = {
   childId: string;
 };
 
@@ -98,4 +132,5 @@ export type FamilyPointsServiceContext = {
   familyId: string;
   parentId: string;
   childId: string;
+  session: AuthSession | null;
 };

@@ -1,4 +1,8 @@
-export { familyPointsDataSource, familyPointsService } from './familyPointsService';
+export {
+  familyPointsDataSource,
+  familyPointsService,
+  isFamilyPointsBackendConfigured,
+} from './familyPointsService';
 export type { FamilyPointsDataSource } from './familyPointsService';
 export { localFamilyPointsService } from './localFamilyPointsService';
 export {

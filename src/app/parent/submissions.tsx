@@ -1,8 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useLanguage } from '@/shared/i18n';
-import { childProfile } from '@/shared/mocks';
-import { useFamilyPoints } from '@/shared/state';
+import { useActiveChild, useFamilyPoints } from '@/shared/state';
 import { TaskSubmission } from '@/shared/types/family';
 import { AppButton, AppCard, AppScreen, EmptyState, SectionTitle, StatusBadge } from '@/shared/ui';
 import { getTaskTitle } from '@/shared/utils/content';
@@ -10,9 +9,12 @@ import { findTask } from '@/shared/utils/tasks';
 
 const ParentSubmissionsScreen = () => {
   const { t } = useLanguage();
-  const { approveSubmission, rejectSubmission, taskSubmissions, tasks } = useFamilyPoints();
+  const { getChildName } = useActiveChild();
+  const { approveSubmission, rejectSubmission, setTaskStatus, taskSubmissions, tasks } =
+    useFamilyPoints();
 
   const pendingSubmissions = taskSubmissions.filter((submission) => submission.status === 'pending');
+  const reviewedSubmissions = taskSubmissions.filter((submission) => submission.status !== 'pending');
 
   const handleReview = (submissionId: string, status: TaskSubmission['status']) => {
     if (status === 'approved') {
@@ -42,7 +44,7 @@ const ParentSubmissionsScreen = () => {
               </View>
               <View style={styles.info}>
                 <Text style={styles.title}>{taskTitle}</Text>
-                <Text style={styles.meta}>{childProfile.name}</Text>
+                <Text style={styles.meta}>{getChildName(submission.childId)}</Text>
                 {Boolean(submission.proofNote) && (
                   <Text style={styles.proof}>{submission.proofNote}</Text>
                 )}
@@ -65,6 +67,32 @@ const ParentSubmissionsScreen = () => {
           </AppCard>
         );
       })}
+
+      <SectionTitle title={t('parent.submissions.history')} />
+      {reviewedSubmissions.map((submission) => {
+        const task = findTask(tasks, submission.taskId);
+        const taskTitle = task ? getTaskTitle(task, t) : t('child.taskDetails.notFoundTitle');
+
+        return (
+          <AppCard key={submission.id}>
+            <View style={styles.info}>
+              <Text style={styles.title}>{taskTitle}</Text>
+              <Text style={styles.meta}>{getChildName(submission.childId)}</Text>
+              <StatusBadge
+                label={submission.status === 'approved' ? t('common.approved') : t('common.rejected')}
+                tone={submission.status === 'approved' ? 'success' : 'danger'}
+              />
+              {task?.status === 'inactive' && (
+                <AppButton
+                  title={t('parent.submissions.repeatTask')}
+                  variant="secondary"
+                  onPress={() => setTaskStatus({ taskId: task.id, status: 'active' })}
+                />
+              )}
+            </View>
+          </AppCard>
+        );
+      })}
     </AppScreen>
   );
 };
@@ -78,14 +106,14 @@ const styles = StyleSheet.create({
   },
   photoPlaceholder: {
     alignItems: 'center',
-    backgroundColor: '#E5EEF1',
+    backgroundColor: '#E3F3EE',
     borderRadius: 8,
     height: 82,
     justifyContent: 'center',
     width: 82,
   },
   photoText: {
-    color: '#5F6C72',
+    color: '#6B7B86',
     fontSize: 13,
     fontWeight: '800',
   },
@@ -94,16 +122,16 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   title: {
-    color: '#1F2933',
+    color: '#12314A',
     fontSize: 18,
     fontWeight: '900',
   },
   meta: {
-    color: '#5F6C72',
+    color: '#6B7B86',
     fontSize: 14,
   },
   proof: {
-    color: '#34444C',
+    color: '#12314A',
     fontSize: 14,
     lineHeight: 20,
   },

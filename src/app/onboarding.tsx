@@ -1,36 +1,46 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { useAuth } from '@/shared/auth';
 import { useLanguage } from '@/shared/i18n';
-import { isSupabaseConfigured } from '@/shared/services/supabase';
-import { createFamily } from '@/shared/services/supabase/onboardingService';
+import { useFamilyPoints } from '@/shared/state';
 import { AppButton, AppCard, AppScreen, AppTextInput, SectionTitle, StatusBadge } from '@/shared/ui';
 
+const AVATAR_COLORS = [
+  '#1E9E86',
+  '#EF5A24',
+  '#F5B225',
+  '#2BA84A',
+  '#3E8ED0',
+  '#7C6BD6',
+  '#E86A9C',
+  '#12314A',
+];
+
 const OnboardingScreen = () => {
+  const { session } = useAuth();
   const { t } = useLanguage();
-  const { signIn, signInDemoRole } = useAuth();
-  const [parentName, setParentName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { activeFamilyId, createChild, hasHydrated } = useFamilyPoints();
+
   const [familyName, setFamilyName] = useState('');
   const [childName, setChildName] = useState('');
+  const [avatarColor, setAvatarColor] = useState(AVATAR_COLORS[0]);
   const [message, setMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleCreateSupabase = async () => {
-    const isValid =
-      parentName.trim().length > 0 &&
-      email.trim().length > 0 &&
-      password.length >= 6 &&
-      familyName.trim().length > 0 &&
-      childName.trim().length > 0;
+  const isFirstFamilySetup = !activeFamilyId;
+  const canSubmit =
+    hasHydrated &&
+    session?.role === 'parent' &&
+    childName.trim().length > 0 &&
+    (!isFirstFamilySetup || familyName.trim().length > 0);
 
-    if (!isValid) {
+  const handleCreateFamily = async () => {
+    if (!canSubmit) {
       setIsSuccess(false);
-      setMessage(t('onboarding.invalidSupabase'));
+      setMessage(t('onboarding.invalid'));
       return;
     }
 
@@ -38,101 +48,91 @@ const OnboardingScreen = () => {
     setIsLoading(true);
 
     try {
-      await createFamily({
-        parentEmail: email.trim(),
-        parentPassword: password,
-        parentName: parentName.trim(),
-        familyName: familyName.trim(),
-        childName: childName.trim(),
+      await createChild({
+        avatarColor,
+        name: childName.trim(),
+        ...(isFirstFamilySetup ? { familyName: familyName.trim() } : {}),
       });
 
       setIsSuccess(true);
-      setMessage(t('onboarding.successSupabase'));
-
-      const session = await signIn({ email: email.trim(), password });
-      router.replace(session.role === 'parent' ? '/parent/dashboard' : '/child/dashboard');
+      setMessage(t('onboarding.success', {
+        family: familyName.trim() || t('onboarding.existingFamily'),
+        child: childName.trim(),
+      }));
+      router.replace('/parent/dashboard');
     } catch (err: unknown) {
       setIsSuccess(false);
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      setMessage(t('onboarding.error', { message }));
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      setMessage(t('onboarding.error', { message: errorMessage }));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCreateDemo = async () => {
-    if (familyName.trim().length === 0 || childName.trim().length === 0) {
-      setIsSuccess(false);
-      setMessage(t('onboarding.invalid'));
-      return;
-    }
-
-    await signInDemoRole({ role: 'parent' });
-    setIsSuccess(true);
-    setMessage(t('onboarding.success', { family: familyName.trim(), child: childName.trim() }));
-    router.replace('/parent/dashboard');
-  };
-
   return (
     <AppScreen title={t('onboarding.title')} subtitle={t('onboarding.subtitle')}>
-      {isSupabaseConfigured && (
+      {isFirstFamilySetup && (
         <AppCard>
-          <SectionTitle title={t('auth.parentAccount')} />
+          <SectionTitle title={t('onboarding.familySetup')} />
           <AppTextInput
-            label={t('auth.parentName')}
-            value={parentName}
-            onChangeText={setParentName}
-            placeholder={t('auth.parentNamePlaceholder')}
-          />
-          <AppTextInput
-            label={t('auth.email')}
-            value={email}
-            onChangeText={setEmail}
-            placeholder={t('auth.emailPlaceholder')}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <AppTextInput
-            label={t('auth.password')}
-            value={password}
-            onChangeText={setPassword}
-            placeholder={t('auth.passwordPlaceholder')}
-            secureTextEntry
+            label={t('onboarding.familyName')}
+            value={familyName}
+            onChangeText={setFamilyName}
+            placeholder={t('onboarding.familyPlaceholder')}
           />
         </AppCard>
       )}
 
       <AppCard>
-        <SectionTitle title={t('onboarding.familySetup')} />
-        <AppTextInput
-          label={t('onboarding.familyName')}
-          value={familyName}
-          onChangeText={setFamilyName}
-          placeholder={t('onboarding.familyPlaceholder')}
-        />
+        <SectionTitle title={t('onboarding.firstChild')} />
         <AppTextInput
           label={t('onboarding.childName')}
           value={childName}
           onChangeText={setChildName}
           placeholder={t('onboarding.childPlaceholder')}
         />
-        <View style={styles.actions}>
-          {isSupabaseConfigured ? (
-            <AppButton
-              title={isLoading ? t('onboarding.registering') : t('onboarding.register')}
-              onPress={handleCreateSupabase}
-              disabled={isLoading}
-            />
-          ) : (
-            <AppButton title={t('onboarding.create')} onPress={handleCreateDemo} />
-          )}
-          <AppButton
-            title={t('parent.dashboard.title')}
-            variant="secondary"
-            onPress={() => router.replace('/parent/dashboard')}
-          />
+
+        <Text style={styles.label}>{t('onboarding.avatarColor')}</Text>
+        <View style={styles.colorGrid}>
+          {AVATAR_COLORS.map((color) => (
+            <TouchableOpacity
+              key={color}
+              onPress={() => setAvatarColor(color)}
+              style={[
+                styles.colorDot,
+                { backgroundColor: color },
+                avatarColor === color && styles.colorDotSelected,
+              ]}>
+              {avatarColor === color && <Text style={styles.colorCheck}>✓</Text>}
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.preview}>
+          <View style={[styles.avatar, { backgroundColor: avatarColor }]}>
+            <Text style={styles.avatarText}>
+              {childName.trim() ? childName.trim().slice(0, 1).toUpperCase() : '?'}
+            </Text>
+          </View>
+          <Text style={styles.previewName}>
+            {childName.trim() || t('onboarding.childPreview')}
+          </Text>
         </View>
       </AppCard>
+
+      <View style={styles.actions}>
+        <AppButton
+          title={isLoading ? t('onboarding.registering') : t('onboarding.createFamily')}
+          onPress={handleCreateFamily}
+          disabled={isLoading || !canSubmit}
+        />
+        <AppButton
+          title={t('common.cancel')}
+          variant="ghost"
+          onPress={() => router.replace('/parent/dashboard')}
+          disabled={isLoading}
+        />
+      </View>
 
       {Boolean(message) && (
         <View style={styles.message}>
@@ -153,17 +153,71 @@ const styles = StyleSheet.create({
   actions: {
     gap: 10,
   },
+  avatar: {
+    alignItems: 'center',
+    borderRadius: 10,
+    height: 56,
+    justifyContent: 'center',
+    width: 56,
+  },
+  avatarText: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  colorCheck: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  colorDot: {
+    alignItems: 'center',
+    borderRadius: 24,
+    height: 48,
+    justifyContent: 'center',
+    width: 48,
+  },
+  colorDotSelected: {
+    borderColor: '#12314A',
+    borderWidth: 3,
+  },
+  colorGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  label: {
+    color: '#12314A',
+    fontSize: 14,
+    fontWeight: '800',
+    marginTop: 6,
+  },
   message: {
     backgroundColor: '#FFFFFF',
-    borderColor: '#E3DDD2',
+    borderColor: '#ECE3CF',
     borderRadius: 8,
     borderWidth: 1,
     gap: 8,
     padding: 16,
   },
   messageText: {
-    color: '#34444C',
+    color: '#12314A',
     fontSize: 14,
     lineHeight: 20,
+  },
+  preview: {
+    alignItems: 'center',
+    borderTopColor: '#ECE3CF',
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    gap: 14,
+    marginTop: 16,
+    paddingTop: 16,
+  },
+  previewName: {
+    color: '#12314A',
+    fontSize: 20,
+    fontWeight: '800',
   },
 });

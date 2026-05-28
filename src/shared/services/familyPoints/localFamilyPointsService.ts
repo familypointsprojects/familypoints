@@ -4,12 +4,17 @@ import {
   addWishInState,
   approveRewardRedemptionInState,
   approveSubmissionInState,
+  approveWishInState,
+  clearFavoriteGoalInState,
   createRewardInState,
   createTaskInState,
+  deleteTaskInState,
   fulfillRewardRedemptionInState,
   redeemRewardInState,
   rejectRewardRedemptionInState,
   rejectSubmissionInState,
+  rejectWishInState,
+  setFavoriteGoalInState,
   setRewardActiveInState,
   setTaskStatusInState,
   submitTaskInState,
@@ -35,6 +40,7 @@ const isFamilyPointsState = (value: unknown): value is FamilyPointsState => {
     Array.isArray(value.rewards) &&
     (value.rewardRedemptions === undefined || Array.isArray(value.rewardRedemptions)) &&
     Array.isArray(value.wishes) &&
+    (value.favoriteGoals === undefined || Array.isArray(value.favoriteGoals)) &&
     Array.isArray(value.pointTransactions) &&
     Array.isArray(value.redeemedRewardIds)
   );
@@ -57,7 +63,11 @@ export const localFamilyPointsService: FamilyPointsService = {
     const parsedState: unknown = JSON.parse(storedState);
 
     return isFamilyPointsState(parsedState)
-      ? { ...parsedState, rewardRedemptions: parsedState.rewardRedemptions ?? [] }
+      ? {
+          ...parsedState,
+          favoriteGoals: parsedState.favoriteGoals ?? [],
+          rewardRedemptions: parsedState.rewardRedemptions ?? [],
+        }
       : null;
   },
   saveState: async (state) => {
@@ -72,6 +82,8 @@ export const localFamilyPointsService: FamilyPointsService = {
     persistState(updateTaskInState(context.state, input)),
   setTaskStatus: async (input, context) =>
     persistState(setTaskStatusInState(context.state, input)),
+  deleteTask: async (input, context) =>
+    persistState(deleteTaskInState(context.state, input)),
   createReward: async (input, context) =>
     persistState(createRewardInState(context.state, input)),
   setRewardActive: async (input, context) =>
@@ -84,8 +96,16 @@ export const localFamilyPointsService: FamilyPointsService = {
     persistState(rejectSubmissionInState(context.state, input)),
   addWish: async (input, context) =>
     persistState(addWishInState(context.state, input)),
+  approveWish: async (input, context) =>
+    persistState(approveWishInState(context.state, input)),
+  rejectWish: async (input, context) =>
+    persistState(rejectWishInState(context.state, input)),
   redeemReward: async (input, context) =>
     persistState(redeemRewardInState(context.state, input)),
+  setFavoriteGoal: async (input, context) =>
+    persistState(setFavoriteGoalInState(context.state, input)),
+  clearFavoriteGoal: async (input, context) =>
+    persistState(clearFavoriteGoalInState(context.state, input)),
   approveRewardRedemption: async (input, context) =>
     persistState(approveRewardRedemptionInState(context.state, input)),
   rejectRewardRedemption: async (input, context) =>

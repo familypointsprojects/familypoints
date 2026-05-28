@@ -5,28 +5,45 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@/shared/auth';
 import { useLanguage } from '@/shared/i18n';
 import { isSupabaseConfigured } from '@/shared/services/supabase';
-import { AppButton, AppCard, AppScreen, AppTextInput, SectionTitle, StatusBadge } from '@/shared/ui';
+import { AppButton, AppCard, AppScreen, AppTextInput, BrandLogo, StatusBadge } from '@/shared/ui';
 import { FP } from '@/constants/theme';
 
 type TabType = 'signin' | 'signup';
 
 const SignInScreen = () => {
   const { t } = useLanguage();
-  const { signIn, signInDemoRole } = useAuth();
+  const { signIn, signUp } = useAuth();
   const [tab, setTab] = useState<TabType>('signin');
+  const [parentName, setParentName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignIn = async () => {
-    if (!email.trim() || !password) {
+  const validateForm = () => {
+    if (tab === 'signup' && !parentName.trim()) {
+      return false;
+    }
+
+    return Boolean(email.trim() && password.length >= (tab === 'signup' ? 6 : 1));
+  };
+
+  const handleAuthSubmit = async () => {
+    if (!validateForm()) {
       setError(t('common.checkForm'));
       return;
     }
+
     setError('');
     setIsLoading(true);
+
     try {
+      if (tab === 'signup') {
+        await signUp({ email: email.trim(), password, parentName: parentName.trim() });
+        router.replace('/onboarding');
+        return;
+      }
+
       const session = await signIn({ email: email.trim(), password });
       router.replace(session.role === 'parent' ? '/parent/dashboard' : '/child/dashboard');
     } catch (err: unknown) {
@@ -36,22 +53,12 @@ const SignInScreen = () => {
     }
   };
 
-  const handleDemoSignIn = async () => {
-    setIsLoading(true);
-    try {
-      await signInDemoRole({ role: 'parent' });
-      router.replace('/parent/dashboard');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <AppScreen showBackButton={false}>
+    <AppScreen>
       {/* Logo */}
       <View style={styles.logoBlock}>
-        <Text style={styles.logoEmoji}>⭐</Text>
-        <Text style={styles.logoTitle}>Family Points</Text>
+        <BrandLogo size={72} />
+        <Text style={styles.logoTitle}>{t('common.appName')}</Text>
         <Text style={styles.logoSub}>Войдите или создайте аккаунт</Text>
       </View>
 
@@ -70,6 +77,14 @@ const SignInScreen = () => {
       </View>
 
       <AppCard>
+        {tab === 'signup' && (
+          <AppTextInput
+            label={t('auth.parentName')}
+            value={parentName}
+            onChangeText={setParentName}
+            placeholder={t('auth.parentNamePlaceholder')}
+          />
+        )}
         <AppTextInput
           label={t('auth.email')}
           value={email}
@@ -89,19 +104,17 @@ const SignInScreen = () => {
         <View style={styles.actions}>
           {isSupabaseConfigured ? (
             <AppButton
-              title={isLoading ? t('auth.signingIn') : (tab === 'signin' ? t('auth.signIn') : 'Создать аккаунт')}
-              onPress={handleSignIn}
+              title={
+                isLoading
+                  ? (tab === 'signin' ? t('auth.signingIn') : t('auth.signingUp'))
+                  : (tab === 'signin' ? t('auth.signIn') : t('auth.signUp'))
+              }
+              onPress={handleAuthSubmit}
               disabled={isLoading}
             />
           ) : (
             <AppButton title={t('auth.realAuthLater')} onPress={() => {}} disabled variant="secondary" />
           )}
-          <AppButton
-            title={t('auth.demoParent')}
-            variant="secondary"
-            onPress={handleDemoSignIn}
-            disabled={isLoading}
-          />
         </View>
 
         {Boolean(error) && (
@@ -140,10 +153,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     gap: 4,
-  },
-  logoEmoji: {
-    fontSize: 44,
-    marginBottom: 4,
   },
   logoTitle: {
     color: FP.text,

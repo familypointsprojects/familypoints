@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<title>Достижения</title>
+<path d="M60 12 L100 24 L100 60 Q100 92 60 108 Q20 92 20 60 L20 24 Z" fill="#3FA88E" stroke="#0E5F4D" stroke-width="4.5" stroke-linejoin="round"/>
+<path d="M60 22 L90 32 L90 60 Q90 84 60 96 Q30 84 30 60 L30 32 Z" fill="none" stroke="#2D7E68" stroke-width="2" opacity="0.6"/>
+<path d="M60 36 L67 53 L86 55 L72 67 L77 86 L60 76 L43 86 L48 67 L34 55 L53 53 Z" fill="#F5B225" stroke="#A66A0B" stroke-width="2.5" stroke-linejoin="round"/>
+</svg>

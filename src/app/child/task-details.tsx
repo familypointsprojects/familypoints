@@ -1,18 +1,19 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Alert, StyleSheet, Text } from 'react-native';
 
 import { useLanguage } from '@/shared/i18n';
-import { childProfile } from '@/shared/mocks';
-import { useFamilyPoints } from '@/shared/state';
+import { useActiveChild, useFamilyPoints } from '@/shared/state';
 import { AppButton, AppCard, AppScreen, AppTextInput, EmptyState, PointsBadge, StatusBadge } from '@/shared/ui';
 import { getTaskDescription, getTaskTitle } from '@/shared/utils/content';
 
 const ChildTaskDetailsScreen = () => {
   const { t } = useLanguage();
+  const { activeChildId } = useActiveChild();
   const { submitTaskWithProof, taskSubmissions, tasks } = useFamilyPoints();
   const { taskId } = useLocalSearchParams<{ taskId?: string }>();
   const [proofNote, setProofNote] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentTaskId = taskId ?? tasks[0]?.id;
   const task = tasks.find((taskItem) => taskItem.id === currentTaskId);
@@ -20,7 +21,7 @@ const ChildTaskDetailsScreen = () => {
     ? taskSubmissions.some(
         (submission) =>
           submission.taskId === task.id &&
-          submission.childId === childProfile.id &&
+          submission.childId === activeChildId &&
           submission.status === 'pending',
       )
     : false;
@@ -36,8 +37,17 @@ const ChildTaskDetailsScreen = () => {
     );
   }
 
-  const handleSubmitTask = () => {
-    submitTaskWithProof(task.id, proofNote);
+  const handleSubmitTask = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await submitTaskWithProof(task.id, proofNote);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      Alert.alert('Ошибка', message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -56,7 +66,11 @@ const ChildTaskDetailsScreen = () => {
               placeholder={t('child.taskDetails.proofPlaceholder')}
               multiline
             />
-            <AppButton title={t('common.iDidIt')} onPress={handleSubmitTask} />
+            <AppButton
+              title={isSubmitting ? '...' : t('common.iDidIt')}
+              onPress={handleSubmitTask}
+              disabled={isSubmitting}
+            />
           </>
         )}
       </AppCard>
@@ -68,7 +82,7 @@ export default ChildTaskDetailsScreen;
 
 const styles = StyleSheet.create({
   description: {
-    color: '#34444C',
+    color: '#12314A',
     fontSize: 16,
     lineHeight: 23,
   },

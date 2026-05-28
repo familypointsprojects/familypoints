@@ -8,6 +8,7 @@ alter table rewards enable row level security;
 alter table wishes enable row level security;
 alter table point_transactions enable row level security;
 alter table reward_redemptions enable row level security;
+alter table favorite_goals enable row level security;
 
 create or replace function is_family_member(target_family_id uuid)
 returns boolean
@@ -98,6 +99,10 @@ on tasks for update
 using (created_by = auth.uid() and is_family_member(family_id))
 with check (created_by = auth.uid() and is_family_member(family_id));
 
+create policy "Parents can delete tasks"
+on tasks for delete
+using (created_by = auth.uid() and is_family_member(family_id));
+
 create policy "Members can read task submissions"
 on task_submissions for select
 using (can_access_child(child_id));
@@ -115,10 +120,18 @@ create policy "Members can read rewards"
 on rewards for select
 using (is_family_member(family_id));
 
-create policy "Parents can manage rewards"
-on rewards for all
-using (created_by = auth.uid() and is_family_member(family_id))
+create policy "Parents can create rewards"
+on rewards for insert
 with check (created_by = auth.uid() and is_family_member(family_id));
+
+create policy "Parents can update rewards"
+on rewards for update
+using (is_family_member(family_id))
+with check (is_family_member(family_id));
+
+create policy "Parents can delete rewards"
+on rewards for delete
+using (is_family_member(family_id));
 
 create policy "Members can read wishes"
 on wishes for select
@@ -153,3 +166,20 @@ create policy "Parents can review reward redemptions"
 on reward_redemptions for update
 using (can_access_child(child_id))
 with check (can_access_child(child_id));
+
+create policy "Members can read favorite goals"
+on favorite_goals for select
+using (can_access_child(child_id));
+
+create policy "Children can create favorite goals"
+on favorite_goals for insert
+with check (can_access_child(child_id));
+
+create policy "Children can update favorite goals"
+on favorite_goals for update
+using (can_access_child(child_id))
+with check (can_access_child(child_id));
+
+create policy "Children can delete favorite goals"
+on favorite_goals for delete
+using (can_access_child(child_id));

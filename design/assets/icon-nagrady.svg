@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<title>Награды</title>
+<rect x="12" y="56" width="96" height="50" rx="5" fill="#7A4D24" stroke="#3E2511" stroke-width="3.5"/>
+<path d="M12 60 Q12 22 60 22 Q108 22 108 60 L108 64 L12 64 Z" fill="#A56A33" stroke="#3E2511" stroke-width="3.5" stroke-linejoin="round"/>
+<line x1="12" y1="82" x2="108" y2="82" stroke="#5E3919" stroke-width="2" opacity="0.5"/>
+<rect x="11" y="60" width="98" height="8" fill="#F5B225" stroke="#A66A0B" stroke-width="2"/>
+<rect x="18" y="78" width="7" height="25" fill="#F5B225" stroke="#A66A0B" stroke-width="1.8"/>
+<rect x="95" y="78" width="7" height="25" fill="#F5B225" stroke="#A66A0B" stroke-width="1.8"/>
+<rect x="52" y="62" width="16" height="22" rx="2" fill="#F5B225" stroke="#A66A0B" stroke-width="2.5"/>
+<circle cx="60" cy="69" r="2.8" fill="#3E2511"/>
+<rect x="58.4" y="69" width="3.2" height="8" fill="#3E2511"/>
+<circle cx="32" cy="42" r="2" fill="#FCE9B6"/>
+<circle cx="80" cy="38" r="1.8" fill="#FCE9B6"/>
+<path d="M95 50 L97 53 L100 54 L97 55 L95 58 L93 55 L90 54 L93 53 Z" fill="#FCE9B6"/>
+</svg>

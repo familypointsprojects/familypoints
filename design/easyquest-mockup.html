@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EasyQuest — Family Points · Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12314A; --ink2:#0E2536; --teal:#1E9E86; --teal-d:#15786A; --teal-bg:#E3F3EE;
+    --gold:#F5B225; --gold-d:#DE940F; --gold-bg:#FBEBC4; --orange:#EF5A24; --orange-d:#C8431A;
+    --orange-bg:#FBE0D4; --cream:#F6EEDD; --card:#FFFFFF; --paper:#FBF6EA; --tan:#E7D5AC;
+    --line:#ECE3CF; --sub:#6B7B86; --green:#2BA84A; --green-bg:#DEF3E2; --red:#E2483B; --red-bg:#FBE3E0;
+    --disp:'Nunito','SF Pro Rounded',-apple-system,system-ui,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+  body{font-family:var(--disp);background:#15293A;color:var(--ink);}
+  .wrap{max-width:1360px;margin:0 auto;padding:40px 32px 80px;}
+  .page-head{display:flex;align-items:center;gap:22px;margin-bottom:14px;}
+  .page-head .lk{width:82px;height:82px;flex:none;}
+  .page-head h1{color:#fff;font-size:34px;font-weight:900;letter-spacing:-.5px;}
+  .page-head h1 .q{color:var(--teal);}
+  .page-head p{color:#9DB4C4;font-size:15px;font-weight:600;margin-top:3px;}
+  .tagline{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 40px;}
+  .tagline span{color:#C9D7E2;font-size:12.5px;font-weight:800;letter-spacing:1.5px;}
+  .tagline b{color:var(--gold);}
+  .sec{margin-bottom:46px;}
+  .sec-head{display:flex;align-items:center;gap:12px;margin-bottom:22px;}
+  .sec-head .num{background:var(--gold);color:var(--ink2);font-weight:900;font-size:13px;
+    padding:4px 10px;border-radius:8px;}
+  .sec-head h2{color:#EAF1F6;font-size:17px;font-weight:800;letter-spacing:2px;}
+  .sec-head .ln{flex:1;height:1px;background:rgba(255,255,255,.12);}
+  .frames{display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start;}
+
+  /* device */
+  .phone{display:flex;flex-direction:column;gap:10px;}
+  .cap{display:flex;align-items:center;gap:7px;color:#AFC3D1;font-size:12.5px;font-weight:800;
+    letter-spacing:.3px;padding-left:4px;}
+  .cap i{width:7px;height:7px;border-radius:50%;background:var(--teal);display:inline-block;}
+  .device{width:286px;height:606px;background:#0C1E2B;border-radius:42px;padding:9px;
+    box-shadow:0 18px 40px rgba(0,0,0,.42);}
+  .screen{width:100%;height:100%;background:var(--cream);border-radius:34px;overflow:hidden;
+    display:flex;flex-direction:column;position:relative;}
+  .scr-body{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+
+  /* status bar */
+  .sb{display:flex;justify-content:space-between;align-items:center;padding:13px 22px 4px;
+    font-size:12px;font-weight:800;color:var(--ink);}
+  .sb .dots{display:flex;gap:4px;align-items:center;}
+  .sb .dots svg{width:15px;height:15px;}
+
+  /* top bar */
+  .tb{display:flex;align-items:center;justify-content:space-between;padding:6px 18px 8px;}
+  .tb .bk{display:flex;align-items:center;gap:5px;color:var(--teal-d);font-weight:800;font-size:13px;}
+  .tb .lang{background:var(--paper);border:1px solid var(--line);border-radius:20px;
+    font-size:11px;font-weight:800;color:var(--sub);padding:4px 9px;}
+  .tb .logo-mini{width:26px;height:26px;}
+
+  /* header */
+  .hd{padding:4px 18px 10px;}
+  .hd h3{font-size:23px;font-weight:900;color:var(--ink);letter-spacing:-.3px;line-height:1.1;}
+  .hd p{font-size:12.5px;color:var(--sub);font-weight:600;margin-top:5px;line-height:1.35;}
+
+  .body-pad{padding:2px 16px 14px;display:flex;flex-direction:column;gap:11px;overflow:hidden;}
+
+  /* card */
+  .card{background:var(--card);border-radius:20px;padding:14px;
+    box-shadow:0 4px 14px rgba(18,49,74,.07);}
+  .card.tan{background:var(--paper);border:1px solid var(--line);}
+  .ct{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+  .ct h4{font-size:13px;font-weight:900;color:var(--ink);letter-spacing:.2px;}
+  .ct h4.up{text-transform:uppercase;letter-spacing:1px;font-size:11.5px;color:var(--sub);}
+
+  /* coin badge */
+  .coin{display:inline-flex;align-items:center;gap:5px;background:var(--gold-bg);
+    color:var(--gold-d);font-weight:900;font-size:12px;border-radius:30px;padding:4px 10px 4px 5px;}
+  .coin svg{width:16px;height:16px;}
+  .coin.lg{font-size:14px;padding:6px 13px 6px 7px;}
+  .coin.lg svg{width:20px;height:20px;}
+
+  /* big number */
+  .big{font-size:40px;font-weight:900;color:var(--ink);line-height:1;}
+  .big small{font-size:16px;font-weight:800;color:var(--gold-d);}
+
+  /* progress trail */
+  .trail{position:relative;height:12px;background:var(--tan);border-radius:10px;overflow:hidden;margin:7px 0 5px;}
+  .trail i{position:absolute;left:0;top:0;bottom:0;background:var(--teal);border-radius:10px;}
+  .meta{font-size:11.5px;color:var(--sub);font-weight:700;}
+
+  /* rows */
+  .row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);}
+  .row:first-of-type{border-top:0;}
+  .row .ico{width:38px;height:38px;border-radius:12px;background:var(--teal-bg);
+    display:flex;align-items:center;justify-content:center;flex:none;}
+  .row .ico svg{width:22px;height:22px;}
+  .row .ico.g{background:var(--gold-bg);} .row .ico.o{background:var(--orange-bg);}
+  .row .tx{flex:1;min-width:0;}
+  .row .tx b{display:block;font-size:13px;font-weight:800;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .row .tx span{font-size:11px;color:var(--sub);font-weight:700;}
+
+  /* buttons */
+  .btn{display:flex;align-items:center;justify-content:center;gap:6px;height:42px;border-radius:15px;
+    font-weight:900;font-size:13.5px;border:0;width:100%;}
+  .btn.teal{background:var(--teal);color:#fff;}
+  .btn.gold{background:var(--gold);color:var(--ink2);}
+  .btn.orange{background:var(--orange);color:#fff;}
+  .btn.ghost{background:var(--teal-bg);color:var(--teal-d);}
+  .btn.line{background:#fff;border:1.5px solid var(--line);color:var(--ink);}
+  .btn.sm{height:34px;border-radius:12px;font-size:12px;width:auto;padding:0 14px;}
+  .btn svg{width:17px;height:17px;}
+  .btn-col{display:flex;flex-direction:column;gap:9px;}
+
+  /* pills / status */
+  .pill{font-size:10.5px;font-weight:900;padding:3px 9px;border-radius:20px;letter-spacing:.3px;}
+  .pill.warn{background:var(--orange-bg);color:var(--orange-d);}
+  .pill.ok{background:var(--green-bg);color:#1c7a33;}
+  .pill.wait{background:var(--gold-bg);color:var(--gold-d);}
+
+  /* avatar */
+  .av{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:900;font-size:17px;flex:none;}
+
+  /* tab bar */
+  .tabs{display:flex;justify-content:space-around;align-items:center;padding:9px 8px 16px;
+    background:#fff;border-top:1px solid var(--line);}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:3px;color:#A9B6BF;}
+  .tab svg{width:23px;height:23px;}
+  .tab span{font-size:9px;font-weight:800;letter-spacing:.2px;}
+  .tab.on{color:var(--teal-d);}
+  .tab.on svg .fill{fill:var(--teal);}
+
+  /* form field */
+  .fld{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 13px;}
+  .fld label{display:block;font-size:10.5px;font-weight:800;color:var(--sub);
+    text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;}
+  .fld .val{font-size:14px;font-weight:700;color:var(--ink);}
+  .fld .ph{color:#A7B4BC;}
+
+  /* segmented */
+  .seg{display:flex;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:3px;gap:3px;}
+  .seg div{flex:1;text-align:center;font-size:12px;font-weight:800;color:var(--sub);
+    padding:7px 0;border-radius:11px;}
+  .seg div.on{background:#fff;color:var(--teal-d);box-shadow:0 2px 6px rgba(18,49,74,.08);}
+
+  /* hero scenes */
+  .scene{height:118px;border-radius:18px;background:#163A4C;position:relative;overflow:hidden;
+    display:flex;align-items:flex-end;justify-content:center;}
+  .scene svg{position:absolute;inset:0;width:100%;height:100%;}
+
+  /* branding */
+  .brand-grid{display:flex;flex-wrap:wrap;gap:22px;align-items:stretch;}
+  .bcard{background:#fff;border-radius:22px;padding:22px;}
+  .bcard.dark{background:#0E2536;}
+  .bcard h5{font-size:11px;font-weight:900;letter-spacing:1.5px;color:var(--sub);
+    text-transform:uppercase;margin-bottom:14px;}
+  .bcard.dark h5{color:#7E97A8;}
+  .logo-lockup{display:flex;align-items:center;gap:16px;}
+  .logo-lockup .lk{width:96px;height:96px;flex:none;}
+  .logo-lockup .wm{font-size:40px;font-weight:900;letter-spacing:-1px;line-height:.9;}
+  .logo-lockup .wm .e{color:var(--ink);} .logo-lockup .wm .q{color:var(--teal);}
+  .bcard.dark .wm .e{color:#fff;}
+  .logo-lockup .tg{font-size:10px;font-weight:900;letter-spacing:1.5px;color:var(--sub);margin-top:6px;}
+  .logo-lockup .tg b{color:var(--gold);}
+  .appicon{width:130px;height:130px;border-radius:30px;background:#0E2536;
+    display:flex;align-items:center;justify-content:center;}
+  .appicon svg{width:96px;height:96px;}
+  .sw-row{display:flex;flex-wrap:wrap;gap:10px;}
+  .sw{width:74px;}
+  .sw .chip{height:50px;border-radius:13px;border:1px solid rgba(0,0,0,.06);}
+  .sw b{display:block;font-size:10.5px;font-weight:900;color:var(--ink);margin-top:6px;}
+  .sw span{font-size:9.5px;color:var(--sub);font-weight:700;}
+  .icoset{display:flex;gap:18px;flex-wrap:wrap;}
+  .icoset .it{text-align:center;width:78px;}
+  .icoset .it .bg{width:62px;height:62px;border-radius:18px;margin:0 auto 8px;
+    display:flex;align-items:center;justify-content:center;}
+  .icoset .it .bg svg{width:36px;height:36px;}
+  .icoset .it b{font-size:10px;font-weight:900;letter-spacing:.5px;color:var(--ink);text-transform:uppercase;}
+  .icoset .it span{display:block;font-size:9.5px;color:var(--sub);font-weight:700;margin-top:2px;}
+  .type-row{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px;}
+  .type-row .a{font-size:34px;font-weight:900;color:var(--ink);}
+  .type-row .b{font-size:20px;font-weight:800;color:var(--ink);}
+  .type-row .c{font-size:14px;font-weight:600;color:var(--sub);}
+  .type-row .d{font-size:12px;font-weight:900;letter-spacing:2px;color:var(--teal-d);}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+  <symbol id="logo-q" viewBox="0 0 120 120">
+    <rect x="13" y="33" width="88" height="72" rx="11" fill="#EAD9AE" stroke="#C8AE78" stroke-width="2.5"/>
+    <path d="M28 94 Q48 80 68 92 T98 82" fill="none" stroke="#B79A63" stroke-width="2" stroke-dasharray="3 4"/>
+    <circle cx="30" cy="98" r="2.4" fill="#B79A63"/>
+    <path d="M90 78 l5 5 m0 -5 l-5 5" stroke="#B79A63" stroke-width="2" stroke-linecap="round"/>
+    <path d="M88 44 q11 -3 13 -15 q-13 1 -15 13 z" fill="#43B083"/>
+    <circle cx="58" cy="52" r="31" fill="#F6B72A" stroke="#D9920F" stroke-width="4"/>
+    <path d="M73 73 L94 92 L80 95 L66 80 Z" fill="#F6B72A" stroke="#D9920F" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="58" cy="52" r="20.5" fill="#1C5E6E"/>
+    <path d="M44 50 a14 13 0 0 1 28 0" fill="none" stroke="#9FE0D0" stroke-width="2" opacity="0.55"/>
+    <path d="M42 65 L57 45 L66 57 L72 65 Z" fill="#143F50"/>
+    <path d="M57 45 L61 50.5 L52.5 50.5 Z" fill="#CDEFE6"/>
+    <path d="M50 65 Q57 57 57 47" fill="none" stroke="#F2A83B" stroke-width="2.4"/>
+    <rect x="56.2" y="40" width="1.6" height="8" fill="#0E2A36"/>
+    <path d="M57.8 40 l7 2.4 l-7 2.4 z" fill="#EF5A24"/>
+    <circle cx="47" cy="46" r="1" fill="#FCE9B6"/><circle cx="69" cy="49" r="1.3" fill="#FCE9B6"/>
+    <circle cx="50" cy="60" r=".9" fill="#FCE9B6"/>
+    <rect x="29" y="12" width="2.6" height="28" fill="#0E2A36"/>
+    <path d="M31.6 13 l17 4.5 l-17 6 z" fill="#EF5A24" stroke="#C8431A" stroke-width="1"/>
+    <circle cx="29" cy="86" r="12" fill="#E7C45A" stroke="#C89A2E" stroke-width="2.5"/>
+    <circle cx="29" cy="86" r="8.5" fill="#1C5E6E"/>
+    <path d="M29 79 l3.2 7 l-3.2 7 l-3.2 -7 z" fill="#EF5A24"/>
+    <path d="M29 79 l3.2 7 l-3.2 0 z" fill="#FBE3C0"/>
+  </symbol>
+
+  <symbol id="ic-map" viewBox="0 0 24 24"><path class="fill" d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z" fill="#1E9E86" stroke="#15786A" stroke-width="1.2" stroke-linejoin="round"/><path d="M9 4v14M15 6v14" stroke="#0E2536" stroke-width="1" opacity=".5"/><path d="M6 9q3 2 6 0t6 1" stroke="#fff" stroke-width="1" stroke-dasharray="2 2" fill="none"/></symbol>
+  <symbol id="ic-shield" viewBox="0 0 24 24"><path class="fill" d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6l8-3z" fill="#1E9E86" stroke="#15786A" stroke-width="1.2" stroke-linejoin="round"/><path d="M12 8l1.3 2.6 2.7.4-2 2 .5 2.8L12 16l-2.5 1.3.5-2.8-2-2 2.7-.4L12 8z" fill="#FBE9B8"/></symbol>
+  <symbol id="ic-coin" viewBox="0 0 24 24"><circle class="fill" cx="12" cy="12" r="9" fill="#F5B225" stroke="#DE940F" stroke-width="1.4"/><circle cx="12" cy="12" r="6.4" fill="none" stroke="#fff" stroke-width="1" opacity=".55"/><path d="M12 7.5l1.4 2.9 3.1.4-2.3 2.2.6 3.1L12 16.6l-2.8 1.5.6-3.1-2.3-2.2 3.1-.4L12 7.5z" fill="#fff"/></symbol>
+  <symbol id="ic-chest" viewBox="0 0 24 24"><path d="M4 10a8 4 0 0116 0v8H4v-8z" fill="#8B5A2B"/><rect x="3" y="9" width="18" height="4.5" rx="2" fill="#A56A33"/><rect x="3.5" y="13" width="17" height="6" rx="1.5" fill="#7A4D24"/><path d="M3.5 13h17" stroke="#5E3A1A" stroke-width="1.2"/><rect x="10.3" y="11.5" width="3.4" height="5" rx="1" fill="#F5B225" stroke="#DE940F" stroke-width=".8"/><path class="fill" d="M5 9.5a7 3.4 0 0114 0" fill="none" stroke="#1E9E86" stroke-width="1.2"/></symbol>
+  <symbol id="ic-family" viewBox="0 0 24 24"><circle cx="7.5" cy="8" r="3" class="fill" fill="#1E9E86"/><circle cx="16.5" cy="8" r="3" fill="#EF5A24"/><path d="M2.5 19c0-3 2.2-5 5-5s5 2 5 5" fill="none" stroke="#1E9E86" stroke-width="2" stroke-linecap="round" class="fill" style="stroke:#1E9E86"/><path d="M11.5 19c0-3 2.2-5 5-5s5 2 5 5" fill="none" stroke="#EF5A24" stroke-width="2" stroke-linecap="round"/><path d="M12 3.6l.9 1.7 1.9.3-1.4 1.3.3 1.9L12 8l-1.7.9.3-1.9L9.2 5.6l1.9-.3L12 3.6z" fill="#F5B225"/></symbol>
+
+  <symbol id="ic-back" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="ic-flag" viewBox="0 0 24 24"><path d="M6 21V4" stroke="#0E2536" stroke-width="2" stroke-linecap="round"/><path d="M6 5l11 2.5L6 12V5z" fill="#EF5A24"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24"><path d="M5 13l4 4 10-11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="ic-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+  <symbol id="ic-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0112 0v5l2 2H4l2-2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M10 20a2 2 0 004 0" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="ic-camera" viewBox="0 0 24 24"><path d="M3 8h4l1.5-2h7L17 8h4v11H3V8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+  <symbol id="ic-qr" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M14 14h3v3h-3zM20 14v6M14 20h6" stroke="currentColor" stroke-width="1.8" fill="none"/></symbol>
+  <symbol id="ic-cell" viewBox="0 0 24 24"><rect x="3" y="10" width="3" height="7" fill="currentColor"/><rect x="8" y="7" width="3" height="10" fill="currentColor"/><rect x="13" y="4" width="3" height="13" fill="currentColor"/></symbol>
+  <symbol id="ic-bat" viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2.5" fill="currentColor"/><rect x="21" y="10" width="2" height="4" rx="1" fill="currentColor"/></symbol>
+</defs>
+</svg>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <svg class="lk"><use href="#logo-q"/></svg>
+    <div>
+      <h1>Easy<span class="q">Quest</span></h1>
+      <p>Family Points · редизайн в стиле квеста · единая страница макета</p>
+    </div>
+  </div>
+  <div class="tagline">
+    <span>ЗАДАНИЯ</span><b>•</b><span>ДОСТИЖЕНИЯ</span><b>•</b><span>БАЛЛЫ</span><b>•</b><span>НАГРАДЫ</span><b>•</b><span>ВМЕСТЕ</span>
+  </div>
+
+  <!-- ============ BRANDING ============ -->
+  <section class="sec">
+    <div class="sec-head"><span class="num">00</span><h2>БРЕНД · ЛОГО · ИКОНКИ</h2><span class="ln"></span></div>
+    <div class="brand-grid">
+      <div class="bcard" style="flex:1;min-width:330px;">
+        <h5>Логотип</h5>
+        <div class="logo-lockup">
+          <svg class="lk"><use href="#logo-q"/></svg>
+          <div>
+            <div class="wm"><span class="e">Easy</span><span class="q">Quest</span></div>
+            <div class="tg">ЗАДАНИЯ <b>•</b> БАЛЛЫ <b>•</b> НАГРАДЫ <b>•</b> ВМЕСТЕ</div>
+          </div>
+        </div>
+      </div>
+      <div class="bcard dark" style="flex:none;">
+        <h5>Иконка приложения</h5>
+        <div class="appicon"><svg><use href="#logo-q"/></svg></div>
+      </div>
+    </div>
+
+    <div class="brand-grid" style="margin-top:22px;">
+      <div class="bcard" style="flex:1;min-width:330px;">
+        <h5>Палитра</h5>
+        <div class="sw-row">
+          <div class="sw"><div class="chip" style="background:#12314A"></div><b>Navy</b><span>#12314A</span></div>
+          <div class="sw"><div class="chip" style="background:#1E9E86"></div><b>Teal</b><span>#1E9E86</span></div>
+          <div class="sw"><div class="chip" style="background:#F5B225"></div><b>Gold</b><span>#F5B225</span></div>
+          <div class="sw"><div class="chip" style="background:#EF5A24"></div><b>Orange</b><span>#EF5A24</span></div>
+          <div class="sw"><div class="chip" style="background:#F6EEDD"></div><b>Cream</b><span>#F6EEDD</span></div>
+          <div class="sw"><div class="chip" style="background:#E7D5AC"></div><b>Map tan</b><span>#E7D5AC</span></div>
+        </div>
+        <h5 style="margin-top:18px;">Типографика — Nunito</h5>
+        <div class="type-row"><span class="a">Aa 900</span><span class="b">Заголовок 800</span><span class="c">Текст 600</span><span class="d">МЕТКА</span></div>
+      </div>
+      <div class="bcard" style="flex:1;min-width:330px;">
+        <h5>Иконки разделов</h5>
+        <div class="icoset">
+          <div class="it"><div class="bg" style="background:#E3F3EE"><svg><use href="#ic-map"/></svg></div><b>Задания</b></div>
+          <div class="it"><div class="bg" style="background:#E3F3EE"><svg><use href="#ic-shield"/></svg></div><b>Достижения</b></div>
+          <div class="it"><div class="bg" style="background:#FBEBC4"><svg><use href="#ic-coin"/></svg></div><b>Баллы</b></div>
+          <div class="it"><div class="bg" style="background:#FBE0D4"><svg><use href="#ic-chest"/></svg></div><b>Награды</b></div>
+          <div class="it"><div class="bg" style="background:#E3F3EE"><svg><use href="#ic-family"/></svg></div><b>Вместе</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ AUTH / ONBOARDING ============ -->
+  <section class="sec">
+    <div class="sec-head"><span class="num">01</span><h2>ВХОД И ОНБОРДИНГ</h2><span class="ln"></span></div>
+    <div class="frames">
+
+      <figure class="phone">
+        <span class="cap"><i></i>Старт · выбор роли</span>
+        <div class="device"><div class="screen">
+          <div class="sb"><span>9:41</span><span class="dots"><svg><use href="#ic-cell"/></svg><svg><use href="#ic-bat"/></svg></span></div>
+          <div class="scr-body">
+            <div class="tb"><span></span><span class="lang">RU / EN</span></div>
+            <div style="padding:4px 22px 0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;">
+              <svg style="width:108px;height:108px"><use href="#logo-q"/></svg>
+              <div class="wm" style="font-size:31px;font-weight:900;letter-spacing:-1px;"><span style="color:var(--ink)">Easy</span><span style="color:var(--teal)">Quest</span></div>
+            </div>
+            <div class="body-pad" style="margin-top:8px;">
+              <div class="card tan" style="text-align:center;">
+                <h3 style="font-size:18px;font-weight:900;color:var(--ink);line-height:1.25;">Задачи, награды и цели — в одном спокойном месте.</h3>
+                <p class="meta" style="margin-top:9px;font-size:11.5px;line-height:1.45;font-weight:600;">Родитель создаёт задачи и награды. Ребёнок выполняет, копит баллы и идёт к своим желаниям.</p>
+              </div>
+              <div class="btn-col" style="margin-top:6px;">
+                <button class="btn teal">Войти как родитель</button>
+                <button class="btn gold">Войти как ребёнок</button>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+      <figure class="phone">
+        <span class="cap"><i></i>Вход родителя</span>
+        <div class="device"><div class="screen">
+          <div class="sb"><span>9:41</span><span class="dots"><svg><use href="#ic-cell"/></svg><svg><use href="#ic-bat"/></svg></span></div>
+          <div class="scr-body">
+            <div class="tb"><span class="bk"><svg style="width:15px;height:15px"><use href="#ic-back"/></svg> Назад</span><span class="lang">RU / EN</span></div>
+            <div class="hd"><h3>Вход</h3><p>Войдите в аккаунт родителя.</p></div>
+            <div class="body-pad">
+              <div class="card">
+                <div class="ct"><h4 class="up">Аккаунт родителя</h4></div>
+                <div class="btn-col" style="gap:10px;">
+                  <div class="fld"><label>Email</label><div class="val ph">parent@example.com</div></div>
+                  <div class="fld"><label>Пароль</label><div class="val">••••••••</div></div>
+                </div>
+                <button class="btn teal" style="margin-top:13px;">Войти</button>
+              </div>
+              <div class="card tan">
+                <p class="meta" style="line-height:1.45;">Email/пароль через Supabase подключатся после добавления ключей проекта.</p>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+      <figure class="phone">
+        <span class="cap"><i></i>Настройка семьи</span>
+        <div class="device"><div class="screen">
+          <div class="sb"><span>9:41</span><span class="dots"><svg><use href="#ic-cell"/></svg><svg><use href="#ic-bat"/></svg></span></div>
+          <div class="scr-body">
+            <div class="tb"><span class="bk"><svg style="width:15px;height:15px"><use href="#ic-back"/></svg> Назад</span><span class="lang">RU / EN</span></div>
+            <div class="hd"><h3>Настройка семьи</h3><p>Зарегистрируй аккаунт родителя и создай семью.</p></div>
+            <div class="body-pad">
+              <div class="card">
+                <div class="ct"><h4 class="up">Данные семьи</h4></div>
+                <div class="btn-col" style="gap:9px;">
+                  <div class="fld"><label>Название семьи</label><div class="val">Семья Паркер</div></div>
+                  <div class="fld"><label>Имя ребёнка</label><div class="val">Mia</div></div>
+                  <div class="fld"><label>Ваше имя</label><div class="val">Алекс</div></div>
+                </div>
+                <button class="btn gold" style="margin-top:13px;">Создать семью</button>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+      <figure class="phone">
+        <span class="cap"><i></i>Подключить ребёнка · QR</span>
+        <div class="device"><div class="screen">
+          <div class="sb"><span>9:41</span><span class="dots"><svg><use href="#ic-cell"/></svg><svg><use href="#ic-bat"/></svg></span></div>
+          <div class="scr-body">
+            <div class="tb"><span class="bk"><svg style="width:15px;height:15px"><use href="#ic-back"/></svg> Назад</span><span class="lang">RU / EN</span></div>
+            <div class="hd"><h3>Подключить ребёнка</h3><p>Покажи QR на устройстве ребёнка.</p></div>
+            <div class="body-pad">
+              <div class="card" style="align-items:center;text-align:center;">
+                <div style="width:170px;height:170px;background:#fff;border:2px solid var(--line);border-radius:20px;margin:2px auto 12px;padding:16px;">
+                  <svg viewBox="0 0 24 24" style="width:100%;height:100%;color:var(--ink)"><use href="#ic-qr"/></svg>
+                </div>
+                <div class="coin" style="margin-bottom:10px;">Mia · код активен 24 ч</div>
+                <button class="btn ghost"><svg><use href="#ic-camera"/></svg> Сканировать камерой</button>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- ============ CHILD ============ -->
+  <section class="sec">
+    <div class="sec-head"><span class="num">02</span><h2>ЭКРАНЫ РЕБЁНКА</h2><span class="ln"></span></div>
+    <div class="frames">
+
+      <figure class="phone">
+        <span class="cap"><i></i>Дашборд</span>
+        <div class="device"><div class="screen">
+          <div class="sb"><span>9:41</span><span class="dots"><svg><use href="#ic-cell"/></svg><svg><use href="#ic-bat"/></svg></span></div>
+          <div class="scr-body">
+            <div class="tb"><span class="lang">RU / EN</span><span class="bk" style="color:var(--sub)"><svg style="width:17px;height:17px"><use href="#ic-bell"/></svg></span></div>
+            <div class="hd"><h3>Привет, Mia 👋</h3><p>Выбери задачу, заработай баллы и двигайся к желаниям.</p></div>
+            <div class="body-pad" style="flex:1;">
+              <div class="card" style="background:var(--ink);">
+                <div class="ct"><h4 class="up" style="color:#8FB7C4;">Твой баланс</h4><div class="coin lg"><svg><use href="#ic-coin"/></svg>240</div></div>
+                <div class="big" style="color:#fff;">240 <small style="color:var(--gold)">бал.</small></div>
+              </div>
+              <div class="card">
+                <div class="ct"><h4>Ближайшая цель</h4><span class="pill wait">60%</span></div>
+                <div class="row" style="padding-top:0;"><div class="ico o"><svg><use href="#ic-flag"/></svg></div><div class="tx"><b>Роликовые коньки</b><span>240 из 400 бал.</span></div></div>
+                <div class="trail"><i style="width:60%"></i></div>
+                <div class="meta">Выполнено на 60% · ещё 160 бал.</div>
+              </div>
+              <div class="card">
+                <div class="ct"><h4>Доступные задачи</h4><div class="coin">Открыто 3</div></div>
+                <div class="row"><div class="ico"><svg><use href="#ic-map"/></svg></div><div class="tx"><b>Заправить кровать</b><span>15 бал.</span></div><button class="btn teal sm">Открыть</button></div>
+                <div class="row"><div class="ico"><svg><use href="#ic-map"/></svg></div><div class="tx"><b>Почитать 20 минут</b><span>20 бал.</span></div><button class="btn teal sm">Открыть</button></div>
+              </div>
+            </div>
+            <div class="tabs">
+              <div class="tab on"><svg><use href="#ic-map"/></svg><span>Задачи</span></div>
+              <div class="tab"><svg><use href="#ic-shield"/></svg><span>Достижения</span></div>
+              <div class="tab"><svg><use href="#ic-coin"/></svg><span>Баллы</span></div>
+              <div class="tab"><svg><use href="#ic-chest"/></svg><span>Награды</span></div>
+              <div class="tab"><svg><use href="#ic-family"/></svg><span>Вместе</span></div>
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+      <figure class="phone">
+        <span class="cap"><i></i>Задачи</span>
+        <div class="device"><div class="screen">
+          <div class="sb"><span>9:41</span><span class="dots"><svg><use href="#ic-cell"/></svg><svg><use href="#ic-bat"/></svg></span></div>
+          <div class="scr-body">
+            <div class="tb"><span class="bk"><svg style="width:15px;height:15px"><use href="#ic-back"/></svg> Назад</span><span class="lang">RU / EN</span></div>
+            <div class="hd"><h3>Задачи</h3><p>Выбери задачу и отправь её, когда выполнишь.</p></div>
+            <div class="body-pad" style="flex:1;">
+              <div class="card">
+                <div class="row"><div class="ico"><svg><use href="#ic-map"/></svg></div><div class="tx"><b>Заправить кровать</b><span>Заправь кровать до завтрака</span></div><div class="coin"><svg><use href="#ic-coin"/></svg>15</div></div>
+                <div class="row"><div class="ico"><svg><use href="#ic-map"/></svg></div><div class="tx"><b>Почитать 20 минут</b><span>Расскажи одну новую мысль</span></div><div class="coin"><svg><use href="#ic-coin"/></svg>20</div></div>
+                <div class="row"><div class="ico"><svg><use href="#ic-map"/></svg></div><div class="tx"><b>Убрать игрушки</b><span>Порядок в игровой зоне</span></div><div class="coin"><svg><use href="#ic-coin"/></svg>15</div></div>
+                <div class="row"><div class="ico"><svg><use href="#ic-map"/></svg></div><div class="tx"><b>Полить растения</b><span>Проверь землю на кухне</span></div><div class="coin"><svg><use href="#ic-coin"/></svg>10</div></div>
+              </div>
+            </div>
+            <div class="tabs">
+              <div class="tab on"><svg><use href="#ic-map"/></svg><span>Задачи</span></div>
+              <div class="tab"><svg><use href="#ic-shield"/></svg><span>Достижения</span></div>
+              <div class="tab"><svg><use href="#ic-coin"/></svg><span>Баллы</span></div>
+              <div class="tab"><svg><use href="#ic-chest"/></svg><span>Награды</span></div>
+              <div class="tab"><svg><use href="#ic-family"/></svg><span>Вместе</span></div>
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+      <figure class="phone">
+        <span class="cap"><i></i>Детали задачи</span>
+        <div class="device"><div class="screen">
+          <div class="sb"><span>9:41</span><span class="dots"><svg><use href="#ic-cell"/></svg><svg><use href="#ic-bat"/></svg></span></div>
+          <div class="scr-body">
+            <div class="tb"><span class="bk"><svg style="width:15px;height:15px"><use href="#ic-back"/></svg> Назад</span><span class="lang">RU / EN</span></div>
+            <div class="hd"><h3>Детали задачи</h3><p>Прочитай детали перед отправкой.</p></div>
+            <div class="body-pad">
+              <div class="card">
+                <div class="scene" style="margin-bottom:12px;">
+                  <svg viewBox="0 0 200 118" preserveAspectRatio="xMidYMid slice"><rect width="200" height="118" fill="#163A4C"/><path d="M0 118 L70 50 L110 80 L160 40 L200 75 L200 118Z" fill="#0F2E3C"/><path d="M70 50 L82 64 L58 64Z" fill="#CDEFE6"/><circle cx="160" cy="34" r="14" fill="#1E9E86" opacity=".5"/><rect x="159" y="22" width="2" height="18" fill="#0E2A36"/><path d="M161 22 l11 3 l-11 3z" fill="#EF5A24"/><circle cx="40" cy="28" r="1.4" fill="#FCE9B6"/><circle cx="120" cy="22" r="1.6" fill="#FCE9B6"/></svg>
+                </div>
+                <div class="ct" style="align-items:flex-start;"><h4 style="font-size:18px;">Почитать 20 минут</h4><div class="coin lg"><svg><use href="#ic-coin"/></svg>20</div></div>
+                <p class="meta" style="line-height:1.45;font-size:12px;">Почитай любую книгу и расскажи одну новую мысль, которую узнал.</p>
+              </div>
+              <div class="card tan">
+                <div class="ct"><h4 class="up">Заметка о выполнении</h4></div>
+                <div class="fld" style="background:#fff;"><div class="val ph">Что ты сделал? Напиши короткую заметку…</div></div>
+              </div>
+              <div style="display:flex;gap:9px;">
+                <button class="btn line" style="flex:none;width:46px;"><svg><use href="#ic-camera"/></svg></button>
+                <button class="btn teal" style="flex:1;"><svg><use href="#ic-check"/></svg> Я сделал</button>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+      <figure class="phone">
+        <span class="cap"><i></i>Награды</span>
+        <div class="device"><div class="screen">
+          <div class="sb"><span>9:41</span><span class="dots"><svg><use href="#ic-cell"/></svg><svg><use href="#ic-bat"/></svg></span></div>
+          <div class="scr-body">
+            <div class="tb"><span class="bk"><svg style="width:15px;height:15px"><use href="#ic-back"/></svg> Назад</span><span class="lang">RU / EN</span></div>
+            <div class="hd"><h3>Награды</h3><p>Получай награды, когда хватает баллов.</p></div>
+            <div class="body-pad" style="flex:1;">
+              <div class="seg"><div class="on">Доступно</div><div>Полученные</div></div>
+              <div class="card">
+                <div class="row"><div class="ico o"><svg><use href="#ic-chest"/></svg></div><div class="tx"><b>30 минут экрана</b><span>Хватает баллов</span></div><button class="btn gold sm">Получить</button></div>
+                <div class="row"><div class="ico o"><svg><use href="#ic-chest"/></svg></div><div class="tx"><b>Мороженое после школы</b><span>25 бал.</span></div><button class="btn gold sm">Получить</button></div>
+                <div class="row"><div class="ico o"><svg><use href="#ic-chest"/></svg></div><div class="tx" style="opacity:.55;"><b>Маленький набор LEGO</b><span>Не хватает 120 бал.</span></div><span class="pill wait">120</span></div>
+              </div>
+            </div>
+            <div class="tabs">
+              <div class="tab"><svg><use href="#ic-map"/></svg><span>Задачи</span></div>
+              <div class="tab"><svg><use href="#ic-shield"/></svg><span>Достижения</span></div>
+              <div class="tab"><svg><use href="#ic-coin"/></svg><span>Баллы</span></div>
+              <div class="tab on"><svg><use href="#ic-chest"/></svg><span>Награды</span></div>
+              <div class="tab"><svg><use href="#ic-family"/></svg><span>Вместе</span></div>
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+      <figure class="phone">
+        <span class="cap"><i></i>Баланс и история</span>
+        <div class="device"><div class="screen">
+          <div class="sb"><span>9:41</span><span class="dots"><svg><use href="#ic-cell"/></svg><svg><use href="#ic-bat"/></svg></span></div>
+          <div class="scr-body">
+            <div class="tb"><span class="bk"><svg style="width:15px;height:15px"><use href="#ic-back"/></svg> Назад</span><span class="lang">RU / EN</span></div>
+            <div class="hd"><h3>Баланс</h3><p>История баллов за задачи, награды и штрафы.</p></div>
+            <div class="body-pad" style="flex:1;">
+              <div class="card" style="background:var(--ink);text-align:center;">
+                <h4 class="up" style="color:#8FB7C4;">Текущий баланс</h4>
+                <div class="big" style="color:#fff;margin-top:4px;">240 <small style="color:var(--gold)">бал.</small></div>
+              </div>
+              <div class="card">
+                <div class="ct"><h4 class="up">История</h4></div>
+                <div class="row" style="padding-top:0;"><div class="tx"><b>Убрать игрушки</b><span>начисление</span></div><b style="color:var(--green);font-size:14px;">+15</b></div>
+                <div class="row"><div class="tx"><b>Помог накрыть на стол</b><span>начисление</span></div><b style="color:var(--green);font-size:14px;">+10</b></div>
+                <div class="row"><div class="tx"><b>Мороженое после школы</b><span>трата</span></div><b style="color:var(--orange-d);font-size:14px;">−25</b></div>
+                <div class="row"><div class="tx"><b>Договорённость по уборке</b><span>штраф</span></div><b style="color:var(--red);font-size:14px;">−10</b></div>
+              </div>
+            </div>
+            <div class="tabs">
+              <div class="tab"><svg><use href="#ic-map"/></svg><span>Задачи</span></div>
+              <div class="tab"><svg><use href="#ic-shield"/></svg><span>Достижения</span></div>
+              <div class="tab on"><svg><use href="#ic-coin"/></svg><span>Баллы</span></div>
+              <div class="tab"><svg><use href="#ic-chest"/></svg><span>Награды</span></div>
+              <div class="tab"><svg><use href="#ic-family"/></svg><span>Вместе</span></div>
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- ============ PARENT ============ -->
+  <section class="sec">
+    <div class="sec-head"><span class="num">03</span><h2>ЭКРАНЫ РОДИТЕЛЯ</h2><span class="ln"></span></div>
+    <div class="frames">
+
+      <figure class="phone">
+        <span class="cap"><i></i>Панель родителя</span>
+        <div class="device"><div class="screen">
+          <div class="sb"><span>9:41</span><span class="dots"><svg><use href="#ic-cell"/></svg><svg><use href="#ic-bat"/></svg></span></div>
+          <div class="scr-body">
+            <div class="tb"><span class="bk" style="color:var(--sub)">Выйти</span><span class="lang">RU / EN</span></div>
+            <div class="hd"><h3>Панель родителя</h3><p>Проверяй прогресс и держи неделю под контролем.</p></div>
+            <div class="body-pad" style="flex:1;">
+              <div class="card">
+                <div class="ct"><h4 class="up">Дети</h4></div>
+                <div class="row" style="padding-top:0;"><div class="av" style="background:#1E9E86;">M</div><div class="tx"><b>Mia</b><span>240 бал.</span></div><button class="btn ghost sm">Пригласить</button></div>
+                <div class="row"><div class="av" style="background:#EF5A24;">L</div><div class="tx"><b>Leo</b><span>90 бал.</span></div><button class="btn ghost sm">Пригласить</button></div>
+                <button class="btn line" style="margin-top:11px;"><svg><use href="#ic-plus"/></svg> Добавить ребёнка</button>
+              </div>
+              <div class="card">
+                <div class="ct"><h4>Нужно проверить</h4><span class="pill warn">2 заявки</span></div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div class="big" style="font-size:34px;">2</div>
+                  <div class="meta" style="line-height:1.4;">заявки на проверку<br>Запросы наград: 1</div>
+                </div>
+              </div>
+            </div>
+            <div class="tabs">
+              <div class="tab on"><svg><use href="#ic-family"/></svg><span>Дети</span></div>
+              <div class="tab"><svg><use href="#ic-shield"/></svg><span>Заявки</span></div>
+              <div class="tab"><div style="width:46px;height:46px;border-radius:16px;background:var(--gold);display:flex;align-items:center;justify-content:center;margin-top:-20px;box-shadow:0 6px 14px rgba(222,148,15,.4);color:var(--ink2);"><svg style="width:24px;height:24px"><use href="#ic-plus"/></svg></div></div>
+              <div class="tab"><svg><use href="#ic-chest"/></svg><span>Награды</span></div>
+              <div class="tab"><svg><use href="#ic-map"/></svg><span>Задачи</span></div>
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+      <figure class="phone">
+        <span class="cap"><i></i>Проверка заявок</span>
+        <div class="device"><div class="screen">
+          <div class="sb"><span>9:41</span><span class="dots"><svg><use href="#ic-cell"/></svg><svg><use href="#ic-bat"/></svg></span></div>
+          <div class="scr-body">
+            <div class="tb"><span class="bk"><svg style="width:15px;height:15px"><use href="#ic-back"/></svg> Назад</span><span class="lang">RU / EN</span></div>
+            <div class="hd"><h3>Проверка заявок</h3><p>Одобряй выполненные задачи или верни на доработку.</p></div>
+            <div class="body-pad" style="flex:1;">
+              <div class="card">
+                <div class="row" style="padding-top:0;border:0;"><div class="av" style="background:#1E9E86;width:34px;height:34px;font-size:14px;border-radius:11px;">M</div><div class="tx"><b>Заправить кровать</b><span>Mia · «всё убрала!»</span></div><div class="coin"><svg><use href="#ic-coin"/></svg>15</div></div>
+                <div style="display:flex;gap:8px;margin-top:10px;">
+                  <button class="btn teal sm" style="flex:1;"><svg><use href="#ic-check"/></svg> Одобрить</button>
+                  <button class="btn line sm" style="flex:1;"><svg><use href="#ic-x"/></svg> Вернуть</button>
+                </div>
+              </div>
+              <div class="card">
+                <div class="row" style="padding-top:0;border:0;"><div class="av" style="background:#EF5A24;width:34px;height:34px;font-size:14px;border-radius:11px;">L</div><div class="tx"><b>Полить растения</b><span>Leo · фото приложено</span></div><div class="coin"><svg><use href="#ic-coin"/></svg>10</div></div>
+                <div style="display:flex;gap:8px;margin-top:10px;">
+                  <button class="btn teal sm" style="flex:1;"><svg><use href="#ic-check"/></svg> Одобрить</button>
+                  <button class="btn line sm" style="flex:1;"><svg><use href="#ic-x"/></svg> Вернуть</button>
+                </div>
+              </div>
+            </div>
+            <div class="tabs">
+              <div class="tab"><svg><use href="#ic-family"/></svg><span>Дети</span></div>
+              <div class="tab on"><svg><use href="#ic-shield"/></svg><span>Заявки</span></div>
+              <div class="tab"><div style="width:46px;height:46px;border-radius:16px;background:var(--gold);display:flex;align-items:center;justify-content:center;margin-top:-20px;box-shadow:0 6px 14px rgba(222,148,15,.4);color:var(--ink2);"><svg style="width:24px;height:24px"><use href="#ic-plus"/></svg></div></div>
+              <div class="tab"><svg><use href="#ic-chest"/></svg><span>Награды</span></div>
+              <div class="tab"><svg><use href="#ic-map"/></svg><span>Задачи</span></div>
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+      <figure class="phone">
+        <span class="cap"><i></i>Создать задачу</span>
+        <div class="device"><div class="screen">
+          <div class="sb"><span>9:41</span><span class="dots"><svg><use href="#ic-cell"/></svg><svg><use href="#ic-bat"/></svg></span></div>
+          <div class="scr-body">
+            <div class="tb"><span class="bk"><svg style="width:15px;height:15px"><use href="#ic-back"/></svg> Назад</span><span class="lang">RU / EN</span></div>
+            <div class="hd"><h3>Создать задачу</h3><p>Создай задачу в семейном квесте.</p></div>
+            <div class="body-pad">
+              <div class="card">
+                <div class="btn-col" style="gap:10px;">
+                  <div class="fld"><label>Название</label><div class="val ph">Например: покормить собаку</div></div>
+                  <div class="fld"><label>Описание</label><div class="val ph">Опиши, что значит «выполнено»</div></div>
+                  <div class="fld" style="display:flex;align-items:center;justify-content:space-between;">
+                    <div><label>Баллы за задачу</label><div class="val">25</div></div>
+                    <div class="coin lg"><svg><use href="#ic-coin"/></svg>25</div>
+                  </div>
+                </div>
+                <button class="btn teal" style="margin-top:13px;"><svg><use href="#ic-check"/></svg> Отправить задачу</button>
+              </div>
+              <div class="card tan">
+                <p class="meta" style="line-height:1.45;">Задача появится у ребёнка как новая точка на карте квеста.</p>
+              </div>
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+      <figure class="phone">
+        <span class="cap"><i></i>Награды · каталог</span>
+        <div class="device"><div class="screen">
+          <div class="sb"><span>9:41</span><span class="dots"><svg><use href="#ic-cell"/></svg><svg><use href="#ic-bat"/></svg></span></div>
+          <div class="scr-body">
+            <div class="tb"><span class="bk"><svg style="width:15px;height:15px"><use href="#ic-back"/></svg> Назад</span><span class="lang">RU / EN</span></div>
+            <div class="hd"><h3>Награды</h3><p>Каталог наград, который видит ребёнок.</p></div>
+            <div class="body-pad" style="flex:1;">
+              <div class="card">
+                <div class="row" style="padding-top:0;"><div class="ico g"><svg><use href="#ic-chest"/></svg></div><div class="tx"><b>30 минут экрана</b><span class="pill ok" style="display:inline-block;margin-top:2px;">активна</span></div><div class="coin"><svg><use href="#ic-coin"/></svg>30</div></div>
+                <div class="row"><div class="ico g"><svg><use href="#ic-chest"/></svg></div><div class="tx"><b>Выбрать фильм в пятницу</b><span class="pill ok" style="display:inline-block;margin-top:2px;">активна</span></div><div class="coin"><svg><use href="#ic-coin"/></svg>75</div></div>
+                <div class="row"><div class="ico g"><svg><use href="#ic-chest"/></svg></div><div class="tx" style="opacity:.6;"><b>Маленький набор LEGO</b><span class="pill" style="background:var(--line);color:var(--sub);display:inline-block;margin-top:2px;">выключена</span></div><div class="coin"><svg><use href="#ic-coin"/></svg>120</div></div>
+              </div>
+              <button class="btn gold"><svg><use href="#ic-plus"/></svg> Создать награду</button>
+            </div>
+            <div class="tabs">
+              <div class="tab"><svg><use href="#ic-family"/></svg><span>Дети</span></div>
+              <div class="tab"><svg><use href="#ic-shield"/></svg><span>Заявки</span></div>
+              <div class="tab"><div style="width:46px;height:46px;border-radius:16px;background:var(--gold);display:flex;align-items:center;justify-content:center;margin-top:-20px;box-shadow:0 6px 14px rgba(222,148,15,.4);color:var(--ink2);"><svg style="width:24px;height:24px"><use href="#ic-plus"/></svg></div></div>
+              <div class="tab on"><svg><use href="#ic-chest"/></svg><span>Награды</span></div>
+              <div class="tab"><svg><use href="#ic-map"/></svg><span>Задачи</span></div>
+            </div>
+          </div>
+        </div></div>
+      </figure>
+
+    </div>
+  </section>
+
+  <div style="text-align:center;color:#5E768A;font-size:12px;font-weight:700;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);">
+    EasyQuest · редизайн Family Points · палитра navy / teal / gold / orange · шрифт Nunito · все экраны на одной странице
+  </div>
+
+</div>
+</body>
+</html>

@@ -7,11 +7,12 @@ import type { FamilyPointsService } from './types';
 export type FamilyPointsDataSource = 'local' | 'supabase';
 
 const requestedDataSource = process.env.EXPO_PUBLIC_DATA_SOURCE;
+const shouldUseLocalDataSource = requestedDataSource === 'local';
 
 export const familyPointsDataSource: FamilyPointsDataSource =
-  requestedDataSource === 'supabase' && isSupabaseConfigured ? 'supabase' : 'local';
+  shouldUseLocalDataSource ? 'local' : 'supabase';
 
 export const familyPointsService: FamilyPointsService =
-  familyPointsDataSource === 'supabase'
-    ? supabaseFamilyPointsService
-    : localFamilyPointsService;
+  familyPointsDataSource === 'supabase' ? supabaseFamilyPointsService : localFamilyPointsService;
+
+export const isFamilyPointsBackendConfigured = familyPointsDataSource === 'supabase' && isSupabaseConfigured;

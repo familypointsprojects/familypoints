@@ -1,11 +1,16 @@
 import type {
   AddWishInput,
+  ApproveWishInput,
+  ClearFavoriteGoalInput,
   CreateRewardInput,
   CreateTaskInput,
+  DeleteTaskInput,
   FamilyPointsState,
   RedeemRewardInput,
+  RejectWishInput,
   ReviewRewardRedemptionInput,
   ReviewSubmissionInput,
+  SetFavoriteGoalInput,
   SetRewardActiveInput,
   SetTaskStatusInput,
   SubmitTaskInput,
@@ -33,6 +38,18 @@ const createSpendTransaction = (
   title: reward.title,
   points: -reward.price,
   type: 'spend',
+  createdAt: new Date().toISOString(),
+});
+
+const createRewardRefundTransaction = (
+  reward: Reward,
+  childId: string,
+): PointTransaction => ({
+  id: createLocalId('transaction'),
+  childId,
+  title: reward.title ? `Refund: ${reward.title}` : undefined,
+  points: reward.price,
+  type: 'manual_adjustment',
   createdAt: new Date().toISOString(),
 });
 
@@ -95,6 +112,15 @@ export const setTaskStatusInState = (
   ),
 });
 
+export const deleteTaskInState = (
+  state: FamilyPointsState,
+  input: DeleteTaskInput,
+): FamilyPointsState => ({
+  ...state,
+  tasks: state.tasks.filter((task) => task.id !== input.taskId),
+  taskSubmissions: state.taskSubmissions.filter((submission) => submission.taskId !== input.taskId),
+});
+
 export const createRewardInState = (
   state: FamilyPointsState,
   input: CreateRewardInput,
@@ -121,6 +147,29 @@ export const setRewardActiveInState = (
   rewards: state.rewards.map((reward) =>
     reward.id === input.rewardId ? { ...reward, isActive: input.isActive } : reward,
   ),
+});
+
+export const setFavoriteGoalInState = (
+  state: FamilyPointsState,
+  input: SetFavoriteGoalInput,
+): FamilyPointsState => ({
+  ...state,
+  favoriteGoals: [
+    ...state.favoriteGoals.filter((goal) => goal.childId !== input.childId),
+    {
+      childId: input.childId,
+      type: input.type,
+      itemId: input.itemId,
+    },
+  ],
+});
+
+export const clearFavoriteGoalInState = (
+  state: FamilyPointsState,
+  input: ClearFavoriteGoalInput,
+): FamilyPointsState => ({
+  ...state,
+  favoriteGoals: state.favoriteGoals.filter((goal) => goal.childId !== input.childId),
 });
 
 export const submitTaskInState = (
@@ -173,6 +222,9 @@ export const approveSubmissionInState = (
     taskSubmissions: state.taskSubmissions.map((item) =>
       item.id === input.submissionId ? { ...item, status: 'approved' } : item,
     ),
+    tasks: state.tasks.map((taskItem) =>
+      taskItem.id === task.id ? { ...taskItem, status: 'inactive' } : taskItem,
+    ),
     pointTransactions: [
       createEarnTransaction(submission, task),
       ...state.pointTransactions,
@@ -198,6 +250,8 @@ export const addWishInState = (
     id: createLocalId('wish'),
     title: input.title.trim(),
     price: input.price,
+    childId: input.childId,
+    status: 'pending',
   };
 
   return {
@@ -205,6 +259,43 @@ export const addWishInState = (
     wishes: [newWish, ...state.wishes],
   };
 };
+
+export const approveWishInState = (
+  state: FamilyPointsState,
+  input: ApproveWishInput,
+): FamilyPointsState => {
+  const wish = state.wishes.find((w) => w.id === input.wishId);
+
+  if (!wish || wish.status === 'approved') {
+    return state;
+  }
+
+  const newReward: Reward = {
+    id: createLocalId('reward'),
+    title: wish.title,
+    price: input.price,
+    type: 'wish',
+    isActive: true,
+  };
+
+  return {
+    ...state,
+    wishes: state.wishes.map((w) =>
+      w.id === input.wishId ? { ...w, status: 'approved', price: input.price } : w,
+    ),
+    rewards: [newReward, ...state.rewards],
+  };
+};
+
+export const rejectWishInState = (
+  state: FamilyPointsState,
+  input: RejectWishInput,
+): FamilyPointsState => ({
+  ...state,
+  wishes: state.wishes.map((w) =>
+    w.id === input.wishId ? { ...w, status: 'rejected' } : w,
+  ),
+});
 
 export const redeemRewardInState = (
   state: FamilyPointsState,
@@ -235,6 +326,10 @@ export const redeemRewardInState = (
   return {
     ...state,
     rewardRedemptions: [newRedemption, ...state.rewardRedemptions],
+    pointTransactions: [
+      createSpendTransaction(reward, input.childId),
+      ...state.pointTransactions,
+    ],
   };
 };
 
@@ -257,29 +352,46 @@ export const approveRewardRedemptionInState = (
       item.id === input.redemptionId ? { ...item, status: 'approved' } : item,
     ),
     redeemedRewardIds: [reward.id, ...state.redeemedRewardIds],
-    pointTransactions: [
-      createSpendTransaction(reward, redemption.childId),
-      ...state.pointTransactions,
-    ],
   };
 };
 
 export const rejectRewardRedemptionInState = (
   state: FamilyPointsState,
   input: ReviewRewardRedemptionInput,
-): FamilyPointsState => ({
-  ...state,
-  rewardRedemptions: state.rewardRedemptions.map((item) =>
-    item.id === input.redemptionId ? { ...item, status: 'rejected' } : item,
-  ),
-});
+): FamilyPointsState => {
+  const redemption = state.rewardRedemptions.find((item) => item.id === input.redemptionId);
+  const reward = redemption
+    ? state.rewards.find((item) => item.id === redemption.rewardId)
+    : undefined;
+  const shouldRefund =
+    Boolean(redemption && reward) &&
+    (redemption?.status === 'requested' || redemption?.status === 'approved');
+
+  return {
+    ...state,
+    rewardRedemptions: state.rewardRedemptions.map((item) =>
+      item.id === input.redemptionId ? { ...item, status: 'rejected' } : item,
+    ),
+    pointTransactions:
+      shouldRefund && redemption && reward
+        ? [createRewardRefundTransaction(reward, redemption.childId), ...state.pointTransactions]
+        : state.pointTransactions,
+  };
+};
 
 export const fulfillRewardRedemptionInState = (
   state: FamilyPointsState,
   input: ReviewRewardRedemptionInput,
-): FamilyPointsState => ({
-  ...state,
-  rewardRedemptions: state.rewardRedemptions.map((item) =>
-    item.id === input.redemptionId ? { ...item, status: 'fulfilled' } : item,
-  ),
-});
+): FamilyPointsState => {
+  const redemption = state.rewardRedemptions.find((item) => item.id === input.redemptionId);
+
+  return {
+    ...state,
+    rewardRedemptions: state.rewardRedemptions.map((item) =>
+      item.id === input.redemptionId ? { ...item, status: 'fulfilled' } : item,
+    ),
+    rewards: state.rewards.map((reward) =>
+      reward.id === redemption?.rewardId ? { ...reward, isActive: false } : reward,
+    ),
+  };
+};

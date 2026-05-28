@@ -1,45 +1,21 @@
 import { router } from 'expo-router';
-import { Alert, Platform, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '@/shared/auth';
 import { useLanguage } from '@/shared/i18n';
-import { family } from '@/shared/mocks';
-import { useFamilyPoints } from '@/shared/state';
-import { AppButton, AppCard, AppScreen, SectionTitle, StatusBadge } from '@/shared/ui';
+import { AppButton, AppCard, AppScreen, BrandLogo, SectionTitle, StatusBadge } from '@/shared/ui';
 import { FP } from '@/constants/theme';
-import type { UserRole } from '@/shared/types/family';
 
 const WelcomeScreen = () => {
   const { t } = useLanguage();
-  const { session, signInDemoRole } = useAuth();
-  const { resetDemoData } = useFamilyPoints();
-
-  const handleContinue = async (role: UserRole) => {
-    try {
-      await signInDemoRole({ role });
-      router.replace(role === 'parent' ? '/parent/dashboard' : '/child/dashboard');
-    } catch (error) {
-      Alert.alert(t('common.checkForm'), String(error));
-    }
-  };
-
-  const handleResetDemoData = () => {
-    Alert.alert(t('demo.resetTitle'), t('demo.resetMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('demo.resetConfirm'),
-        style: 'destructive',
-        onPress: resetDemoData,
-      },
-    ]);
-  };
+  const { session } = useAuth();
 
   return (
     <AppScreen contentStyle={styles.content} showBackButton={false}>
       {/* Hero */}
       <View style={styles.hero}>
         <View style={styles.logoWrap}>
-          <Text style={styles.logoEmoji}>⭐</Text>
+          <BrandLogo size={82} />
         </View>
         <Text style={styles.appName}>{t('common.appName')}</Text>
         <Text style={styles.heroTitle}>{t('welcome.heroTitle')}</Text>
@@ -55,7 +31,7 @@ const WelcomeScreen = () => {
       </View>
 
       <AppCard>
-        <SectionTitle title={t(family.nameKey)} />
+        <SectionTitle title={t('welcome.startTitle')} />
         {session && (
           <View style={styles.sessionRow}>
             <StatusBadge label={t('auth.signedInAs', { name: session.name })} tone="success" />
@@ -66,30 +42,14 @@ const WelcomeScreen = () => {
         )}
         <View style={styles.actions}>
           <AppButton
-            title={t('welcome.continueParent')}
-            onPress={() => handleContinue('parent')}
-          />
-          <AppButton
-            title={t('welcome.continueChild')}
-            variant="secondary"
-            onPress={() => handleContinue('child')}
-          />
-          <AppButton
-            title={t('common.settings')}
-            variant="secondary"
-            onPress={() => router.push('/settings')}
-          />
-          <AppButton
-            title={t('auth.signInTitle')}
-            variant="ghost"
+            title={t('welcome.parentAccount')}
             onPress={() => router.push('/auth/sign-in')}
           />
           <AppButton
-            title={t('onboarding.title')}
-            variant="ghost"
-            onPress={() => router.push('/onboarding')}
+            title={t('welcome.childInvite')}
+            variant="secondary"
+            onPress={() => router.push('/auth/scan-invite')}
           />
-          <AppButton title={t('demo.reset')} variant="ghost" onPress={handleResetDemoData} />
         </View>
       </AppCard>
     </AppScreen>
@@ -109,16 +69,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   logoWrap: {
-    width: 88,
-    height: 88,
-    borderRadius: 24,
-    backgroundColor: FP.primaryLight,
+    width: 104,
+    height: 104,
+    borderRadius: 28,
+    backgroundColor: FP.white,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
-  },
-  logoEmoji: {
-    fontSize: 44,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    elevation: 3,
   },
   appName: {
     color: FP.primary,

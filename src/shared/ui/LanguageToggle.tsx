@@ -41,14 +41,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   label: {
-    color: '#5F6C72',
+    color: '#6B7B86',
     fontSize: 13,
     fontWeight: '800',
   },
   container: {
     alignSelf: 'flex-start',
-    backgroundColor: '#E5EEF1',
-    borderColor: '#B8CDD4',
+    backgroundColor: '#E3F3EE',
+    borderColor: '#E3F3EE',
     borderRadius: 8,
     borderWidth: 1,
     flexDirection: 'row',
@@ -60,10 +60,10 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   activeOption: {
-    backgroundColor: '#245B73',
+    backgroundColor: '#15786A',
   },
   optionText: {
-    color: '#245B73',
+    color: '#15786A',
     fontSize: 13,
     fontWeight: '900',
   },

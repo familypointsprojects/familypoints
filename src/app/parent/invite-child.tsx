@@ -4,17 +4,16 @@ import { ActivityIndicator, Alert, Share, StyleSheet, Text, View } from 'react-n
 import QRCode from 'react-native-qrcode-svg';
 
 import { useAuth } from '@/shared/auth';
-import { useLanguage } from '@/shared/i18n';
 import { createChildInvite, revokeChildInvite } from '@/shared/services/supabase/inviteService';
 import type { ChildInvite } from '@/shared/services/supabase/inviteService';
 import { AppButton, AppCard, AppScreen, SectionTitle, StatusBadge } from '@/shared/ui';
 
 const APP_SCHEME = 'familypoints';
+const APP_NAME = 'easyQuest';
 
 const buildInviteUrl = (token: string) => `${APP_SCHEME}://invite/${token}`;
 
 const InviteChildScreen = () => {
-  const { t } = useLanguage();
   const { session } = useAuth();
   const { childId, childName } = useLocalSearchParams<{ childId: string; childName: string }>();
 
@@ -47,7 +46,7 @@ const InviteChildScreen = () => {
     if (!invite) return;
 
     const url = buildInviteUrl(invite.token);
-    const message = `Привет! Присоединяйся к нашей семье в Family Points.\n\nОткрой ссылку на своём устройстве:\n${url}`;
+    const message = `Привет! Присоединяйся к нашей семье в ${APP_NAME}.\n\nОткрой ссылку на своём устройстве:\n${url}`;
 
     try {
       await Share.share({ message, url });
@@ -93,7 +92,7 @@ const InviteChildScreen = () => {
       {isLoading && (
         <AppCard>
           <View style={styles.center}>
-            <ActivityIndicator size="large" color="#58A4B0" />
+            <ActivityIndicator size="large" color="#1E9E86" />
             <Text style={styles.meta}>Создаём инвайт...</Text>
           </View>
         </AppCard>
@@ -115,7 +114,7 @@ const InviteChildScreen = () => {
               <QRCode
                 value={inviteUrl}
                 size={220}
-                color="#1F2933"
+                color="#12314A"
                 backgroundColor="#FFFFFF"
               />
             </View>
@@ -145,7 +144,7 @@ const InviteChildScreen = () => {
           <AppCard>
             <SectionTitle title="Инструкция" />
             <Text style={styles.instruction}>
-              1. Откройте Family Points на устройстве ребёнка{'\n'}
+              1. Откройте {APP_NAME} на устройстве ребёнка{'\n'}
               2. Нажмите "Войти по QR / ссылке"{'\n'}
               3. Отсканируйте QR-код или откройте ссылку{'\n'}
               4. Ребёнок автоматически войдёт в свой профиль
@@ -170,12 +169,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   urlBox: {
-    backgroundColor: '#F5F0E8',
+    backgroundColor: '#FBF6EA',
     borderRadius: 8,
     padding: 12,
   },
   urlText: {
-    color: '#34444C',
+    color: '#12314A',
     fontFamily: 'monospace',
     fontSize: 13,
   },
@@ -184,18 +183,18 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   meta: {
-    color: '#5F6C72',
+    color: '#6B7B86',
     fontSize: 13,
     marginTop: 8,
     textAlign: 'center',
   },
   errorText: {
-    color: '#C0392B',
+    color: '#E2483B',
     fontSize: 14,
     marginVertical: 8,
   },
   instruction: {
-    color: '#34444C',
+    color: '#12314A',
     fontSize: 14,
     lineHeight: 24,
   },
