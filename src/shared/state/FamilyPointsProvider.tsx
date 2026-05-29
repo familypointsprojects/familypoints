@@ -226,6 +226,7 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
   // Supabase Realtime — instant push when available
   useEffect(() => {
     if (!session || !supabaseClient || familyPointsDataSource !== 'supabase') return;
+    const client = supabaseClient;
 
     const REALTIME_TABLES = [
       'tasks',
@@ -244,7 +245,7 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
         ch.on('postgres_changes' as const, { event: '*', schema: 'public', table }, () =>
           scheduleReload(),
         ),
-      supabaseClient.channel(channelName),
+      client.channel(channelName),
     ).subscribe((status) => {
       if (status === 'CHANNEL_ERROR') {
         console.warn('Realtime channel error — polling will cover updates');
@@ -252,7 +253,7 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
     });
 
     return () => {
-      supabaseClient.removeChannel(channel);
+      client.removeChannel(channel);
     };
   }, [session, scheduleReload]);
 

@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { FP } from '@/constants/theme';
 import { TranslationKey, useLanguage } from '@/shared/i18n';
 import { useActiveChild, useFamilyPoints } from '@/shared/state';
 import { PointTransactionType } from '@/shared/types/family';
@@ -13,10 +15,11 @@ import {
   SegmentedControlOption,
   StatusBadge,
 } from '@/shared/ui';
-import { getTaskTitle, getTransactionTitle } from '@/shared/utils/content';
-import { getBalance } from '@/shared/utils/points';
-import { findTask } from '@/shared/utils/tasks';
-import { useState } from 'react';
+import { getRewardTitle, getTaskTitle, getTransactionTitle, getWishTitle } from '@/shared/utils/content';
+import { getFavoriteGoalForChild } from '@/shared/utils/favoriteGoals';
+import { getBalance, getPotentialPoints, getProgressPercent } from '@/shared/utils/points';
+import { findTask, getAvailableTasksForChild } from '@/shared/utils/tasks';
+import { getVisibleWishes } from '@/shared/utils/wishes';
 
 type ChildBalanceTab = 'balance' | 'taskHistory';
 
@@ -28,10 +31,7 @@ const transactionLabelKeys: Record<PointTransactionType, TranslationKey> = {
 };
 
 const getTransactionTone = (type: PointTransactionType) => {
-  if (type === 'earn' || type === 'manual_adjustment') {
-    return 'success';
-  }
-
+  if (type === 'earn' || type === 'manual_adjustment') return 'success';
   return type === 'penalty' ? 'danger' : 'muted';
 };
 
@@ -41,56 +41,188 @@ const formatDate = (dateValue: string, locale: string): string =>
 const ChildBalanceScreen = () => {
   const { language, t } = useLanguage();
   const { activeChildId } = useActiveChild();
-  const { pointTransactions, taskSubmissions, tasks } = useFamilyPoints();
+  const { pointTransactions, taskSubmissions, tasks, rewards, rewardRedemptions, wishes, favoriteGoals } = useFamilyPoints();
   const [activeTab, setActiveTab] = useState<ChildBalanceTab>('balance');
-  const childTransactions = pointTransactions.filter(
-    (transaction) => transaction.childId === activeChildId,
-  );
+
+  const childTransactions = pointTransactions.filter((tx) => tx.childId === activeChildId);
   const balance = getBalance(pointTransactions, activeChildId);
+  const potentialPoints = getPotentialPoints(tasks, taskSubmissions, activeChildId);
   const locale = language === 'ru' ? 'ru' : 'en';
+
+  // Stats
+  const totalEarned = childTransactions.filter((tx) => tx.points > 0).reduce((s, tx) => s + tx.points, 0);
+  const totalSpent = Math.abs(childTransactions.filter((tx) => tx.points < 0).reduce((s, tx) => s + tx.points, 0));
+
+  // Focus goal
+  const visibleWishes = getVisibleWishes(wishes, rewards, rewardRedemptions);
+  const favoriteGoal = getFavoriteGoalForChild(favoriteGoals, activeChildId);
+  const focusReward = favoriteGoal?.type === 'reward'
+    ? rewards.find((r) => r.id === favoriteGoal.itemId && r.isActive !== false)
+    : undefined;
+  const focusWish = favoriteGoal?.type === 'wish'
+    ? visibleWishes.find((w) => w.id === favoriteGoal.itemId && (w.status ?? 'pending') === 'approved')
+    : undefined;
+  const focusGoal = focusReward
+    ? { title: getRewardTitle(focusReward, t), price: focusReward.price }
+    : focusWish
+      ? { title: getWishTitle(focusWish, t), price: focusWish.price }
+      : undefined;
+  const goalProgress = focusGoal ? getProgressPercent(balance, focusGoal.price) : 0;
+  const goalRemaining = focusGoal ? Math.max(focusGoal.price - balance, 0) : 0;
+  const availableTasks = getAvailableTasksForChild(tasks, taskSubmissions, activeChildId);
+  const availableTasksPoints = availableTasks.reduce((s, task) => s + task.points, 0);
+  const availableProgress = focusGoal && availableTasksPoints > 0
+    ? Math.min(getProgressPercent(balance + availableTasksPoints, focusGoal.price), 100) - goalProgress
+    : 0;
+  const goalRemainingAfterAvailable = focusGoal ? Math.max(focusGoal.price - balance - availableTasksPoints, 0) : 0;
+
+  // Submissions
   const mySubmissions = taskSubmissions
-    .filter((submission) => submission.childId === activeChildId)
+    .filter((s) => s.childId === activeChildId)
     .slice()
     .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-  const pendingSubmissions = mySubmissions.filter((submission) => submission.status === 'pending');
-  const reviewedSubmissions = mySubmissions.filter((submission) => submission.status !== 'pending');
+  const pendingSubmissions = mySubmissions.filter((s) => s.status === 'pending');
+  const reviewedSubmissions = mySubmissions.filter((s) => s.status !== 'pending');
+
   const tabOptions: SegmentedControlOption<ChildBalanceTab>[] = [
-    { label: t('common.balance'), value: 'balance' },
-    { label: t('common.history'), value: 'taskHistory' },
+    { label: t('child.balance.tabPoints'), value: 'balance' },
+    { label: t('child.balance.tabQuests'), value: 'taskHistory' },
   ];
 
   return (
     <AppScreen title={t('child.balanceAndHistory.title')} subtitle={t('child.balanceAndHistory.subtitle')}>
+
+      {/* ── Balance card ── */}
       <AppCard>
         <SectionTitle title={t('common.currentBalance')} />
-        <Text style={styles.balance}>
-          {balance} {t('common.pointsShort')}
-        </Text>
+
+        <View style={styles.balanceRow}>
+          <Text style={styles.balance}>
+            {balance} {t('common.pointsShort')}
+          </Text>
+          {potentialPoints > 0 && (
+            <View style={styles.pendingBadge}>
+              <Text style={styles.pendingText}>
+                +{potentialPoints} {t('child.balance.onReview')}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {potentialPoints > 0 && (
+          <Text style={styles.projectedText}>
+            = {balance + potentialPoints} {t('common.pointsShort')} {t('child.balance.ifApproved')}
+          </Text>
+        )}
+
+        {/* Stats row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>+{totalEarned}</Text>
+            <Text style={styles.statLabel}>{t('child.balance.earned')}</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, totalSpent > 0 && styles.statSpent]}>−{totalSpent}</Text>
+            <Text style={styles.statLabel}>{t('child.balance.spent')}</Text>
+          </View>
+          {pendingSubmissions.length > 0 && (
+            <>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, styles.statPending]}>+{potentialPoints}</Text>
+                <Text style={styles.statLabel}>{t('child.balance.pendingTasks')}</Text>
+              </View>
+            </>
+          )}
+        </View>
       </AppCard>
+
+      {/* ── Focus goal progress ── */}
+      {focusGoal && (
+        <AppCard>
+          <SectionTitle title={t('child.balance.goalProgress')} />
+          <Text style={styles.goalTitle} numberOfLines={1}>{focusGoal.title}</Text>
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${goalProgress}%` }]} />
+          </View>
+          <View style={styles.goalMeta}>
+            <Text style={styles.goalPercent}>{goalProgress}%</Text>
+            {goalRemaining > 0 && (
+              <Text style={styles.goalRemaining}>
+                {goalRemaining} {t('common.pointsShort')} {t('child.balance.remaining')}
+              </Text>
+            )}
+          </View>
+
+          {availableTasksPoints > 0 && (
+            <View style={styles.questHint}>
+              <Text style={styles.questHintText}>
+                {goalRemainingAfterAvailable === 0
+                  ? `⭐ ${t('child.balance.questReady', { points: availableTasksPoints })}`
+                  : `🗺️ ${t('child.balance.questHint', { points: availableTasksPoints })}`}
+              </Text>
+            </View>
+          )}
+        </AppCard>
+      )}
 
       <SegmentedControl options={tabOptions} value={activeTab} onChange={setActiveTab} />
 
+      {/* ── Balance tab: transaction history ── */}
       {activeTab === 'balance' && (
         <>
-          <SectionTitle title={t('child.balance.pointsHistory')} />
-          {childTransactions.map((transaction) => (
-            <AppCard key={transaction.id}>
-              <View style={styles.header}>
-                <View style={styles.textGroup}>
-                  <Text style={styles.title}>{getTransactionTitle(transaction, t)}</Text>
-                  <Text style={styles.meta}>{formatDate(transaction.createdAt, locale)}</Text>
+          {childTransactions.length === 0 && pendingSubmissions.length === 0 && (
+            <EmptyState
+              title={t('child.balance.emptyTitle')}
+              message={t('child.balance.emptyMessage')}
+            />
+          )}
+
+          {/* Pending submissions — not yet approved */}
+          {pendingSubmissions.map((submission) => {
+            const task = findTask(tasks, submission.taskId);
+            const taskTitle = task ? getTaskTitle(task, t) : t('child.taskDetails.notFoundTitle');
+            return (
+              <AppCard key={`pending-${submission.id}`}>
+                <View style={styles.header}>
+                  <View style={styles.textGroup}>
+                    <Text style={styles.title}>{taskTitle}</Text>
+                    <Text style={styles.meta}>{formatDate(submission.submittedAt, locale)}</Text>
+                  </View>
+                  <View style={styles.txPendingCol}>
+                    <Text style={styles.txPendingAmount}>
+                      +{task?.points ?? '?'} {t('common.pointsShort')}
+                    </Text>
+                    <Text style={styles.txPendingLabel}>{t('child.balance.onReview')}</Text>
+                  </View>
                 </View>
-                <PointsBadge points={transaction.points} />
-              </View>
-              <StatusBadge
-                label={t(transactionLabelKeys[transaction.type])}
-                tone={getTransactionTone(transaction.type)}
-              />
-            </AppCard>
-          ))}
+              </AppCard>
+            );
+          })}
+
+          {/* Confirmed transactions */}
+          {childTransactions.map((transaction) => {
+            const isPositive = transaction.points > 0;
+            const sign = isPositive ? '+' : '';
+            return (
+              <AppCard key={transaction.id}>
+                <View style={styles.header}>
+                  <View style={styles.textGroup}>
+                    <Text style={styles.title}>{getTransactionTitle(transaction, t)}</Text>
+                    <Text style={styles.meta}>{formatDate(transaction.createdAt, locale)}</Text>
+                  </View>
+                  <Text style={[styles.txAmount, isPositive ? styles.txPositive : styles.txNegative]}>
+                    {sign}{transaction.points} {t('common.pointsShort')}
+                  </Text>
+                </View>
+              </AppCard>
+            );
+          })}
         </>
       )}
 
+      {/* ── Task history tab ── */}
       {activeTab === 'taskHistory' && (
         <>
           {mySubmissions.length === 0 && (
@@ -117,7 +249,10 @@ const ChildBalanceScreen = () => {
                           <Text style={styles.proof}>{submission.proofNote}</Text>
                         )}
                       </View>
-                      <StatusBadge label={t('common.waitingForApproval')} tone="warning" />
+                      <View style={styles.rightCol}>
+                        {task && <PointsBadge points={task.points} />}
+                        <StatusBadge label={t('common.waitingForApproval')} tone="warning" />
+                      </View>
                     </View>
                   </AppCard>
                 );
@@ -145,7 +280,10 @@ const ChildBalanceScreen = () => {
                           <Text style={styles.proof}>{submission.proofNote}</Text>
                         )}
                       </View>
-                      <StatusBadge label={statusLabel} tone={statusTone} />
+                      <View style={styles.rightCol}>
+                        {task && isApproved && <PointsBadge points={task.points} />}
+                        <StatusBadge label={statusLabel} tone={statusTone} />
+                      </View>
                     </View>
                   </AppCard>
                 );
@@ -161,33 +299,180 @@ const ChildBalanceScreen = () => {
 export default ChildBalanceScreen;
 
 const styles = StyleSheet.create({
+  // Balance card
+  balanceRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
   balance: {
-    color: '#12314A',
+    color: FP.text,
     fontSize: 42,
     fontWeight: '900',
   },
+  pendingBadge: {
+    backgroundColor: FP.accentLight,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  pendingText: {
+    color: FP.accentText,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  projectedText: {
+    color: FP.textSub,
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: -4,
+  },
+  statsRow: {
+    borderTopColor: FP.border,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    marginTop: 8,
+    paddingTop: 12,
+    gap: 0,
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+    gap: 2,
+  },
+  statDivider: {
+    backgroundColor: FP.border,
+    width: 1,
+  },
+  statValue: {
+    color: FP.text,
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  statLabel: {
+    color: FP.textSub,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  statSpent: {
+    color: FP.red,
+  },
+  statPending: {
+    color: FP.accentText,
+  },
+  // Goal progress
+  goalTitle: {
+    color: FP.text,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  progressTrack: {
+    backgroundColor: FP.tan,
+    borderRadius: 8,
+    height: 10,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    backgroundColor: FP.primary,
+    height: 10,
+    borderRadius: 8,
+  },
+  progressAvailable: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    backgroundColor: FP.primaryLight,
+    borderRightWidth: 1.5,
+    borderRightColor: FP.primary,
+  },
+  goalMeta: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  goalPercent: {
+    color: FP.primary,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  goalRemaining: {
+    color: FP.textSub,
+    fontSize: 13,
+  },
+  questHint: {
+    backgroundColor: FP.primaryLight,
+    borderRadius: 8,
+    marginTop: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  questHintText: {
+    color: FP.primary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  questHintSuccess: {
+    backgroundColor: FP.primary,
+  },
+  questHintSuccessText: {
+    color: FP.white,
+  },
+  // Pending transaction
+  txPendingCol: {
+    alignItems: 'flex-end',
+    alignSelf: 'center',
+    gap: 2,
+  },
+  txPendingAmount: {
+    color: FP.textSub,
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  txPendingLabel: {
+    color: FP.accentText,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  // Transaction amount
+  txAmount: {
+    fontSize: 18,
+    fontWeight: '900',
+    alignSelf: 'center',
+  },
+  txPositive: {
+    color: FP.primary,
+  },
+  txNegative: {
+    color: FP.red,
+  },
+  // Cards
   header: {
     alignItems: 'flex-start',
     flexDirection: 'row',
     gap: 12,
     justifyContent: 'space-between',
   },
-  meta: {
-    color: '#6B7B86',
-    fontSize: 14,
-  },
-  proof: {
-    color: '#12314A',
-    fontSize: 14,
-    lineHeight: 20,
+  rightCol: {
+    alignItems: 'flex-end',
+    gap: 6,
   },
   textGroup: {
     flex: 1,
     gap: 4,
   },
   title: {
-    color: '#12314A',
+    color: FP.text,
     fontSize: 17,
     fontWeight: '900',
+  },
+  meta: {
+    color: FP.textSub,
+    fontSize: 14,
+  },
+  proof: {
+    color: FP.text,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

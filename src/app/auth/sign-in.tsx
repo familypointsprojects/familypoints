@@ -57,7 +57,7 @@ const SignInScreen = () => {
     <AppScreen>
       {/* Logo */}
       <View style={styles.logoBlock}>
-        <BrandLogo size={72} />
+        <BrandLogo height={224} width={520} />
         <Text style={styles.logoTitle}>{t('common.appName')}</Text>
         <Text style={styles.logoSub}>Войдите или создайте аккаунт</Text>
       </View>

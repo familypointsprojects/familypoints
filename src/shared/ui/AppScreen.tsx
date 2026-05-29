@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FP } from '@/constants/theme';
 import { useLanguage } from '@/shared/i18n';
 import { AppHeaderMenu } from '@/shared/ui/AppHeaderMenu';
+import { BrandLogo } from '@/shared/ui/BrandLogo';
 import { LanguageToggle } from '@/shared/ui/LanguageToggle';
 import { shouldShowBottomNavigation } from '@/shared/ui/bottomNavigationRoutes';
 
@@ -71,7 +72,7 @@ export const AppScreen = ({
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           scrollIndicatorInsets={hasBottomNavigationSpace ? styles.scrollIndicatorInsets : undefined}>
-          <View style={styles.topBar}>
+          <View style={[styles.topBar, isWelcome && styles.topBarWelcome]}>
             {shouldShowBackButton ? (
               <Pressable
                 accessibilityRole="button"
@@ -80,7 +81,7 @@ export const AppScreen = ({
                 <Text style={styles.backText}>{t('common.back')}</Text>
               </Pressable>
             ) : (
-              <View style={styles.topBarSpacer} />
+              !isWelcome && <BrandLogo height={44} style={styles.topLogo} />
             )}
             {isWelcome ? <LanguageToggle /> : <AppHeaderMenu />}
           </View>
@@ -118,7 +119,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 760,
     alignSelf: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 12,
     gap: 16,
   },
   contentWithBottomBar: {
@@ -144,9 +147,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
+    paddingVertical: 8,
   },
-  topBarSpacer: {
-    width: 42,
+  topBarWelcome: {
+    justifyContent: 'flex-end',
+  },
+  topLogo: {
+    flexShrink: 0,
   },
   backButton: {
     alignSelf: 'flex-start',

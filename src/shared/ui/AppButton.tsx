@@ -6,6 +6,7 @@ type AppButtonVariant = 'primary' | 'secondary' | 'accent' | 'danger' | 'ghost';
 
 type AppButtonProps = {
   title: string;
+  subtitle?: string;
   onPress: () => void;
   variant?: AppButtonVariant;
   disabled?: boolean;
@@ -18,8 +19,8 @@ const containerStyles: Record<AppButtonVariant, ViewStyle> = {
   },
   secondary: {
     backgroundColor: FP.primaryLight,
-    borderColor: FP.primaryBorder,
-    borderWidth: 1,
+    borderColor: FP.primary,
+    borderWidth: 1.5,
   },
   accent: {
     backgroundColor: FP.accent,
@@ -42,6 +43,7 @@ const textStyles: Record<AppButtonVariant, TextStyle> = {
 
 export const AppButton = ({
   title,
+  subtitle,
   onPress,
   variant = 'primary',
   disabled = false,
@@ -61,6 +63,11 @@ export const AppButton = ({
     <Text style={[styles.text, textStyles[variant], disabled && styles.disabledText]}>
       {title}
     </Text>
+    {Boolean(subtitle) && (
+      <Text style={[styles.subtitle, textStyles[variant], disabled && styles.disabledText]}>
+        {subtitle}
+      </Text>
+    )}
   </Pressable>
 );
 
@@ -77,6 +84,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 12,
+    fontWeight: '400',
+    textAlign: 'center',
+    opacity: 0.72,
+    marginTop: 2,
   },
   disabled: {
     opacity: 0.42,

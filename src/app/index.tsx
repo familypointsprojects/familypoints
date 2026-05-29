@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@/shared/auth';
 import { useLanguage } from '@/shared/i18n';
 import { AppButton, AppCard, AppScreen, BrandLogo, SectionTitle, StatusBadge } from '@/shared/ui';
+import { QuestFlowPill } from '@/shared/ui/QuestFlowPill';
 import { FP } from '@/constants/theme';
 
 const WelcomeScreen = () => {
@@ -14,20 +15,11 @@ const WelcomeScreen = () => {
     <AppScreen contentStyle={styles.content} showBackButton={false}>
       {/* Hero */}
       <View style={styles.hero}>
-        <View style={styles.logoWrap}>
-          <BrandLogo size={82} />
-        </View>
-        <Text style={styles.appName}>{t('common.appName')}</Text>
+        <BrandLogo height={160} style={styles.heroLogo} />
         <Text style={styles.heroTitle}>{t('welcome.heroTitle')}</Text>
         <Text style={styles.subtitle}>{t('welcome.subtitle')}</Text>
 
-        {/* Emoji strip */}
-        <View style={styles.emojiRow}>
-          <Text style={styles.emoji}>🎁</Text>
-          <Text style={styles.emoji}>🎯</Text>
-          <Text style={styles.emoji}>⭐</Text>
-          <Text style={styles.emoji}>🏆</Text>
-        </View>
+        <QuestFlowPill />
       </View>
 
       <AppCard>
@@ -61,59 +53,28 @@ export default WelcomeScreen;
 const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
-    justifyContent: 'center',
   },
   hero: {
     alignItems: 'center',
     gap: 10,
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
-  logoWrap: {
-    width: 104,
-    height: 104,
-    borderRadius: 28,
-    backgroundColor: FP.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 3,
-  },
-  appName: {
-    color: FP.primary,
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+  heroLogo: {
+    alignSelf: 'center',
   },
   heroTitle: {
     color: FP.text,
-    fontSize: 30,
+    fontSize: 26,
     fontWeight: '900',
-    lineHeight: 37,
+    lineHeight: 33,
     textAlign: 'center',
   },
   subtitle: {
     color: FP.textSub,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 21,
     textAlign: 'center',
-    maxWidth: 280,
-  },
-  emojiRow: {
-    flexDirection: 'row',
-    gap: 16,
-    backgroundColor: FP.primaryLight,
-    borderRadius: 20,
-    paddingHorizontal: 28,
-    paddingVertical: 14,
-    marginTop: 4,
-  },
-  emoji: {
-    fontSize: 30,
+    maxWidth: 340,
   },
   sessionRow: {
     gap: 8,
