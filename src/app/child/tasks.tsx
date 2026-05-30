@@ -28,7 +28,13 @@ import {
   StatusBadge,
 } from '@/shared/ui';
 import { getTaskDescription, getTaskTitle } from '@/shared/utils/content';
-import { getAvailableTasksForChild, getPendingTasksForChild } from '@/shared/utils/tasks';
+import {
+  getAvailableTasksForChild,
+  getDailyTasksForToday,
+  getPendingTasksForChild,
+  getTodaySubmission,
+  hasSubmittedDailyTaskToday,
+} from '@/shared/utils/tasks';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const CLOSE_THRESHOLD = 80;
@@ -40,6 +46,7 @@ const ChildTasksScreen = () => {
   const { activeChildId } = useActiveChild();
   const { submitTaskWithProof, taskSubmissions, tasks } = useFamilyPoints();
 
+  const dailyTasks = getDailyTasksForToday(tasks);
   const availableTasks = getAvailableTasksForChild(tasks, taskSubmissions, activeChildId);
   const pendingTasks = getPendingTasksForChild(tasks, taskSubmissions, activeChildId);
 
@@ -131,7 +138,7 @@ const ChildTasksScreen = () => {
       handleClose();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      Alert.alert('Ошибка', message);
+      Alert.alert(t('common.error'), message);
     } finally {
       setIsSubmitting(false);
     }
@@ -144,11 +151,69 @@ const ChildTasksScreen = () => {
 
   return (
     <AppScreen title={t('common.tasks')} subtitle={t('child.tasks.subtitle')}>
+      {/* ── Daily Quests ── */}
+      {dailyTasks.length > 0 && (
+        <>
+          <SectionTitle title="Сегодняшние квесты" />
+          {dailyTasks.map((task) => {
+            const submission = getTodaySubmission(taskSubmissions, task.id, activeChildId);
+            const alreadySubmitted = hasSubmittedDailyTaskToday(taskSubmissions, task.id, activeChildId);
+
+            let statusBadge: ReturnType<typeof StatusBadge> | null = null;
+            if (submission?.status === 'approved') {
+              statusBadge = <StatusBadge label="Выполнено" tone="success" />;
+            } else if (submission?.status === 'pending') {
+              statusBadge = <StatusBadge label={t('common.waitingForApproval')} tone="warning" />;
+            } else if (submission?.status === 'rejected') {
+              statusBadge = <StatusBadge label="Отклонено — попробуй снова" tone="danger" />;
+            }
+
+            return (
+              <AppCard key={task.id} style={styles.dailyCard}>
+                <View style={styles.dailyHeader}>
+                  <View style={styles.dailyBadge}>
+                    <Text style={styles.dailyBadgeText}>⚡</Text>
+                  </View>
+                  <View style={styles.flex1}>
+                    <Text style={styles.title}>{getTaskTitle(task, t)}</Text>
+                    <Text style={styles.description}>{getTaskDescription(task, t)}</Text>
+                  </View>
+                  <PointsBadge points={task.points} />
+                </View>
+                {statusBadge}
+                {/* Can re-submit after rejection, but not when pending/approved today */}
+                {!alreadySubmitted || submission?.status === 'rejected' ? (
+                  submission?.status !== 'rejected' ? (
+                    <AppButton
+                      title={t('common.openDetails')}
+                      variant="secondary"
+                      onPress={() => handleOpen(task)}
+                    />
+                  ) : (
+                    <AppButton
+                      title="Попробовать снова"
+                      variant="secondary"
+                      onPress={() => handleOpen(task)}
+                    />
+                  )
+                ) : null}
+              </AppCard>
+            );
+          })}
+        </>
+      )}
+
       <SegmentedControl options={tabOptions} value={tab} onChange={setTab} />
 
       {tab === 'available' && (
         <>
           <SectionTitle title={t('common.availableTasks')} />
+          {availableTasks.length === 0 && (
+            <EmptyState
+              title={t('common.availableTasks')}
+              message="Все задания выполнены или выданы на проверку."
+            />
+          )}
           {availableTasks.map((task) => (
             <AppCard key={task.id}>
               <View style={styles.header}>
@@ -250,6 +315,30 @@ const ChildTasksScreen = () => {
 export default ChildTasksScreen;
 
 const styles = StyleSheet.create({
+  dailyBadge: {
+    alignItems: 'center',
+    backgroundColor: FP.accentLight,
+    borderRadius: 10,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  dailyBadgeText: {
+    fontSize: 18,
+  },
+  dailyCard: {
+    borderColor: FP.accent,
+    borderWidth: 1.5,
+  },
+  dailyHeader: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 10,
+  },
+  flex1: {
+    flex: 1,
+    gap: 2,
+  },
   header: {
     alignItems: 'flex-start',
     flexDirection: 'row',

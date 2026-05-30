@@ -24,6 +24,15 @@ export type Family = {
 
 export type TaskStatus = 'active' | 'inactive';
 
+export type DayOfWeek =
+  | 'monday'
+  | 'tuesday'
+  | 'wednesday'
+  | 'thursday'
+  | 'friday'
+  | 'saturday'
+  | 'sunday';
+
 export type Task = {
   id: string;
   titleKey?: TranslationKey;
@@ -32,6 +41,10 @@ export type Task = {
   description?: string;
   points: number;
   status: TaskStatus;
+  /** true = repeatable daily quest; false/undefined = one-time task */
+  isDaily?: boolean;
+  /** Which days the quest is available. Empty/undefined = every day */
+  availableDays?: DayOfWeek[];
 };
 
 export type SubmissionStatus = 'pending' | 'approved' | 'rejected';
@@ -54,6 +67,12 @@ export type Reward = {
   price: number;
   type: RewardType;
   isActive?: boolean;
+  /** true = repeatable daily reward */
+  isDailyReward?: boolean;
+  /** Which days the reward is available. Empty/undefined = every day */
+  availableDays?: DayOfWeek[];
+  /** If true, child must have all today's daily quests approved before buying */
+  requiresDailyQuestsCompleted?: boolean;
 };
 
 export type RewardRedemptionStatus = 'requested' | 'approved' | 'rejected' | 'fulfilled';
@@ -78,7 +97,46 @@ export type Wish = {
   status?: WishStatus;
 };
 
-export type PointTransactionType = 'earn' | 'spend' | 'penalty' | 'manual_adjustment';
+export type PointTransactionType =
+  | 'earn'
+  | 'spend'
+  | 'penalty'
+  | 'manual_adjustment'
+  | 'investment_deposit'
+  | 'investment_payout';
+
+// ─── Growth Missions ─────────────────────────────────────────────────────────
+
+export type MissionStatus = 'active' | 'archived';
+
+export type InvestmentProject = {
+  id: string;
+  familyId: string;
+  createdBy: string;
+  title: string;
+  description?: string;
+  durationDays: number;
+  bonusPercent: number;
+  minAmount: number;
+  maxAmount: number;
+  status: MissionStatus;
+  createdAt: string;
+};
+
+export type ChildInvestment = {
+  id: string;
+  projectId: string;
+  projectTitle?: string;
+  childId: string;
+  familyId: string;
+  amount: number;
+  bonusPercent: number;
+  payoutAmount: number;
+  depositedAt: string;
+  maturesAt: string;
+  claimedAt?: string | null;
+  depositTxId?: string | null;
+};
 
 export type PointTransaction = {
   id: string;

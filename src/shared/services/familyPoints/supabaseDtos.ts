@@ -50,6 +50,8 @@ export type TaskRow = {
   description: string;
   points: number;
   status: TaskStatus;
+  is_daily: boolean;
+  available_days: string[];
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -73,6 +75,9 @@ export type RewardRow = {
   price: number;
   type: RewardType;
   is_active: boolean;
+  is_daily_reward: boolean;
+  available_days: string[];
+  requires_daily_quests_completed: boolean;
   created_by: string;
   created_at: string;
   updated_at: string;

@@ -8,6 +8,7 @@ import {
   IconCompass,
   IconFamily,
   IconMap,
+  IconMissions,
   IconShield,
 } from '@/shared/ui/QuestIcons';
 
@@ -15,6 +16,7 @@ export type BottomActionIcon =
   | 'children'
   | 'create'
   | 'home'
+  | 'missions'
   | 'points'
   | 'requests'
   | 'review'
@@ -39,6 +41,7 @@ const iconByType = {
   children: IconFamily,
   create: IconShield,
   home: IconCompass,
+  missions: IconMissions,
   points: IconCoin,
   requests: IconFamily,
   review: IconCoin,

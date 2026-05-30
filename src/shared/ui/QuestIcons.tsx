@@ -163,6 +163,25 @@ export const IconCompass: React.FC<IconProps> = ({ size = 26 }) => (
   </Svg>
 );
 
+export const IconMissions: React.FC<IconProps> = ({ size = 26 }) => (
+  <Svg width={size} height={size} viewBox="0 0 120 120">
+    {/* Jar body */}
+    <Rect x={28} y={42} width={64} height={64} rx={14} fill="#3FA88E" stroke="#0E5F4D" strokeWidth={3.5} />
+    {/* Jar lid */}
+    <Rect x={22} y={30} width={76} height={18} rx={8} fill="#1E9E86" stroke="#0E5F4D" strokeWidth={3} />
+    {/* Coin slot */}
+    <Rect x={52} y={30} width={16} height={5} rx={2.5} fill="#0A4A3C" />
+    {/* Star */}
+    <Path
+      d="M60 56 L64 67 L76 67 L67 74 L70 85 L60 78 L50 85 L53 74 L44 67 L56 67 Z"
+      fill="#F5B225"
+      stroke="#A66A0B"
+      strokeWidth={2}
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 export const IconPlus: React.FC<IconProps> = ({ size = 24 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24">
     <Line x1={12} y1={5} x2={12} y2={19} stroke="#0E2536" strokeWidth={3} strokeLinecap="round" />

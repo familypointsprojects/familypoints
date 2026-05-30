@@ -1,6 +1,7 @@
 import type { AuthSession } from '@/shared/auth/types';
 import type {
   ChildProfile,
+  DayOfWeek,
   PointTransaction,
   Reward,
   RewardRedemption,
@@ -39,6 +40,8 @@ export type CreateTaskInput = {
   title: string;
   description: string;
   points: number;
+  isDaily?: boolean;
+  availableDays?: DayOfWeek[];
 };
 
 export type UpdateTaskInput = {
@@ -47,6 +50,8 @@ export type UpdateTaskInput = {
   description: string;
   points: number;
   status: TaskStatus;
+  isDaily?: boolean;
+  availableDays?: DayOfWeek[];
 };
 
 export type SetTaskStatusInput = {
@@ -62,6 +67,9 @@ export type CreateRewardInput = {
   title: string;
   price: number;
   type: RewardType;
+  isDailyReward?: boolean;
+  availableDays?: DayOfWeek[];
+  requiresDailyQuestsCompleted?: boolean;
 };
 
 export type SetRewardActiveInput = {

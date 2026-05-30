@@ -1,5 +1,6 @@
 import type {
   ChildProfile,
+  DayOfWeek,
   Family,
   ParentProfile,
   PointTransaction,
@@ -59,6 +60,8 @@ export const mapTaskRowToTask = (row: TaskRow): Task => ({
   description: row.description,
   points: row.points,
   status: row.status,
+  isDaily: row.is_daily ?? false,
+  availableDays: (row.available_days ?? []) as DayOfWeek[],
 });
 
 export const mapTaskToCreateTaskPayload = (
@@ -100,6 +103,9 @@ export const mapRewardRowToReward = (row: RewardRow): Reward => ({
   price: row.price,
   type: row.type,
   isActive: row.is_active,
+  isDailyReward: row.is_daily_reward ?? false,
+  availableDays: (row.available_days ?? []) as DayOfWeek[],
+  requiresDailyQuestsCompleted: row.requires_daily_quests_completed ?? false,
 });
 
 export const mapRewardToCreatePayload = (

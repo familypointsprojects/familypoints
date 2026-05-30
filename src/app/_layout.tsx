@@ -8,6 +8,7 @@ import { StyleSheet, View } from 'react-native';
 import { AuthProvider, useAuth } from '@/shared/auth';
 import { LanguageProvider } from '@/shared/i18n';
 import { FamilyPointsProvider } from '@/shared/state';
+import { GrowthMissionsProvider } from '@/shared/state/GrowthMissionsProvider';
 import { AppBottomNavigation } from '@/shared/ui/AppBottomNavigation';
 import { shouldShowBottomNavigation } from '@/shared/ui/bottomNavigationRoutes';
 
@@ -119,6 +120,9 @@ const RootNavigation = () => {
         <Stack.Screen name="child/wishes" />
         <Stack.Screen name="child/rewards" />
         <Stack.Screen name="child/history" />
+        <Stack.Screen name="parent/growth-missions" />
+        <Stack.Screen name="parent/create-growth-mission" />
+        <Stack.Screen name="child/growth-missions" />
       </Stack>
       {showBottomNavigation && (
         <View pointerEvents="box-none" style={styles.bottomNavigation}>
@@ -133,9 +137,11 @@ const RootLayout = () => (
   <LanguageProvider>
     <AuthProvider>
       <FamilyPointsProvider>
-        <AuthRouteGuard />
-        <DeepLinkHandler />
-        <RootNavigation />
+        <GrowthMissionsProvider>
+          <AuthRouteGuard />
+          <DeepLinkHandler />
+          <RootNavigation />
+        </GrowthMissionsProvider>
       </FamilyPointsProvider>
     </AuthProvider>
   </LanguageProvider>

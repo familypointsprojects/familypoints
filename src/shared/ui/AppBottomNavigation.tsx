@@ -4,7 +4,7 @@ import { useLanguage } from '@/shared/i18n';
 import { useActiveChild, useFamilyPoints } from '@/shared/state';
 import { BottomActionBar, BottomActionItem } from '@/shared/ui/BottomActionBar';
 import { getBalance } from '@/shared/utils/points';
-import { getAvailableTasksForChild } from '@/shared/utils/tasks';
+import { getTotalAvailableTasksCount } from '@/shared/utils/tasks';
 
 const isActiveRoute = (pathname: string, route: string): boolean => pathname === route;
 
@@ -14,10 +14,12 @@ type BottomNavigationRoute =
   | '/parent/submissions'
   | '/parent/rewards'
   | '/parent/redemptions'
+  | '/parent/growth-missions'
   | '/child/dashboard'
   | '/child/tasks'
   | '/child/balance'
-  | '/child/rewards';
+  | '/child/rewards'
+  | '/child/growth-missions';
 
 const pushIfInactive = (pathname: string, route: BottomNavigationRoute) => {
   if (isActiveRoute(pathname, route)) {
@@ -78,6 +80,13 @@ export const AppBottomNavigation = () => {
         label: t('parent.quick.requests'),
         onPress: () => pushIfInactive(pathname, '/parent/redemptions'),
       },
+      {
+        icon: 'missions',
+        isActive: isActiveRoute(pathname, '/parent/growth-missions'),
+        key: 'missions',
+        label: t('missions.navLabel'),
+        onPress: () => pushIfInactive(pathname, '/parent/growth-missions'),
+      },
     ];
 
     return <BottomActionBar items={parentItems} />;
@@ -85,7 +94,7 @@ export const AppBottomNavigation = () => {
 
   if (pathname.startsWith('/child')) {
     const balance = getBalance(pointTransactions, activeChildId);
-    const availableTasksCount = getAvailableTasksForChild(tasks, taskSubmissions, activeChildId).length;
+    const availableTasksCount = getTotalAvailableTasksCount(tasks, taskSubmissions, activeChildId);
     const openRequestIds = new Set(
       rewardRedemptions
         .filter((r) => r.childId === activeChildId && (r.status === 'requested' || r.status === 'approved'))
@@ -125,6 +134,13 @@ export const AppBottomNavigation = () => {
         key: 'rewards',
         label: t('common.rewards'),
         onPress: () => pushIfInactive(pathname, '/child/rewards'),
+      },
+      {
+        icon: 'missions',
+        isActive: isActiveRoute(pathname, '/child/growth-missions'),
+        key: 'missions',
+        label: t('missions.navLabel'),
+        onPress: () => pushIfInactive(pathname, '/child/growth-missions'),
       },
     ];
 

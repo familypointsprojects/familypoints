@@ -425,6 +425,8 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
       description: input.description.trim(),
       points: input.points,
       status: 'active',
+      is_daily: input.isDaily ?? false,
+      available_days: input.availableDays ?? [],
       created_by: userId,
     });
 
@@ -443,6 +445,8 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
         description: input.description.trim(),
         points: input.points,
         status: input.status,
+        is_daily: input.isDaily ?? false,
+        available_days: input.availableDays ?? [],
         updated_at: new Date().toISOString(),
       })
       .eq('id', input.taskId);
@@ -491,6 +495,9 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
         price: input.price,
         type: input.type,
         is_active: true,
+        is_daily_reward: input.isDailyReward ?? false,
+        available_days: input.availableDays ?? [],
+        requires_daily_quests_completed: input.requiresDailyQuestsCompleted ?? false,
         created_by: userId,
       })
       .select('id')
@@ -612,13 +619,17 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
       throwSupabaseError('create earn transaction', transactionError.message);
     }
 
-    const { error: taskStatusError } = await supabase
-      .from('tasks')
-      .update({ status: 'inactive', updated_at: reviewedAt })
-      .eq('id', task.id);
+    // Daily quests stay active so they can be submitted again tomorrow.
+    // Only one-time tasks are deactivated after approval.
+    if (!task.is_daily) {
+      const { error: taskStatusError } = await supabase
+        .from('tasks')
+        .update({ status: 'inactive', updated_at: reviewedAt })
+        .eq('id', task.id);
 
-    if (taskStatusError) {
-      throwSupabaseError('deactivate approved task', taskStatusError.message);
+      if (taskStatusError) {
+        throwSupabaseError('deactivate approved task', taskStatusError.message);
+      }
     }
 
     return reloadState();
@@ -738,6 +749,9 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
         price: reward.price,
         type: reward.type,
         is_active: true,
+        is_daily_reward: reward.isDailyReward ?? false,
+        available_days: reward.availableDays ?? [],
+        requires_daily_quests_completed: reward.requiresDailyQuestsCompleted ?? false,
         created_by: context.parentId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

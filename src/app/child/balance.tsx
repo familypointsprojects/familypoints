@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { FP } from '@/constants/theme';
 import { TranslationKey, useLanguage } from '@/shared/i18n';
 import { useActiveChild, useFamilyPoints } from '@/shared/state';
+import { useGrowthMissions } from '@/shared/state/GrowthMissionsProvider';
 import { PointTransactionType } from '@/shared/types/family';
 import {
   AppCard,
@@ -18,7 +19,7 @@ import {
 import { getRewardTitle, getTaskTitle, getTransactionTitle, getWishTitle } from '@/shared/utils/content';
 import { getFavoriteGoalForChild } from '@/shared/utils/favoriteGoals';
 import { getBalance, getPotentialPoints, getProgressPercent } from '@/shared/utils/points';
-import { findTask, getAvailableTasksForChild } from '@/shared/utils/tasks';
+import { findTask, getAvailableTasksForChild, getDailyTasksForToday, hasSubmittedDailyTaskToday } from '@/shared/utils/tasks';
 import { getVisibleWishes } from '@/shared/utils/wishes';
 
 type ChildBalanceTab = 'balance' | 'taskHistory';
@@ -28,12 +29,10 @@ const transactionLabelKeys: Record<PointTransactionType, TranslationKey> = {
   spend: 'transactionType.spend',
   penalty: 'transactionType.penalty',
   manual_adjustment: 'transactionType.manual_adjustment',
+  investment_deposit: 'transactionType.investment_deposit',
+  investment_payout: 'transactionType.investment_payout',
 };
 
-const getTransactionTone = (type: PointTransactionType) => {
-  if (type === 'earn' || type === 'manual_adjustment') return 'success';
-  return type === 'penalty' ? 'danger' : 'muted';
-};
 
 const formatDate = (dateValue: string, locale: string): string =>
   new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(dateValue));
@@ -42,6 +41,7 @@ const ChildBalanceScreen = () => {
   const { language, t } = useLanguage();
   const { activeChildId } = useActiveChild();
   const { pointTransactions, taskSubmissions, tasks, rewards, rewardRedemptions, wishes, favoriteGoals } = useFamilyPoints();
+  const { myInvestments } = useGrowthMissions();
   const [activeTab, setActiveTab] = useState<ChildBalanceTab>('balance');
 
   const childTransactions = pointTransactions.filter((tx) => tx.childId === activeChildId);
@@ -49,9 +49,21 @@ const ChildBalanceScreen = () => {
   const potentialPoints = getPotentialPoints(tasks, taskSubmissions, activeChildId);
   const locale = language === 'ru' ? 'ru' : 'en';
 
-  // Stats
-  const totalEarned = childTransactions.filter((tx) => tx.points > 0).reduce((s, tx) => s + tx.points, 0);
-  const totalSpent = Math.abs(childTransactions.filter((tx) => tx.points < 0).reduce((s, tx) => s + tx.points, 0));
+  // Stats — exclude investment flows from earned/spent
+  const totalEarned = childTransactions
+    .filter((tx) => tx.points > 0 && tx.type !== 'investment_payout')
+    .reduce((s, tx) => s + tx.points, 0);
+  const totalSpent = Math.abs(childTransactions
+    .filter((tx) => tx.points < 0 && tx.type !== 'investment_deposit')
+    .reduce((s, tx) => s + tx.points, 0));
+  const totalInvested = Math.abs(childTransactions
+    .filter((tx) => tx.type === 'investment_deposit')
+    .reduce((s, tx) => s + tx.points, 0));
+  const totalPayoutReceived = childTransactions
+    .filter((tx) => tx.type === 'investment_payout')
+    .reduce((s, tx) => s + tx.points, 0);
+  const activeInv = myInvestments.filter((inv) => !inv.claimedAt);
+  const expectedPayout = activeInv.reduce((s, inv) => s + inv.payoutAmount, 0);
 
   // Focus goal
   const visibleWishes = getVisibleWishes(wishes, rewards, rewardRedemptions);
@@ -70,10 +82,10 @@ const ChildBalanceScreen = () => {
   const goalProgress = focusGoal ? getProgressPercent(balance, focusGoal.price) : 0;
   const goalRemaining = focusGoal ? Math.max(focusGoal.price - balance, 0) : 0;
   const availableTasks = getAvailableTasksForChild(tasks, taskSubmissions, activeChildId);
-  const availableTasksPoints = availableTasks.reduce((s, task) => s + task.points, 0);
-  const availableProgress = focusGoal && availableTasksPoints > 0
-    ? Math.min(getProgressPercent(balance + availableTasksPoints, focusGoal.price), 100) - goalProgress
-    : 0;
+  const pendingDailyTasks = getDailyTasksForToday(tasks).filter(
+    (task) => !hasSubmittedDailyTaskToday(taskSubmissions, task.id, activeChildId),
+  );
+  const availableTasksPoints = [...availableTasks, ...pendingDailyTasks].reduce((s, task) => s + task.points, 0);
   const goalRemainingAfterAvailable = focusGoal ? Math.max(focusGoal.price - balance - availableTasksPoints, 0) : 0;
 
   // Submissions
@@ -96,26 +108,59 @@ const ChildBalanceScreen = () => {
       <AppCard>
         <SectionTitle title={t('common.currentBalance')} />
 
-        <View style={styles.balanceRow}>
-          <Text style={styles.balance}>
-            {balance} {t('common.pointsShort')}
-          </Text>
-          {potentialPoints > 0 && (
-            <View style={styles.pendingBadge}>
-              <Text style={styles.pendingText}>
-                +{potentialPoints} {t('child.balance.onReview')}
-              </Text>
+        <Text style={styles.balance}>
+          {balance} {t('common.pointsShort')}
+        </Text>
+
+        {/* "Ждёт тебя" block — only when there's something incoming */}
+        {(potentialPoints > 0 || activeInv.length > 0) && (() => {
+          const totalIncoming = potentialPoints + expectedPayout;
+          return (
+            <View style={styles.incomingBox}>
+              <Text style={styles.incomingTitle}>{t('missions.incomingTitle')}</Text>
+
+              {potentialPoints > 0 && (
+                <View style={styles.incomingRow}>
+                  <Text style={styles.incomingIcon}>⏳</Text>
+                  <Text style={styles.incomingLabel}>{t('child.balance.onReview')}</Text>
+                  <Text style={styles.incomingAmount}>+{potentialPoints} {t('common.pointsShort')}</Text>
+                </View>
+              )}
+
+              {activeInv.map((inv) => {
+                const diffMs = new Date(inv.maturesAt).getTime() - Date.now();
+                const ready  = diffMs <= 0;
+                const days   = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                const hours  = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                return (
+                  <View key={inv.id} style={styles.incomingRow}>
+                    <Text style={styles.incomingIcon}>{ready ? '🎉' : '🔒'}</Text>
+                    <View style={styles.incomingLabelCol}>
+                      <Text style={styles.incomingLabel}>{inv.projectTitle}</Text>
+                      <Text style={styles.incomingMeta}>
+                        {ready
+                          ? t('missions.dashboard.ready')
+                          : t('missions.dashboard.matureIn', { days: String(days), hours: String(hours) })}
+                      </Text>
+                    </View>
+                    <Text style={[styles.incomingAmount, ready && styles.incomingAmountReady]}>
+                      +{inv.payoutAmount} {t('common.pointsShort')}
+                    </Text>
+                  </View>
+                );
+              })}
+
+              <View style={styles.incomingTotal}>
+                <Text style={styles.incomingTotalLabel}>{t('missions.incomingTotal')}</Text>
+                <Text style={styles.incomingTotalValue}>
+                  {balance + totalIncoming} {t('common.pointsShort')}
+                </Text>
+              </View>
             </View>
-          )}
-        </View>
+          );
+        })()}
 
-        {potentialPoints > 0 && (
-          <Text style={styles.projectedText}>
-            = {balance + potentialPoints} {t('common.pointsShort')} {t('child.balance.ifApproved')}
-          </Text>
-        )}
-
-        {/* Stats row */}
+        {/* Stats row 1: earned / spent / pending */}
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>+{totalEarned}</Text>
@@ -136,6 +181,32 @@ const ChildBalanceScreen = () => {
             </>
           )}
         </View>
+
+        {/* Stats row 2: investment stats (only if any investment activity) */}
+        {(totalInvested > 0 || totalPayoutReceived > 0) && (
+          <View style={[styles.statsRow, styles.statsRowInvest]}>
+            {totalInvested > 0 && (
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, styles.statInvested]}>🔒 {totalInvested}</Text>
+                <Text style={styles.statLabel}>{t('missions.statInvested')}</Text>
+              </View>
+            )}
+            {totalInvested > 0 && expectedPayout > 0 && <View style={styles.statDivider} />}
+            {expectedPayout > 0 && (
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, styles.statExpected]}>{expectedPayout}</Text>
+                <Text style={styles.statLabel}>{t('missions.statExpected')}</Text>
+              </View>
+            )}
+            {totalPayoutReceived > 0 && totalInvested > 0 && <View style={styles.statDivider} />}
+            {totalPayoutReceived > 0 && (
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, styles.statPayout]}>+{totalPayoutReceived}</Text>
+                <Text style={styles.statLabel}>{t('missions.statPayout')}</Text>
+              </View>
+            )}
+          </View>
+        )}
       </AppCard>
 
       {/* ── Focus goal progress ── */}
@@ -205,14 +276,54 @@ const ChildBalanceScreen = () => {
           {childTransactions.map((transaction) => {
             const isPositive = transaction.points > 0;
             const sign = isPositive ? '+' : '';
+            const isDeposit = transaction.type === 'investment_deposit';
+            const isPayout  = transaction.type === 'investment_payout';
+            const typeLabel = t(transactionLabelKeys[transaction.type]);
+
+            // For deposit transactions — find linked investment for countdown
+            const linkedInv = isDeposit
+              ? myInvestments.find((inv) => inv.depositTxId === transaction.id)
+              : null;
+            const matureCountdown = linkedInv && !linkedInv.claimedAt ? (() => {
+              const diffMs = new Date(linkedInv.maturesAt).getTime() - Date.now();
+              if (diffMs <= 0) return { ready: true, days: 0, hours: 0 };
+              return {
+                ready: false,
+                days: Math.floor(diffMs / (1000 * 60 * 60 * 24)),
+                hours: Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+              };
+            })() : null;
             return (
-              <AppCard key={transaction.id}>
+              <AppCard key={transaction.id} style={isDeposit ? styles.depositCard : isPayout ? styles.payoutCard : undefined}>
                 <View style={styles.header}>
                   <View style={styles.textGroup}>
                     <Text style={styles.title}>{getTransactionTitle(transaction, t)}</Text>
-                    <Text style={styles.meta}>{formatDate(transaction.createdAt, locale)}</Text>
+                    <View style={styles.metaRow}>
+                      <Text style={styles.meta}>{formatDate(transaction.createdAt, locale)}</Text>
+                      {(isDeposit || isPayout) && (
+                        <View style={[styles.typeBadge, isPayout ? styles.typeBadgePayout : styles.typeBadgeDeposit]}>
+                          <Text style={[styles.typeBadgeText, isPayout ? styles.typeBadgeTextPayout : styles.typeBadgeTextDeposit]}>
+                            {isPayout ? '🎉 ' : '🔒 '}{typeLabel}
+                          </Text>
+                        </View>
+                      )}
+                      {matureCountdown && linkedInv && (
+                        <View style={[styles.typeBadge, matureCountdown.ready ? styles.typeBadgePayout : styles.typeBadgeDeposit]}>
+                          <Text style={[styles.typeBadgeText, matureCountdown.ready ? styles.typeBadgeTextPayout : styles.typeBadgeTextDeposit]}>
+                            {matureCountdown.ready
+                              ? `🎉 ${t('missions.payoutLabel', { payout: String(linkedInv.payoutAmount) })}`
+                              : `→ ${linkedInv.payoutAmount} ${t('common.pointsShort')} ${t('missions.dashboard.matureIn', { days: String(matureCountdown.days), hours: String(matureCountdown.hours) })}`}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                  <Text style={[styles.txAmount, isPositive ? styles.txPositive : styles.txNegative]}>
+                  <Text style={[
+                    styles.txAmount,
+                    isPayout ? styles.txPayout :
+                    isDeposit ? styles.txDeposit :
+                    isPositive ? styles.txPositive : styles.txNegative,
+                  ]}>
                     {sign}{transaction.points} {t('common.pointsShort')}
                   </Text>
                 </View>
@@ -328,6 +439,76 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: -4,
   },
+  investHint: {
+    color: FP.accentText,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  // Incoming block
+  incomingBox: {
+    backgroundColor: FP.primaryLight,
+    borderRadius: 12,
+    gap: 8,
+    padding: 12,
+  },
+  incomingTitle: {
+    color: FP.primaryDark,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  incomingRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  incomingIcon: {
+    fontSize: 16,
+    width: 22,
+    textAlign: 'center',
+  },
+  incomingLabelCol: {
+    flex: 1,
+    gap: 1,
+  },
+  incomingLabel: {
+    color: FP.text,
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  incomingMeta: {
+    color: FP.textSub,
+    fontSize: 12,
+  },
+  incomingAmount: {
+    color: FP.primaryDark,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  incomingAmountReady: {
+    color: FP.primary,
+  },
+  incomingTotal: {
+    alignItems: 'center',
+    borderTopColor: FP.primaryBorder,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 8,
+    marginTop: 2,
+  },
+  incomingTotalLabel: {
+    color: FP.primaryDark,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  incomingTotalValue: {
+    color: FP.primaryDark,
+    fontSize: 18,
+    fontWeight: '900',
+  },
   statsRow: {
     borderTopColor: FP.border,
     borderTopWidth: 1,
@@ -360,6 +541,24 @@ const styles = StyleSheet.create({
   },
   statPending: {
     color: FP.accentText,
+  },
+  statsRowInvest: {
+    borderTopColor: FP.accentLight,
+    backgroundColor: FP.accentLight,
+    borderRadius: 10,
+    marginTop: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderTopWidth: 0,
+  },
+  statInvested: {
+    color: FP.accentText,
+  },
+  statExpected: {
+    color: FP.accentDark,
+  },
+  statPayout: {
+    color: FP.primary,
   },
   // Goal progress
   goalTitle: {
@@ -445,6 +644,48 @@ const styles = StyleSheet.create({
   },
   txNegative: {
     color: FP.red,
+  },
+  txDeposit: {
+    color: FP.accentDark,
+  },
+  txPayout: {
+    color: FP.primary,
+  },
+  // Investment transaction cards
+  depositCard: {
+    borderLeftWidth: 3,
+    borderLeftColor: FP.accent,
+  },
+  payoutCard: {
+    borderLeftWidth: 3,
+    borderLeftColor: FP.primary,
+  },
+  metaRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  typeBadge: {
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  typeBadgeDeposit: {
+    backgroundColor: FP.accentLight,
+  },
+  typeBadgePayout: {
+    backgroundColor: FP.primaryLight,
+  },
+  typeBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  typeBadgeTextDeposit: {
+    color: FP.accentText,
+  },
+  typeBadgeTextPayout: {
+    color: FP.primaryDark,
   },
   // Cards
   header: {

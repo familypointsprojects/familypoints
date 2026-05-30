@@ -12,10 +12,12 @@ export type CreateTaskPayload = Pick<
   'family_id' | 'child_id' | 'title' | 'description' | 'points' | 'created_by'
 > & {
   status?: TaskRow['status'];
+  is_daily?: boolean;
+  available_days?: string[];
 };
 
 export type UpdateTaskPayload = Partial<
-  Pick<TaskRow, 'title' | 'description' | 'points' | 'status' | 'child_id'>
+  Pick<TaskRow, 'title' | 'description' | 'points' | 'status' | 'child_id' | 'is_daily' | 'available_days'>
 >;
 
 export type CreateTaskSubmissionPayload = Pick<
@@ -31,10 +33,10 @@ export type CreateRewardPayload = Pick<
   RewardRow,
   'family_id' | 'title' | 'price' | 'type' | 'created_by'
 > &
-  Partial<Pick<RewardRow, 'is_active'>>;
+  Partial<Pick<RewardRow, 'is_active' | 'is_daily_reward' | 'available_days' | 'requires_daily_quests_completed'>>;
 
 export type UpdateRewardPayload = Partial<
-  Pick<RewardRow, 'title' | 'price' | 'type' | 'is_active'>
+  Pick<RewardRow, 'title' | 'price' | 'type' | 'is_active' | 'is_daily_reward' | 'available_days' | 'requires_daily_quests_completed'>
 >;
 
 export type CreateWishPayload = Pick<WishRow, 'child_id' | 'title' | 'price'>;

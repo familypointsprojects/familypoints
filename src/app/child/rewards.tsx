@@ -25,6 +25,7 @@ import {
   moveFavoriteGoalsToFront,
 } from '@/shared/utils/favoriteGoals';
 import { getBalance, getProgressPercent } from '@/shared/utils/points';
+import { getDailyRewardLockReason, isDailyRewardAvailableToday } from '@/shared/utils/rewards';
 import { getVisibleWishes } from '@/shared/utils/wishes';
 
 type ChildRewardsTab = 'rewards' | 'wishes' | 'received';
@@ -79,6 +80,8 @@ const ChildRewardsScreen = () => {
     rewardRedemptions,
     rewards,
     setFavoriteGoal,
+    taskSubmissions,
+    tasks,
     wishes,
   } = useFamilyPoints();
   const [activeTab, setActiveTab] = useState<ChildRewardsTab>('rewards');
@@ -104,7 +107,12 @@ const ChildRewardsScreen = () => {
   const availableRewards = rewards.filter(
     (reward) =>
       reward.isActive !== false &&
+      !reward.isDailyReward &&
       !openRewardRequests.some((redemption) => redemption.rewardId === reward.id),
+  );
+  // Daily rewards: active + available today (regardless of lock state — shown with lock indicator)
+  const dailyRewards = rewards.filter(
+    (reward) => reward.isDailyReward && isDailyRewardAvailableToday(reward),
   );
   const visibleWishes = getVisibleWishes(wishes, rewards, rewardRedemptions);
   const childWishes = visibleWishes.filter(
@@ -299,6 +307,63 @@ const ChildRewardsScreen = () => {
 
       {activeTab === 'rewards' && (
         <>
+          {/* ── Daily Rewards ── */}
+          {dailyRewards.length > 0 && (
+            <>
+              <SectionTitle title="Ежедневные награды" />
+              {dailyRewards.map((reward) => {
+                const lockReason = getDailyRewardLockReason(
+                  reward,
+                  balance,
+                  tasks,
+                  taskSubmissions,
+                  activeChildId,
+                );
+                const rewardTitle = getRewardTitle(reward, t);
+                const isLocked = lockReason !== null;
+
+                return (
+                  <AppCard key={reward.id} style={styles.dailyRewardCard}>
+                    <View style={styles.header}>
+                      <View style={styles.titleGroup}>
+                        <View style={styles.dailyRewardTitleRow}>
+                          <Text style={styles.dailyRewardEmoji}>🌅</Text>
+                          <Text style={styles.title}>{rewardTitle}</Text>
+                        </View>
+                        <StatusBadge label={t(rewardTypeLabelKeys[reward.type])} />
+                      </View>
+                      <PointsBadge points={reward.price} />
+                    </View>
+
+                    {lockReason === 'daily_quests_incomplete' && (
+                      <Text style={styles.lockNote}>
+                        🔒 Сначала выполни все сегодняшние квесты
+                      </Text>
+                    )}
+                    {lockReason === 'not_enough_points' && (
+                      <Text style={styles.lockNote}>
+                        🔒 Недостаточно баллов
+                      </Text>
+                    )}
+
+                    <AppButton
+                      title={
+                        lockReason === 'daily_quests_incomplete'
+                          ? '🔒 Сначала выполни квесты'
+                          : lockReason === 'not_enough_points'
+                            ? t('common.notEnoughPoints')
+                            : t('common.redeem')
+                      }
+                      onPress={() => !isLocked && handleRedeem(reward.id, rewardTitle)}
+                      disabled={isLocked}
+                      variant={isLocked ? 'secondary' : 'primary'}
+                    />
+                  </AppCard>
+                );
+              })}
+            </>
+          )}
+
           <SectionTitle title={t('common.availableRewards')} />
           {sortedAvailableRewards.map((reward) => {
             const canRedeem = balance >= reward.price;
@@ -515,6 +580,23 @@ const styles = StyleSheet.create({
     color: '#12314A',
     fontSize: 42,
     fontWeight: '900',
+  },
+  dailyRewardCard: {
+    borderColor: '#F5B225',
+    borderWidth: 1.5,
+  },
+  dailyRewardTitleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
+  },
+  dailyRewardEmoji: {
+    fontSize: 16,
+  },
+  lockNote: {
+    color: '#6B7B86',
+    fontSize: 13,
+    lineHeight: 19,
   },
   celebrationOverlay: {
     alignItems: 'center',
