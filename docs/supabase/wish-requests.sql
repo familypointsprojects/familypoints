@@ -31,6 +31,7 @@ as $$
 declare
   v_wish wishes%rowtype;
   v_membership family_members%rowtype;
+  v_reward_id uuid;
 begin
   if price_input <= 0 then
     return json_build_object('error', 'Price must be greater than 0');
@@ -68,8 +69,26 @@ begin
       updated_at = now()
   where id = wish_id_input;
 
-  insert into rewards (family_id, title, price, type, is_active, created_by)
-  values (v_membership.family_id, v_wish.title, price_input, 'wish', true, profile_id_input);
+  select id into v_reward_id
+  from rewards
+  where family_id = v_membership.family_id
+    and type = 'wish'
+    and lower(trim(title)) = lower(trim(v_wish.title))
+    and (child_id is null or child_id = v_wish.child_id)
+  order by case when child_id = v_wish.child_id then 0 else 1 end
+  limit 1;
+
+  if found then
+    update rewards
+    set child_id = v_wish.child_id,
+        price = price_input,
+        is_active = true,
+        updated_at = now()
+    where id = v_reward_id;
+  else
+    insert into rewards (family_id, child_id, title, price, type, is_active, created_by)
+    values (v_membership.family_id, v_wish.child_id, v_wish.title, price_input, 'wish', true, profile_id_input);
+  end if;
 
   return json_build_object('ok', true);
 end;

@@ -1,12 +1,18 @@
+import * as Crypto from 'expo-crypto';
+
 import type { FamilyPointsState } from '@/shared/state/types';
+import { approveWishInState } from '@/shared/state/domainActions';
 import { getSupabaseClient, loadChildFamilyState } from '@/shared/services/supabase';
 import type { AuthSession } from '@/shared/auth/types';
 import { getBalance } from '@/shared/utils/points';
+import { normalizeLevelingState } from '@/shared/utils/leveling';
+import { getTodayDayKey } from '@/shared/utils/tasks';
 
 import {
   mapChildRowToChildProfile,
   mapFavoriteGoalRowToFavoriteGoal,
   mapPointTransactionRowToPointTransaction,
+  mapProfileRowToParentProfile,
   mapRewardRowToReward,
   mapTaskRowToTask,
   mapTaskSubmissionRowToTaskSubmission,
@@ -18,6 +24,7 @@ import type {
   FamilyMemberRow,
   FamilyRow,
   PointTransactionRow,
+  ProfileRow,
   RewardRedemptionRow,
   RewardRow,
   TaskRow,
@@ -42,6 +49,45 @@ const isMissingRelationError = (message?: string): boolean => {
   const normalizedMessage = message?.toLowerCase() ?? '';
 
   return normalizedMessage.includes('does not exist') || normalizedMessage.includes('schema cache');
+};
+
+const isMissingColumnError = (message?: string): boolean => {
+  const normalizedMessage = message?.toLowerCase() ?? '';
+
+  return (
+    normalizedMessage.includes('could not find') ||
+    normalizedMessage.includes('column') ||
+    normalizedMessage.includes('schema cache')
+  ) && (
+    normalizedMessage.includes('is_daily') ||
+    normalizedMessage.includes('available_days') ||
+    normalizedMessage.includes('is_daily_reward') ||
+    normalizedMessage.includes('requires_daily_quests_completed')
+  );
+};
+
+const createId = (): string => Crypto.randomUUID();
+const SUPABASE_WRITE_TIMEOUT_MS = 15_000;
+
+const withSupabaseTimeout = async <TValue,>(
+  promise: PromiseLike<TValue>,
+  operation: string,
+): Promise<TValue> => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(
+      () => reject(new Error(`Failed to ${operation}: Supabase did not respond in time`)),
+      SUPABASE_WRITE_TIMEOUT_MS,
+    );
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
 };
 
 const getRequiredCurrentUserId = async (): Promise<string> => {
@@ -376,6 +422,7 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
       redemptionRows,
       favoriteGoalRows,
       familyResult,
+      parentMembersResult,
     ] = await Promise.all([
       getFamilyTasks(membership.family_id),
       getChildSubmissions(childIds),
@@ -384,12 +431,24 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
       getChildPointTransactions(childIds),
       getChildRewardRedemptions(childIds),
       getChildFavoriteGoals(childIds),
-      supabase.from('families').select('name').eq('id', membership.family_id).single(),
+      supabase.from('families').select('name, created_by').eq('id', membership.family_id).single(),
+      supabase
+        .from('family_members')
+        .select('profile_id, profiles(id, name, role, has_full_permissions)')
+        .eq('family_id', membership.family_id)
+        .eq('role', 'parent'),
     ]);
 
-    const familyName = (familyResult.data as FamilyRow | null)?.name;
+    const familyRow = familyResult.data as (FamilyRow & { created_by: string }) | null;
+    const familyName = familyRow?.name;
+    const ownerId = familyRow?.created_by;
 
-    return {
+    const parentProfiles = ((parentMembersResult.data ?? []) as { profile_id: string; profiles: unknown }[])
+      .map((m) => (Array.isArray(m.profiles) ? m.profiles[0] : m.profiles) as ProfileRow | null)
+      .filter((p): p is ProfileRow => p !== null && p.role === 'parent')
+      .map((p) => mapProfileRowToParentProfile(p, ownerId));
+
+    return normalizeLevelingState({
       tasks: taskRows.map(mapTaskRowToTask),
       taskSubmissions: submissionRows.map(mapTaskSubmissionRowToTaskSubmission),
       rewards: rewardRows.map(mapRewardRowToReward),
@@ -404,37 +463,85 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
       wishes: wishRows.map(mapWishRowToWish),
       favoriteGoals: favoriteGoalRows.map(mapFavoriteGoalRowToFavoriteGoal),
       pointTransactions: transactionRows.map(mapPointTransactionRowToPointTransaction),
+      childProgress: [],
+      childSkillUnlocks: [],
+      childAchievements: [],
       redeemedRewardIds: redemptionRows
         .filter((redemption) => redemption.status === 'requested' || redemption.status === 'approved')
         .map((redemption) => redemption.reward_id),
       children: children.map(mapChildRowToChildProfile),
+      parents: parentProfiles,
       activeFamilyId: membership.family_id,
       activeParentId: data.user.id,
       activeChildId: childIds[0],
       familyName,
-    };
+    });
   },
-  createTask: async (input) => {
+  createTask: async (input, context) => {
     const supabase = getSupabaseClient();
-    const userId = await getRequiredCurrentUserId();
-    const membership = await getRequiredFamilyMembership();
-    const { error } = await supabase.from('tasks').insert({
-      family_id: membership.family_id,
-      child_id: null,
+    const userId = context.parentId || context.session?.profileId;
+    const familyId = context.familyId || context.state.activeFamilyId;
+
+    if (!userId || !familyId) {
+      throw new Error('Family data is still loading. Please try again in a moment.');
+    }
+
+    const taskId = createId();
+    const basePayload = {
+      id: taskId,
+      family_id: familyId,
+      child_id: input.childId ?? null,
       title: input.title.trim(),
       description: input.description.trim(),
       points: input.points,
       status: 'active',
+      created_by: userId,
+    };
+    const dailyPayload = {
+      ...basePayload,
       is_daily: input.isDaily ?? false,
       available_days: input.availableDays ?? [],
-      created_by: userId,
+    };
+    const syncTask = async () => {
+      const firstResult = await withSupabaseTimeout(
+        supabase.from('tasks').insert(dailyPayload),
+        'create task',
+      );
+      const result = firstResult.error && isMissingColumnError(firstResult.error.message)
+        ? await withSupabaseTimeout(
+            supabase.from('tasks').insert(basePayload),
+            'create task without daily fields',
+          )
+        : firstResult;
+
+      if (result.error) {
+        throwSupabaseError('create task', result.error.message);
+      }
+    };
+
+    syncTask().catch((error: unknown) => {
+      console.warn('Failed to sync created task to Supabase', error);
     });
 
-    if (error) {
-      throwSupabaseError('create task', error.message);
-    }
-
-    return reloadState();
+    return {
+      ...context.state,
+      activeFamilyId: context.state.activeFamilyId ?? familyId,
+      activeParentId: context.state.activeParentId ?? userId,
+      tasks: [
+        {
+          id: taskId,
+          childId: input.childId,
+          title: input.title.trim(),
+          description: input.description.trim(),
+          points: input.points,
+          status: 'active' as const,
+          isDaily: input.isDaily ?? false,
+          availableDays: input.availableDays ?? [],
+          createdBy: userId,
+        },
+        ...context.state.tasks,
+      ],
+    };
   },
   updateTask: async (input) => {
     const supabase = getSupabaseClient();
@@ -445,6 +552,7 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
         description: input.description.trim(),
         points: input.points,
         status: input.status,
+        child_id: input.childId ?? null,
         is_daily: input.isDaily ?? false,
         available_days: input.availableDays ?? [],
         updated_at: new Date().toISOString(),
@@ -491,6 +599,7 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
       .from('rewards')
       .insert({
         family_id: membership.family_id,
+        ...(input.childId ? { child_id: input.childId } : {}),
         title: input.title.trim(),
         price: input.price,
         type: input.type,
@@ -509,6 +618,55 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
 
     return reloadState();
   },
+  updateReward: async (input, context) => {
+    const supabase = getSupabaseClient();
+    const updatePayload = {
+      child_id: input.childId ?? null,
+      title: input.title.trim(),
+      price: input.price,
+      type: input.type,
+      is_active: input.isActive ?? true,
+      is_daily_reward: input.isDailyReward ?? false,
+      available_days: input.availableDays ?? [],
+      requires_daily_quests_completed: input.requiresDailyQuestsCompleted ?? false,
+      updated_at: new Date().toISOString(),
+    };
+    const updateReward = (payload: Partial<typeof updatePayload>) =>
+      supabase
+        .from('rewards')
+        .update(payload)
+        .eq('id', input.rewardId);
+    let { error } = await updateReward(updatePayload);
+
+    if (error && error.message.includes("'child_id' column")) {
+      const {
+        child_id: _childId,
+        ...payloadWithoutChildId
+      } = updatePayload;
+      const retryResult = await updateReward(payloadWithoutChildId);
+      error = retryResult.error;
+    }
+
+    if (error) {
+      throwSupabaseError('update reward', error.message);
+    }
+
+    const { data: updatedReward, error: verifyError } = await supabase
+      .from('rewards')
+      .select('id, price')
+      .eq('id', input.rewardId)
+      .single();
+
+    if (verifyError) {
+      throwSupabaseError('verify reward update', verifyError.message);
+    }
+
+    if (!updatedReward || updatedReward.price !== input.price) {
+      throwSupabaseError('verify reward update', 'Supabase did not persist the new reward price');
+    }
+
+    return reloadState(context.session);
+  },
   setRewardActive: async (input) => {
     const supabase = getSupabaseClient();
     const { error } = await supabase
@@ -526,34 +684,64 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
   },
   submitTask: async (input, context) => {
     const supabase = getSupabaseClient();
+    const proofNote = input.proofNote?.trim() || null;
 
     if (context.session?.role === 'child') {
-      const { data, error } = await supabase.rpc('submit_child_task', {
-        child_id_input: input.childId,
-        profile_id_input: context.session.profileId,
-        proof_note_input: input.proofNote?.trim() || null,
-        task_id_input: input.taskId,
-      });
+      try {
+        const { data, error } = await withSupabaseTimeout(
+          supabase.rpc('submit_child_task', {
+            child_id_input: input.childId,
+            profile_id_input: context.session.profileId,
+            proof_note_input: proofNote,
+            task_id_input: input.taskId,
+          }),
+          'submit task',
+        );
 
-      if (error) {
-        throwSupabaseError('submit task', error.message);
-      }
+        if (error) {
+          throw new Error(error.message);
+        }
 
-      const result = data as { error?: string } | null;
+        const result = data as { error?: string } | null;
 
-      if (result?.error) {
-        throwSupabaseError('submit task', result.error);
+        if (result?.error) {
+          throw new Error(result.error);
+        }
+      } catch (error) {
+        console.warn('Child task RPC failed, falling back to direct submission insert', error);
+        const { error: insertError } = await withSupabaseTimeout(
+          supabase.from('task_submissions').insert({
+            task_id: input.taskId,
+            child_id: input.childId,
+            status: 'pending',
+            photo_url: proofNote,
+          }),
+          'submit task directly',
+        );
+
+        if (insertError) {
+          throwSupabaseError('submit task', insertError.message);
+        }
       }
 
       return reloadState(context.session);
     }
 
-    const { error } = await supabase.from('task_submissions').insert({
-      task_id: input.taskId,
-      child_id: input.childId,
-      status: 'pending',
-      photo_url: input.proofNote?.trim() || null,
-    });
+    const task = context.state.tasks.find((item) => item.id === input.taskId);
+
+    if (!task || (task.childId && task.childId !== input.childId)) {
+      return reloadState();
+    }
+
+    const { error } = await withSupabaseTimeout(
+      supabase.from('task_submissions').insert({
+        task_id: input.taskId,
+        child_id: input.childId,
+        status: 'pending',
+        photo_url: proofNote,
+      }),
+      'submit task',
+    );
 
     if (error) {
       throwSupabaseError('submit task', error.message);
@@ -693,11 +881,24 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
     const supabase = getSupabaseClient();
 
     if (context.session?.role === 'child') {
-      const { data, error } = await supabase.rpc('create_child_reward_redemption', {
-        child_id_input: input.childId,
-        profile_id_input: context.session.profileId,
-        reward_id_input: input.rewardId,
-      });
+      const reward = context.state.rewards.find((item) => item.id === input.rewardId);
+      const rpcName = reward?.isDailyReward
+        ? 'purchase_daily_reward'
+        : 'create_child_reward_redemption';
+      const rpcParams = reward?.isDailyReward
+        ? {
+            child_id_input: input.childId,
+            day_of_week: getTodayDayKey(),
+            profile_id_input: context.session.profileId,
+            reward_id_input: input.rewardId,
+          }
+        : {
+            child_id_input: input.childId,
+            profile_id_input: context.session.profileId,
+            reward_id_input: input.rewardId,
+          };
+
+      const { data, error } = await supabase.rpc(rpcName, rpcParams);
 
       if (error) {
         throwSupabaseError('redeem reward', error.message);
@@ -721,7 +922,9 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
         (redemption.status === 'requested' || redemption.status === 'approved'),
     );
 
-    if (!reward || reward.isActive === false || balance < reward.price || hasOpenRequest) {
+    const rewardIsAvailableForChild = !reward?.childId || reward.childId === input.childId;
+
+    if (!reward || !rewardIsAvailableForChild || reward.isActive === false || balance < reward.price || hasOpenRequest) {
       return reloadState();
     }
 
@@ -745,6 +948,7 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
       {
         id: reward.id,
         family_id: context.familyId,
+        child_id: reward.childId ?? null,
         title: reward.title ?? '',
         price: reward.price,
         type: reward.type,
@@ -850,6 +1054,9 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
     }
 
     return reloadState(context.session);
+  },
+  unlockSkill: async () => {
+    throw createSupabaseServiceError('unlock skill');
   },
   approveRewardRedemption: async (input, context) => {
     const supabase = getSupabaseClient();
@@ -1011,7 +1218,7 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
 
     return reloadState();
   },
-  createChild: async (input) => {
+  createChild: async (input, context) => {
     const supabase = getSupabaseClient();
     const userId = await getRequiredCurrentUserId();
 
@@ -1023,18 +1230,15 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
       familyId = existingMembership.family_id;
     } else {
       // Создаём семью (первый ребёнок)
+      familyId = createId();
       const name = (input.familyName ?? 'Моя семья').trim();
-      const { data: familyData, error: familyError } = await supabase
+      const { error: familyError } = await supabase
         .from('families')
-        .insert({ name, created_by: userId })
-        .select('id')
-        .single();
+        .insert({ id: familyId, name, created_by: userId });
 
-      if (familyError || !familyData) {
+      if (familyError) {
         throwSupabaseError('create family', familyError?.message ?? 'unknown');
       }
-
-      familyId = (familyData as { id: string }).id;
 
       // Добавляем родителя в family_members
       const { error: parentMemberError } = await supabase
@@ -1046,36 +1250,34 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
       }
     }
 
-    // Создаём профиль ребёнка
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .insert({ name: input.name.trim(), role: 'child' })
-      .select('id')
-      .single();
+    // Parent RLS can insert child profiles, but may not be allowed to select them back.
+    // Generate ids on the client so creation does not depend on insert(...).select().
+    const profileId = createId();
+    const childId = createId();
 
-    if (profileError || !profileData) {
+    // Создаём профиль ребёнка
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({ id: profileId, name: input.name.trim(), role: 'child' });
+
+    if (profileError) {
       throwSupabaseError('create child profile', profileError?.message ?? 'unknown');
     }
 
-    const profileId = (profileData as { id: string }).id;
-
     // Создаём запись в children
-    const { data: childData, error: childError } = await supabase
+    const { error: childError } = await supabase
       .from('children')
       .insert({
+        id: childId,
         family_id: familyId,
         profile_id: profileId,
         display_name: input.name.trim(),
         avatar_color: input.avatarColor,
-      })
-      .select('id')
-      .single();
+      });
 
-    if (childError || !childData) {
+    if (childError) {
       throwSupabaseError('create child', childError?.message ?? 'unknown');
     }
-
-    const childId = (childData as { id: string }).id;
 
     // Добавляем ребёнка в family_members
     const { error: memberError } = await supabase
@@ -1086,8 +1288,106 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
       throwSupabaseError('add child to family', memberError.message);
     }
 
+    const childName = input.name.trim();
+    const nextState = normalizeLevelingState({
+      ...context.state,
+      activeFamilyId: context.state.activeFamilyId ?? familyId,
+      activeParentId: context.state.activeParentId ?? userId,
+      activeChildId: context.state.activeChildId ?? childId,
+      familyName: context.state.familyName ?? input.familyName?.trim(),
+      children: [
+        ...context.state.children.filter((child) => child.id !== childId),
+        {
+          id: childId,
+          name: childName,
+          role: 'child' as const,
+          avatarColor: input.avatarColor,
+        },
+      ],
+    });
+
+    return { state: nextState, childId };
+  },
+  createParent: async (input) => {
+    const supabase = getSupabaseClient();
+    const userId = await getRequiredCurrentUserId();
+
+    let familyId: string;
+    const existingMembership = await getFirstFamilyMembership(userId);
+
+    if (existingMembership) {
+      familyId = existingMembership.family_id;
+    } else {
+      familyId = createId();
+      const fname = (input.familyName ?? 'Моя семья').trim();
+      const { error: familyError } = await supabase
+        .from('families')
+        .insert({ id: familyId, name: fname, created_by: userId });
+      if (familyError) throwSupabaseError('create family', familyError.message);
+
+      const { error: memberError } = await supabase
+        .from('family_members')
+        .insert({ family_id: familyId, profile_id: userId, role: 'parent' });
+      if (memberError) throwSupabaseError('add user to family', memberError.message);
+    }
+
+    const profileId = createId();
+
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({ id: profileId, name: input.name.trim(), role: 'parent', has_full_permissions: input.hasFullPermissions });
+
+    if (profileError) {
+      throwSupabaseError('create parent profile', profileError?.message ?? 'unknown');
+    }
+
+    const { error: memberError } = await supabase
+      .from('family_members')
+      .insert({ family_id: familyId, profile_id: profileId, role: 'parent' });
+
+    if (memberError) {
+      throwSupabaseError('add parent to family', memberError.message);
+    }
+
     const state = await reloadState();
-    return { state, childId };
+    return { state, parentId: profileId };
+  },
+  deleteParent: async (input) => {
+    const supabase = getSupabaseClient();
+
+    const { error: memberError } = await supabase
+      .from('family_members')
+      .delete()
+      .eq('profile_id', input.parentId);
+
+    if (memberError) {
+      throwSupabaseError('remove parent from family', memberError.message);
+    }
+
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', input.parentId);
+
+    if (profileError) {
+      throwSupabaseError('delete parent profile', profileError.message);
+    }
+
+    return reloadState();
+  },
+  updateParent: async (input) => {
+    const supabase = getSupabaseClient();
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ name: input.name.trim(), has_full_permissions: input.hasFullPermissions })
+      .eq('id', input.parentId);
+
+    if (error) {
+      throwSupabaseError('update parent', error.message);
+    }
+
+    return reloadState();
   },
   deleteChild: async (input) => {
     const supabase = getSupabaseClient();
@@ -1150,12 +1450,7 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
 
     const nextState = await reloadState(context.session);
 
-    return {
-      ...nextState,
-      wishes: nextState.wishes.map((wish) =>
-        wish.id === input.wishId ? { ...wish, price: input.price, status: 'approved' } : wish,
-      ),
-    };
+    return approveWishInState(nextState, input);
   },
   rejectWish: async (input, context) => {
     const supabase = getSupabaseClient();

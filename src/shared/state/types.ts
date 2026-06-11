@@ -1,7 +1,12 @@
 import type { AuthSession } from '@/shared/auth/types';
 import type {
   ChildProfile,
+  ChildAchievementProgress,
+  ChildProgress,
+  ChildSkillId,
+  ChildSkillUnlock,
   DayOfWeek,
+  ParentProfile,
   PointTransaction,
   Reward,
   RewardRedemption,
@@ -20,8 +25,12 @@ export type FamilyPointsState = {
   wishes: Wish[];
   favoriteGoals: FavoriteGoal[];
   pointTransactions: PointTransaction[];
+  childProgress: ChildProgress[];
+  childSkillUnlocks: ChildSkillUnlock[];
+  childAchievements: ChildAchievementProgress[];
   redeemedRewardIds: string[];
   children: ChildProfile[];
+  parents: ParentProfile[];
   activeFamilyId?: string;
   activeParentId?: string;
   activeChildId?: string;
@@ -40,6 +49,7 @@ export type CreateTaskInput = {
   title: string;
   description: string;
   points: number;
+  childId?: string;
   isDaily?: boolean;
   availableDays?: DayOfWeek[];
 };
@@ -50,6 +60,7 @@ export type UpdateTaskInput = {
   description: string;
   points: number;
   status: TaskStatus;
+  childId?: string;
   isDaily?: boolean;
   availableDays?: DayOfWeek[];
 };
@@ -67,9 +78,15 @@ export type CreateRewardInput = {
   title: string;
   price: number;
   type: RewardType;
+  childId?: string;
   isDailyReward?: boolean;
   availableDays?: DayOfWeek[];
   requiresDailyQuestsCompleted?: boolean;
+};
+
+export type UpdateRewardInput = CreateRewardInput & {
+  rewardId: string;
+  isActive?: boolean;
 };
 
 export type SetRewardActiveInput = {
@@ -131,8 +148,29 @@ export type CreateChildInput = {
   familyName?: string;
 };
 
+export type CreateParentInput = {
+  name: string;
+  hasFullPermissions: boolean;
+  familyName?: string;
+};
+
+export type DeleteParentInput = {
+  parentId: string;
+};
+
+export type UpdateParentInput = {
+  parentId: string;
+  name: string;
+  hasFullPermissions: boolean;
+};
+
 export type UpdateFamilyNameInput = {
   familyName: string;
+};
+
+export type UnlockSkillInput = {
+  childId: string;
+  skillId: ChildSkillId;
 };
 
 export type FamilyPointsServiceContext = {

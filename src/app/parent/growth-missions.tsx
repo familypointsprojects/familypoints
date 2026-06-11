@@ -1,21 +1,27 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useLanguage } from '@/shared/i18n';
+import { supabaseGrowthMissionsService } from '@/shared/services/growthMissions';
+import { useFamilyPoints } from '@/shared/state';
 import { useGrowthMissions } from '@/shared/state/GrowthMissionsProvider';
-import { AppButton, AppCard, AppScreen, SectionTitle, StatusBadge } from '@/shared/ui';
-import type { InvestmentProject } from '@/shared/types/family';
+import { AppButton, AppCard, AppScreen, ParentChildFilter, SectionTitle, StatusBadge } from '@/shared/ui';
+import type { ChildInvestment, InvestmentProject } from '@/shared/types/family';
+import { getMissionCountdown } from '@/shared/utils/growthMissions';
 
 const MissionCard = ({
+  childInvestments,
   project,
   onArchive,
 }: {
+  childInvestments?: ChildInvestment[];
   project: InvestmentProject;
   onArchive: (id: string) => void;
 }) => {
   const { t } = useLanguage();
   const isActive = project.status === 'active';
+  const projectInvestments = childInvestments?.filter((investment) => investment.projectId === project.id);
 
   return (
     <AppCard>
@@ -64,14 +70,57 @@ const MissionCard = ({
           />
         </View>
       )}
+      {projectInvestments && (
+        <View style={styles.childInvestments}>
+          {projectInvestments.length === 0 ? (
+            <Text style={styles.childInvestmentEmpty}>{t('missions.childNoInvestments')}</Text>
+          ) : (
+            projectInvestments.map((investment) => {
+              const countdown = getMissionCountdown(investment.maturesAt);
+              const statusLabel = investment.claimedAt
+                ? t('missions.claimedLabel')
+                : countdown.ready
+                  ? t('missions.readyToClaim')
+                  : countdown.days > 0 || countdown.hours > 0
+                    ? t('missions.dashboard.matureIn', {
+                        days: String(countdown.days),
+                        hours: String(countdown.hours),
+                      })
+                    : t('missions.dashboard.matureInMinutes', {
+                        minutes: String(countdown.minutes),
+                      });
+
+              return (
+                <View key={investment.id} style={styles.childInvestmentRow}>
+                  <View style={styles.childInvestmentInfo}>
+                    <Text style={styles.childInvestmentTitle}>
+                      {t('missions.statInvested')}: {investment.amount}
+                    </Text>
+                    <Text style={styles.childInvestmentMeta}>
+                      {t('missions.statExpected')}: {investment.payoutAmount}
+                    </Text>
+                  </View>
+                  <StatusBadge
+                    label={statusLabel}
+                    tone={investment.claimedAt ? 'success' : countdown.ready ? 'warning' : 'muted'}
+                  />
+                </View>
+              );
+            })
+          )}
+        </View>
+      )}
     </AppCard>
   );
 };
 
 const ParentGrowthMissionsScreen = () => {
   const { t } = useLanguage();
+  const { children } = useFamilyPoints();
   const { projects, archiveMission, reload } = useGrowthMissions();
   const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null);
+  const [selectedChildId, setSelectedChildId] = useState<string | undefined>();
+  const [selectedChildInvestments, setSelectedChildInvestments] = useState<ChildInvestment[]>([]);
   const [showArchived, setShowArchived] = useState(false);
 
   useFocusEffect(useCallback(() => { reload(); }, [reload]));
@@ -79,6 +128,33 @@ const ParentGrowthMissionsScreen = () => {
   const active   = projects.filter((p) => p.status === 'active');
   const archived = projects.filter((p) => p.status === 'archived');
   const visible  = showArchived ? archived : active;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!selectedChildId) {
+      setSelectedChildInvestments([]);
+      return undefined;
+    }
+
+    supabaseGrowthMissionsService
+      .fetchChildInvestments(selectedChildId)
+      .then((investments) => {
+        if (isMounted) {
+          setSelectedChildInvestments(investments);
+        }
+      })
+      .catch((error: unknown) => {
+        console.warn('[ParentGrowthMissions] child investments filter failed', error);
+        if (isMounted) {
+          setSelectedChildInvestments([]);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedChildId]);
 
   const handleArchiveConfirm = async () => {
     if (!confirmArchiveId) return;
@@ -88,6 +164,12 @@ const ParentGrowthMissionsScreen = () => {
 
   return (
     <AppScreen title={t('missions.title')} subtitle={t('missions.subtitle')}>
+      <ParentChildFilter
+        childrenList={children}
+        selectedChildId={selectedChildId}
+        onChange={setSelectedChildId}
+      />
+
       <SectionTitle
         title={showArchived ? t('missions.archived') : t('missions.active')}
         action={
@@ -116,6 +198,7 @@ const ParentGrowthMissionsScreen = () => {
 
       {visible.map((project) => (
         <MissionCard
+          childInvestments={selectedChildId ? selectedChildInvestments : undefined}
           key={project.id}
           project={project}
           onArchive={(id) => setConfirmArchiveId(id)}
@@ -181,6 +264,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  childInvestmentEmpty: {
+    color: '#6B7B86',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  childInvestmentInfo: {
+    flex: 1,
+    gap: 3,
+  },
+  childInvestmentMeta: {
+    color: '#6B7B86',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  childInvestmentRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'space-between',
+  },
+  childInvestmentTitle: {
+    color: '#12314A',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  childInvestments: {
+    borderTopColor: '#ECE3CF',
+    borderTopWidth: 1,
+    gap: 8,
+    paddingTop: 12,
   },
   metaText: {
     backgroundColor: '#EDF6FF',

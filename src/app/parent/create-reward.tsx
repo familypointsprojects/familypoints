@@ -6,7 +6,8 @@ import { FP } from '@/constants/theme';
 import { TranslationKey, useLanguage } from '@/shared/i18n';
 import { useFamilyPoints } from '@/shared/state';
 import type { DayOfWeek, RewardType } from '@/shared/types/family';
-import { AppButton, AppCard, AppScreen, AppTextInput, SectionTitle } from '@/shared/ui';
+import { AppButton, AppCard, AppScreen, AppTextInput, ParentChildFilter, SectionTitle } from '@/shared/ui';
+import { getRewardPriceSuggestions } from '@/shared/utils/pricingGuidance';
 
 const rewardTypes: RewardType[] = ['screen_time', 'experience', 'toy', 'treat', 'wish'];
 
@@ -30,10 +31,11 @@ const ALL_DAYS: { key: DayOfWeek; label: string }[] = [
 
 const CreateRewardScreen = () => {
   const { t } = useLanguage();
-  const { createReward } = useFamilyPoints();
+  const { children, createReward, rewards, tasks } = useFamilyPoints();
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
   const [type, setType] = useState<RewardType>('experience');
+  const [selectedChildId, setSelectedChildId] = useState<string | undefined>();
   const [isDailyReward, setIsDailyReward] = useState(false);
   const [availableDays, setAvailableDays] = useState<DayOfWeek[]>([]);
   const [requiresDailyQuests, setRequiresDailyQuests] = useState(false);
@@ -41,6 +43,13 @@ const CreateRewardScreen = () => {
 
   const priceValue = Number(price);
   const isValid = title.trim().length > 0 && priceValue > 0;
+  const priceSuggestions = getRewardPriceSuggestions({
+    rewardType: type,
+    isDailyReward,
+    childId: selectedChildId,
+    rewards,
+    tasks,
+  });
 
   const toggleDay = (day: DayOfWeek) => {
     setAvailableDays((prev) =>
@@ -60,6 +69,7 @@ const CreateRewardScreen = () => {
         title: title.trim(),
         price: priceValue,
         type,
+        childId: selectedChildId,
         isDailyReward,
         availableDays: isDailyReward ? availableDays : [],
         requiresDailyQuestsCompleted: isDailyReward ? requiresDailyQuests : false,
@@ -83,13 +93,6 @@ const CreateRewardScreen = () => {
           onChangeText={setTitle}
           placeholder={t('parent.rewards.titlePlaceholder')}
         />
-        <AppTextInput
-          label={t('common.price')}
-          value={price}
-          onChangeText={(value) => setPrice(value.replace(/[^\d]/g, ''))}
-          placeholder={t('parent.rewards.pricePlaceholder')}
-          keyboardType="number-pad"
-        />
         <View style={styles.typeGrid}>
           {rewardTypes.map((item) => (
             <AppButton
@@ -101,6 +104,13 @@ const CreateRewardScreen = () => {
             />
           ))}
         </View>
+
+        <ParentChildFilter
+          childrenList={children}
+          label={t('parent.assignment.child')}
+          selectedChildId={selectedChildId}
+          onChange={setSelectedChildId}
+        />
 
         {/* Daily reward toggle */}
         <View style={styles.divider} />
@@ -147,6 +157,42 @@ const CreateRewardScreen = () => {
             </Pressable>
           </>
         )}
+
+        <AppTextInput
+          label={t('common.price')}
+          value={price}
+          onChangeText={(value) => setPrice(value.replace(/[^\d]/g, ''))}
+          placeholder={t('parent.rewards.pricePlaceholder')}
+          keyboardType="number-pad"
+        />
+        <View style={styles.suggestionRow}>
+          {priceSuggestions.map((suggestion) => (
+            <Pressable
+              accessibilityRole="button"
+              key={suggestion.label}
+              onPress={() => setPrice(String(suggestion.value))}
+              style={({ pressed }) => [
+                styles.suggestionChip,
+                priceValue === suggestion.value && styles.suggestionChipSelected,
+                pressed && styles.suggestionChipPressed,
+              ]}>
+              <Text
+                style={[
+                  styles.suggestionValue,
+                  priceValue === suggestion.value && styles.suggestionValueSelected,
+                ]}>
+                {suggestion.label}: {suggestion.value}
+              </Text>
+              <Text
+                style={[
+                  styles.suggestionNote,
+                  priceValue === suggestion.value && styles.suggestionNoteSelected,
+                ]}>
+                {suggestion.note}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
 
         <AppButton
           title={isSaving ? t('common.saving') : t('parent.rewards.create')}
@@ -237,6 +283,47 @@ const styles = StyleSheet.create({
     color: FP.ink,
     fontSize: 15,
     fontWeight: '600',
+  },
+  suggestionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  suggestionChip: {
+    backgroundColor: FP.primaryLight,
+    borderColor: FP.primaryBorder,
+    borderRadius: 8,
+    borderWidth: 1,
+    flexGrow: 1,
+    minWidth: 96,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  suggestionChipPressed: {
+    opacity: 0.78,
+  },
+  suggestionChipSelected: {
+    backgroundColor: FP.primary,
+    borderColor: FP.primary,
+  },
+  suggestionValue: {
+    color: FP.primaryDark,
+    fontSize: 13,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  suggestionValueSelected: {
+    color: '#FFFFFF',
+  },
+  suggestionNote: {
+    color: FP.textSub,
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  suggestionNoteSelected: {
+    color: '#EAF8F4',
   },
   typeButton: {
     flexGrow: 1,

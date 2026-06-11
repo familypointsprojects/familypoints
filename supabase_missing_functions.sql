@@ -18,35 +18,69 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_child_exists   boolean;
-  v_pending_exists boolean;
+  v_child children%rowtype;
+  v_task tasks%rowtype;
+  v_day text;
 BEGIN
-  -- Verify the child belongs to this profile
-  SELECT EXISTS(
-    SELECT 1 FROM children
-    WHERE id          = child_id_input
-      AND profile_id  = profile_id_input
-  ) INTO v_child_exists;
+  v_day := case extract(dow from now() at time zone 'utc')::int
+    when 0 then 'sunday'
+    when 1 then 'monday'
+    when 2 then 'tuesday'
+    when 3 then 'wednesday'
+    when 4 then 'thursday'
+    when 5 then 'friday'
+    else 'saturday'
+  end;
 
-  IF NOT v_child_exists THEN
+  SELECT * INTO v_child
+  FROM children
+  WHERE id = child_id_input
+    AND profile_id = profile_id_input;
+
+  IF NOT FOUND THEN
     RETURN json_build_object('error', 'Unauthorized: child not found for this profile');
   END IF;
 
-  -- Block duplicate pending submissions
-  SELECT EXISTS(
-    SELECT 1 FROM task_submissions
-    WHERE task_id  = task_id_input
-      AND child_id = child_id_input
-      AND status   = 'pending'
-  ) INTO v_pending_exists;
+  SELECT * INTO v_task
+  FROM tasks
+  WHERE id = task_id_input
+    AND family_id = v_child.family_id
+    AND status = 'active'
+    AND (child_id IS NULL OR child_id = v_child.id)
+    AND (
+      is_daily = false
+      OR array_length(available_days, 1) IS NULL
+      OR array_length(available_days, 1) = 0
+      OR v_day = ANY(available_days)
+    );
 
-  IF v_pending_exists THEN
-    RETURN json_build_object('error', 'Task already submitted and pending review');
+  IF NOT FOUND THEN
+    RETURN json_build_object('error', 'Task is not available');
   END IF;
 
-  -- Create the submission
+  IF v_task.is_daily THEN
+    IF EXISTS (
+      SELECT 1 FROM task_submissions
+      WHERE task_id = v_task.id
+        AND child_id = v_child.id
+        AND status IN ('pending', 'approved')
+        AND submitted_at::date = (now() at time zone 'utc')::date
+    ) THEN
+      RETURN json_build_object('success', true);
+    END IF;
+  ELSE
+    IF EXISTS (
+      SELECT 1 FROM task_submissions
+      WHERE task_id = v_task.id
+        AND child_id = v_child.id
+        AND status = 'pending'
+    ) THEN
+      RETURN json_build_object('success', true);
+    END IF;
+  END IF;
+
   INSERT INTO task_submissions (task_id, child_id, status, photo_url, submitted_at)
-  VALUES (task_id_input, child_id_input, 'pending', proof_note_input, now());
+  VALUES (v_task.id, v_child.id, 'pending', NULLIF(TRIM(proof_note_input), ''), now());
 
   RETURN json_build_object('success', true);
 END;
@@ -132,8 +166,16 @@ BEGIN
     RETURN json_build_object('error', 'Reward not found');
   END IF;
 
+  IF v_reward.child_id IS NOT NULL AND v_reward.child_id <> child_id_input THEN
+    RETURN json_build_object('error', 'Reward is not available for this child');
+  END IF;
+
   IF v_reward.is_active = false THEN
     RETURN json_build_object('error', 'Reward is not active');
+  END IF;
+
+  IF v_reward.is_daily_reward THEN
+    RETURN json_build_object('error', 'Use daily reward purchase');
   END IF;
 
   -- Compute balance
@@ -210,6 +252,7 @@ AS $$
 DECLARE
   v_wish       record;
   v_membership record;
+  v_reward_id uuid;
 BEGIN
   IF price_input <= 0 THEN
     RETURN json_build_object('error', 'Price must be greater than 0');
@@ -247,9 +290,27 @@ BEGIN
       updated_at = now()
   WHERE id = wish_id_input;
 
-  -- Create a reward from the wish
-  INSERT INTO rewards (family_id, title, price, type, is_active, created_by)
-  VALUES (v_membership.family_id, v_wish.title, price_input, 'wish', true, profile_id_input);
+  -- Create or update a child-specific reward from the wish
+  SELECT id INTO v_reward_id
+  FROM rewards
+  WHERE family_id = v_membership.family_id
+    AND type = 'wish'
+    AND lower(trim(title)) = lower(trim(v_wish.title))
+    AND (child_id IS NULL OR child_id = v_wish.child_id)
+  ORDER BY CASE WHEN child_id = v_wish.child_id THEN 0 ELSE 1 END
+  LIMIT 1;
+
+  IF FOUND THEN
+    UPDATE rewards
+    SET child_id = v_wish.child_id,
+        price = price_input,
+        is_active = true,
+        updated_at = now()
+    WHERE id = v_reward_id;
+  ELSE
+    INSERT INTO rewards (family_id, child_id, title, price, type, is_active, created_by)
+    VALUES (v_membership.family_id, v_wish.child_id, v_wish.title, price_input, 'wish', true, profile_id_input);
+  END IF;
 
   RETURN json_build_object('success', true);
 END;
@@ -281,3 +342,20 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.reject_wish(uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public.reject_wish(uuid) TO authenticated;
+
+
+-- 7. delete_current_user
+--    Удаляет аккаунт текущего пользователя из auth.users
+-- ------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.delete_current_user()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  DELETE FROM auth.users WHERE id = auth.uid();
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.delete_current_user() TO authenticated;

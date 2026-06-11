@@ -9,11 +9,11 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#12314A',
-    background: '#F6EEDD',
-    backgroundElement: '#FBF6EA',
-    backgroundSelected: '#EAF1EF',
-    textSecondary: '#6B7B86',
+    text: '#10233F',
+    background: '#EDF5FF',
+    backgroundElement: '#FFFFFF',
+    backgroundSelected: '#E8F2FF',
+    textSecondary: '#63758A',
   },
   dark: {
     text: '#FFFFFF',
@@ -24,47 +24,55 @@ export const Colors = {
   },
 } as const;
 
-/** easyQuest design tokens (treasure-map / quest theme) */
+/** easyQuest design tokens (arcade quest theme) */
 export const FP = {
-  // Brand — teal
-  primary:      '#1E9E86',
-  primaryDark:  '#15786A',
-  primaryLight: '#E3F3EE',
-  primaryBorder:'#BFE3D8',
+  // Brand — quest blue
+  primary:      '#1647B7',
+  primaryDark:  '#0B2B70',
+  primaryLight: '#E8F2FF',
+  primaryBorder:'#BFD7F5',
 
   // Accent (points / coins / stars) — gold
-  accent:       '#F5B225',
-  accentDark:   '#DE940F',
-  accentLight:  '#FBEBC4',
-  accentText:   '#8A5A06',
+  accent:       '#F7B721',
+  accentDark:   '#D88B08',
+  accentLight:  '#FFF2BE',
+  accentText:   '#835100',
 
   // Energy (flags / alerts / progress peaks) — orange
-  orange:       '#EF5A24',
+  orange:       '#FF642D',
   orangeDark:   '#C8431A',
-  orangeLight:  '#FBE0D4',
+  orangeLight:  '#FFE4D6',
+  cyan:         '#10C7E8',
+  cyanLight:    '#DDF8FF',
+  mint:         '#25D989',
+  mintLight:    '#DBFBEF',
+  lime:         '#D8FF3E',
+  pink:         '#FF4F91',
+  purple:       '#7557FF',
 
   // Semantic
-  green:        '#2BA84A',
-  greenLight:   '#DEF3E2',
-  red:          '#E2483B',
-  redLight:     '#FBE3E0',
+  green:        '#21B86F',
+  greenLight:   '#DBFBEF',
+  red:          '#EF463D',
+  redLight:     '#FFE3E0',
 
-  // Neutrals — parchment / navy
-  bg:           '#F6EEDD',
+  // Neutrals — ice / navy
+  bg:           '#EDF5FF',
   card:         '#FFFFFF',
-  paper:        '#FBF6EA',
-  tan:          '#E7D5AC',
-  ink:          '#12314A',
-  ink2:         '#0E2536',
-  text:         '#12314A',
-  textSub:      '#6B7B86',
-  border:       '#ECE3CF',
-  muted:        '#FBF6EA',
+  paper:        '#F7FBFF',
+  tan:          '#DCE8F5',
+  ink:          '#10233F',
+  ink2:         '#071827',
+  text:         '#10233F',
+  textSub:      '#63758A',
+  border:       '#DCE8F5',
+  muted:        '#F4F8FD',
   white:        '#FFFFFF',
+  graphite:     '#16283A',
 
-  // Gradient stops — teal
-  gradStart:    '#2BB89B',
-  gradEnd:      '#15786A',
+  // Gradient stops — blue / cyan
+  gradStart:    '#1647B7',
+  gradEnd:      '#0B2B70',
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;

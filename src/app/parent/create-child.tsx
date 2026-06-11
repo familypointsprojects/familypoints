@@ -17,9 +17,9 @@ const AVATAR_COLORS = [
 ];
 
 const CreateChildScreen = () => {
-  const { createChild, activeFamilyId } = useFamilyPoints();
+  const { createChild, activeFamilyId, hasHydrated } = useFamilyPoints();
 
-  const isFirstChild = !activeFamilyId;
+  const isFirstChild = hasHydrated && !activeFamilyId;
 
   const [familyName, setFamilyName] = useState('');
   const [name, setName] = useState('');
@@ -55,9 +55,20 @@ const CreateChildScreen = () => {
       });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Не удалось создать ребёнка');
+    } finally {
       setIsLoading(false);
     }
   };
+
+  if (!hasHydrated) {
+    return (
+      <AppScreen title="Добавить ребёнка" subtitle="Подготавливаем семейные данные">
+        <View style={styles.loader}>
+          <ActivityIndicator color="#1E9E86" />
+        </View>
+      </AppScreen>
+    );
+  }
 
   return (
     <AppScreen

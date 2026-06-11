@@ -25,7 +25,7 @@ export const childProfile: ChildProfile = {
 export const family: Family = {
   id: 'family-1',
   nameKey: 'family.parkers',
-  parentId: parentProfile.id,
+  parentIds: [parentProfile.id],
   childIds: [childProfile.id],
 };
 

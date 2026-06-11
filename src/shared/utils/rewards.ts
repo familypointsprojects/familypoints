@@ -4,9 +4,13 @@ import { areDailyQuestsApprovedToday, getTodayDayKey } from './tasks';
 /**
  * True if this daily reward is available today based on its available_days setting.
  */
-export const isDailyRewardAvailableToday = (reward: Reward): boolean => {
+export const isRewardAvailableForChild = (reward: Reward, childId: string): boolean =>
+  !reward.childId || reward.childId === childId;
+
+export const isDailyRewardAvailableToday = (reward: Reward, childId?: string): boolean => {
   if (!reward.isDailyReward) return false;
   if (!reward.isActive) return false;
+  if (childId && !isRewardAvailableForChild(reward, childId)) return false;
   const days = reward.availableDays ?? [];
   if (days.length === 0) return true;
   return days.includes(getTodayDayKey());

@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { FP } from '@/constants/theme';
 import { Language, useLanguage } from '@/shared/i18n';
 
 const languages: Language[] = ['ru', 'en'];
@@ -41,29 +42,29 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   label: {
-    color: '#6B7B86',
+    color: FP.textSub,
     fontSize: 13,
     fontWeight: '800',
   },
   container: {
     alignSelf: 'flex-start',
-    backgroundColor: '#E3F3EE',
-    borderColor: '#E3F3EE',
-    borderRadius: 8,
+    backgroundColor: FP.white,
+    borderColor: FP.primaryBorder,
+    borderRadius: 12,
     borderWidth: 1,
     flexDirection: 'row',
     padding: 3,
   },
   option: {
-    borderRadius: 6,
+    borderRadius: 9,
     paddingHorizontal: 10,
     paddingVertical: 7,
   },
   activeOption: {
-    backgroundColor: '#15786A',
+    backgroundColor: FP.primaryDark,
   },
   optionText: {
-    color: '#15786A',
+    color: FP.primary,
     fontSize: 13,
     fontWeight: '900',
   },

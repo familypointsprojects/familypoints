@@ -16,22 +16,41 @@ import type { AuthSession } from '@/shared/auth/types';
 import { familyPointsService, familyPointsDataSource } from '@/shared/services/familyPoints';
 import { supabaseClient } from '@/shared/services/supabase';
 import type {
+  ChildSkillUnlock,
+  Reward,
+  Task,
+  TaskSubmission,
+} from '@/shared/types/family';
+import {
+  approveSubmissionInState,
+  rejectSubmissionInState,
+  submitTaskInState,
+  unlockSkillInState,
+  updateRewardInState,
+} from '@/shared/state/domainActions';
+import type {
   AddWishInput,
   ApproveWishInput,
   ClearFavoriteGoalInput,
   CreateChildInput,
+  CreateParentInput,
   CreateRewardInput,
   CreateTaskInput,
   DeleteChildInput,
+  DeleteParentInput,
   DeleteTaskInput,
   FamilyPointsState,
   RejectWishInput,
   SetFavoriteGoalInput,
   SetRewardActiveInput,
   SetTaskStatusInput,
+  UnlockSkillInput,
   UpdateFamilyNameInput,
+  UpdateParentInput,
+  UpdateRewardInput,
   UpdateTaskInput,
 } from '@/shared/state/types';
+import { normalizeLevelingState } from '@/shared/utils/leveling';
 
 type FamilyPointsAction =
   | { type: 'hydrate'; payload: FamilyPointsState }
@@ -39,11 +58,12 @@ type FamilyPointsAction =
 
 type FamilyPointsContextValue = FamilyPointsState & {
   hasHydrated: boolean;
-  createTask: (input: CreateTaskInput) => void;
-  updateTask: (input: UpdateTaskInput) => void;
-  setTaskStatus: (input: SetTaskStatusInput) => void;
+  createTask: (input: CreateTaskInput) => Promise<void>;
+  updateTask: (input: UpdateTaskInput) => Promise<void>;
+  setTaskStatus: (input: SetTaskStatusInput) => Promise<void>;
   deleteTask: (input: DeleteTaskInput) => void;
   createReward: (input: CreateRewardInput) => Promise<void>;
+  updateReward: (input: UpdateRewardInput) => Promise<void>;
   setRewardActive: (input: SetRewardActiveInput) => Promise<void>;
   submitTask: (taskId: string) => void;
   submitTaskWithProof: (taskId: string, proofNote: string) => Promise<void>;
@@ -55,12 +75,17 @@ type FamilyPointsContextValue = FamilyPointsState & {
   redeemReward: (rewardId: string) => void;
   setFavoriteGoal: (input: SetFavoriteGoalInput) => Promise<void>;
   clearFavoriteGoal: (input: ClearFavoriteGoalInput) => Promise<void>;
+  unlockSkill: (input: UnlockSkillInput) => Promise<void>;
   approveRewardRedemption: (redemptionId: string) => void;
   rejectRewardRedemption: (redemptionId: string) => void;
   fulfillRewardRedemption: (redemptionId: string) => void;
   deleteChild: (input: DeleteChildInput) => void;
   createChild: (input: CreateChildInput) => Promise<string>;
+  createParent: (input: CreateParentInput) => Promise<string>;
+  deleteParent: (input: DeleteParentInput) => void;
+  updateParent: (input: UpdateParentInput) => void;
   updateFamilyName: (input: UpdateFamilyNameInput) => void;
+  reloadState: () => Promise<void>;
   resetDemoData: () => void;
 };
 
@@ -72,8 +97,12 @@ const initialState: FamilyPointsState = {
   wishes: [],
   favoriteGoals: [],
   pointTransactions: [],
+  childProgress: [],
+  childSkillUnlocks: [],
+  childAchievements: [],
   redeemedRewardIds: [],
   children: [],
+  parents: [],
 };
 
 const favoriteGoalLayoutAnimation: LayoutAnimationConfig = {
@@ -104,13 +133,17 @@ const applySessionToState = (
   const nextActiveParentId =
     session?.role === 'parent' ? session.profileId : nextState.activeParentId;
 
-  return {
+  return normalizeLevelingState({
     ...nextState,
     children: nextState.children ?? [],
+    parents: nextState.parents ?? [],
     favoriteGoals: nextState.favoriteGoals ?? [],
+    childProgress: nextState.childProgress ?? [],
+    childSkillUnlocks: nextState.childSkillUnlocks ?? [],
+    childAchievements: nextState.childAchievements ?? [],
     activeChildId: nextActiveChildId,
     activeParentId: nextActiveParentId,
-  };
+  });
 };
 
 const familyPointsReducer = (
@@ -129,12 +162,110 @@ const familyPointsReducer = (
   }
 };
 
+const upsertById = <T extends { id: string }>(items: T[], item: T): T[] => {
+  const existingIndex = items.findIndex((existingItem) => existingItem.id === item.id);
+
+  if (existingIndex === -1) {
+    return [item, ...items];
+  }
+
+  return items.map((existingItem) => (existingItem.id === item.id ? item : existingItem));
+};
+
+const toDateKey = (value: string): string => value.slice(0, 10);
+
+const submissionsMatchSameAttempt = (
+  submission: TaskSubmission,
+  optimisticSubmission: TaskSubmission,
+): boolean =>
+  submission.taskId === optimisticSubmission.taskId &&
+  submission.childId === optimisticSubmission.childId &&
+  toDateKey(submission.submittedAt) === toDateKey(optimisticSubmission.submittedAt);
+
+const skillUnlocksMatch = (
+  unlock: ChildSkillUnlock,
+  optimisticUnlock: ChildSkillUnlock,
+): boolean =>
+  unlock.childId === optimisticUnlock.childId &&
+  unlock.skillId === optimisticUnlock.skillId;
+
 const FamilyPointsContext = createContext<FamilyPointsContextValue | undefined>(undefined);
 
 export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
   const { hasHydrated: hasAuthHydrated, session } = useAuth();
   const [state, dispatch] = useReducer(familyPointsReducer, initialState);
   const [hasHydrated, setHasHydrated] = useState(false);
+  const optimisticTasksRef = useRef<Task[]>([]);
+  const optimisticRewardsRef = useRef<Reward[]>([]);
+  const optimisticSubmissionsRef = useRef<TaskSubmission[]>([]);
+  const optimisticSkillUnlocksRef = useRef<ChildSkillUnlock[]>([]);
+
+  const mergeOptimisticState = useCallback(
+    (nextState: FamilyPointsState, nextSession: AuthSession | null = session) => {
+      const optimisticTasks = optimisticTasksRef.current;
+      const optimisticRewards = optimisticRewardsRef.current;
+      const optimisticSubmissions = optimisticSubmissionsRef.current;
+      const optimisticSkillUnlocks = optimisticSkillUnlocksRef.current;
+
+      const taskOverrides = new Map(optimisticTasks.map((task) => [task.id, task]));
+      const rewardOverrides = new Map(optimisticRewards.map((reward) => [reward.id, reward]));
+      const mergedTasks = [
+        ...optimisticTasks.filter((task) => !nextState.tasks.some((item) => item.id === task.id)),
+        ...nextState.tasks.map((task) => taskOverrides.get(task.id) ?? task),
+      ];
+      const mergedRewards = [
+        ...optimisticRewards.filter((reward) => !nextState.rewards.some((item) => item.id === reward.id)),
+        ...nextState.rewards.map((reward) => rewardOverrides.get(reward.id) ?? reward),
+      ];
+
+      const mergedSubmissions = [...nextState.taskSubmissions];
+
+      optimisticSubmissions.forEach((optimisticSubmission) => {
+        const sameIdIndex = mergedSubmissions.findIndex(
+          (submission) => submission.id === optimisticSubmission.id,
+        );
+
+        if (sameIdIndex >= 0) {
+          mergedSubmissions[sameIdIndex] = optimisticSubmission;
+          return;
+        }
+
+        const sameAttemptIndex = mergedSubmissions.findIndex((submission) =>
+          submissionsMatchSameAttempt(submission, optimisticSubmission),
+        );
+
+        if (sameAttemptIndex >= 0) {
+          if (mergedSubmissions[sameAttemptIndex].status !== optimisticSubmission.status) {
+            mergedSubmissions[sameAttemptIndex] = optimisticSubmission;
+          }
+          return;
+        }
+
+        mergedSubmissions.unshift(optimisticSubmission);
+      });
+      const mergedSkillUnlocks = [
+        ...optimisticSkillUnlocks,
+        ...nextState.childSkillUnlocks.filter(
+          (unlock) =>
+            !optimisticSkillUnlocks.some((optimisticUnlock) =>
+              skillUnlocksMatch(unlock, optimisticUnlock),
+            ),
+        ),
+      ];
+
+      return applySessionToState(
+        {
+          ...nextState,
+          tasks: mergedTasks,
+          rewards: mergedRewards,
+          taskSubmissions: mergedSubmissions,
+          childSkillUnlocks: mergedSkillUnlocks,
+        },
+        nextSession,
+      );
+    },
+    [session],
+  );
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -162,12 +293,12 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
         if (isMounted && storedState) {
           dispatch({
             type: 'hydrate',
-            payload: applySessionToState(storedState, session),
+            payload: mergeOptimisticState(storedState, session),
           });
         }
 
         if (isMounted && !storedState) {
-          dispatch({ type: 'hydrate', payload: applySessionToState(initialState, session) });
+          dispatch({ type: 'hydrate', payload: mergeOptimisticState(initialState, session) });
         }
       } catch (error) {
         console.warn('Failed to hydrate easyQuest state', error);
@@ -183,7 +314,7 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
     return () => {
       isMounted = false;
     };
-  }, [hasAuthHydrated, session]);
+  }, [hasAuthHydrated, mergeOptimisticState, session]);
 
   // Central reload helper — shared by polling, realtime and foreground handlers
   const reloadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -196,13 +327,13 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
           .loadState(session)
           .then((nextState) => {
             if (nextState) {
-              dispatch({ type: 'hydrate', payload: applySessionToState(nextState, session) });
+              dispatch({ type: 'hydrate', payload: mergeOptimisticState(nextState, session) });
             }
           })
           .catch((error: unknown) => console.warn('Re-hydrate failed', error));
       }, delay);
     },
-    [session],
+    [mergeOptimisticState, session],
   );
 
   // Re-hydrate when app returns to foreground
@@ -214,12 +345,12 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
     return () => subscription.remove();
   }, [session, scheduleReload]);
 
-  // Polling — reliable fallback, every 10 s while app is active
+  // Polling — reliable fallback while app is active
   useEffect(() => {
     if (!session || familyPointsDataSource !== 'supabase') return;
     const interval = setInterval(() => {
       if (AppState.currentState === 'active') scheduleReload(0);
-    }, 10_000);
+    }, 3_000);
     return () => clearInterval(interval);
   }, [session, scheduleReload]);
 
@@ -294,12 +425,52 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
     [],
   );
 
+  const reloadFamilyPointsState = useCallback(async () => {
+    if (!session) {
+      dispatch({ type: 'hydrate', payload: initialState });
+      return;
+    }
+
+    const nextState = await familyPointsService.loadState(session);
+
+    if (nextState) {
+      dispatch({ type: 'hydrate', payload: mergeOptimisticState(nextState, session) });
+    }
+  }, [mergeOptimisticState, session]);
+
   const value = useMemo<FamilyPointsContextValue>(
     () => ({
       ...state,
       hasHydrated,
-      createTask: (input) =>
-        runServiceAction(() => familyPointsService.createTask(input, serviceContext)),
+      createTask: async (input) => {
+        const nextState = await familyPointsService.createTask(input, serviceContext);
+        const createdTasks = nextState.tasks.filter(
+          (task) => !serviceContext.state.tasks.some((existingTask) => existingTask.id === task.id),
+        );
+        optimisticTasksRef.current = createdTasks.reduce(
+          (tasks, task) => upsertById(tasks, task),
+          optimisticTasksRef.current,
+        );
+        dispatch({ type: 'hydrate', payload: nextState });
+        familyPointsService
+          .loadState(session)
+          .then((freshState) => {
+            if (freshState) {
+              const freshTaskIds = new Set(freshState.tasks.map((task) => task.id));
+              const mergedState = {
+                ...freshState,
+                tasks: [
+                  ...createdTasks.filter((task) => !freshTaskIds.has(task.id)),
+                  ...freshState.tasks,
+                ],
+              };
+              dispatch({ type: 'hydrate', payload: mergeOptimisticState(mergedState, session) });
+            }
+          })
+          .catch((error: unknown) => {
+            console.warn('Failed to refresh easyQuest state after task creation', error);
+          });
+      },
       updateTask: (input) =>
         runServiceAction(() => familyPointsService.updateTask(input, serviceContext)),
       setTaskStatus: (input) =>
@@ -310,32 +481,122 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
         const nextState = await familyPointsService.createReward(input, serviceContext);
         dispatch({ type: 'hydrate', payload: nextState });
       },
+      updateReward: async (input) => {
+        const optimisticState = updateRewardInState(serviceContext.state, input);
+        const optimisticReward = optimisticState.rewards.find((reward) => reward.id === input.rewardId);
+
+        if (optimisticReward) {
+          optimisticRewardsRef.current = upsertById(optimisticRewardsRef.current, optimisticReward);
+        }
+        dispatch({ type: 'hydrate', payload: optimisticState });
+
+        try {
+          const nextState = await familyPointsService.updateReward(input, serviceContext);
+          optimisticRewardsRef.current = optimisticRewardsRef.current.filter(
+            (reward) => reward.id !== input.rewardId,
+          );
+          dispatch({ type: 'hydrate', payload: mergeOptimisticState(nextState, session) });
+        } catch (error: unknown) {
+          optimisticRewardsRef.current = optimisticRewardsRef.current.filter(
+            (reward) => reward.id !== input.rewardId,
+          );
+
+          const freshState = await familyPointsService.loadState(session).catch(() => null);
+          if (freshState) {
+            dispatch({ type: 'hydrate', payload: mergeOptimisticState(freshState, session) });
+          }
+
+          console.warn('Failed to sync easyQuest reward update', error);
+          throw error;
+        }
+      },
       setRewardActive: async (input) => {
         const nextState = await familyPointsService.setRewardActive(input, serviceContext);
         dispatch({ type: 'hydrate', payload: nextState });
       },
-      submitTask: (taskId) =>
-        runServiceAction(() =>
-          familyPointsService.submitTask(
-            { taskId, childId: serviceContext.childId },
-            serviceContext,
-          ),
-        ),
-      submitTaskWithProof: async (taskId, proofNote) => {
-        const nextState = await familyPointsService.submitTask(
-          { taskId, childId: serviceContext.childId, proofNote },
-          serviceContext,
+      submitTask: (taskId) => {
+        const submitInput = { taskId, childId: serviceContext.childId };
+        const optimisticState = submitTaskInState(serviceContext.state, submitInput);
+        const optimisticSubmissions = optimisticState.taskSubmissions.filter(
+          (submission) =>
+            !serviceContext.state.taskSubmissions.some((existingSubmission) => existingSubmission.id === submission.id),
         );
-        dispatch({ type: 'hydrate', payload: nextState });
+
+        optimisticSubmissionsRef.current = optimisticSubmissions.reduce(
+          (submissions, submission) => upsertById(submissions, submission),
+          optimisticSubmissionsRef.current,
+        );
+        dispatch({ type: 'hydrate', payload: optimisticState });
+        familyPointsService
+          .submitTask(submitInput, serviceContext)
+          .then((nextState) => dispatch({ type: 'hydrate', payload: mergeOptimisticState(nextState, session) }))
+          .catch((error: unknown) => {
+            console.warn('Failed to sync easyQuest task submission', error);
+          });
       },
-      approveSubmission: (submissionId) =>
-        runServiceAction(() =>
-          familyPointsService.approveSubmission({ submissionId }, serviceContext),
-        ),
-      rejectSubmission: (submissionId) =>
-        runServiceAction(() =>
-          familyPointsService.rejectSubmission({ submissionId }, serviceContext),
-        ),
+      submitTaskWithProof: async (taskId, proofNote) => {
+        const submitInput = { taskId, childId: serviceContext.childId, proofNote };
+        const optimisticState = submitTaskInState(serviceContext.state, submitInput);
+        const optimisticSubmissions = optimisticState.taskSubmissions.filter(
+          (submission) =>
+            !serviceContext.state.taskSubmissions.some((existingSubmission) => existingSubmission.id === submission.id),
+        );
+
+        optimisticSubmissionsRef.current = optimisticSubmissions.reduce(
+          (submissions, submission) => upsertById(submissions, submission),
+          optimisticSubmissionsRef.current,
+        );
+        dispatch({ type: 'hydrate', payload: optimisticState });
+        familyPointsService
+          .submitTask(submitInput, serviceContext)
+          .then((nextState) => dispatch({ type: 'hydrate', payload: mergeOptimisticState(nextState, session) }))
+          .catch((error: unknown) => {
+            console.warn('Failed to sync easyQuest task submission', error);
+          });
+      },
+      approveSubmission: (submissionId) => {
+        const reviewInput = { submissionId };
+        const optimisticState = approveSubmissionInState(serviceContext.state, reviewInput);
+        const optimisticSubmission = optimisticState.taskSubmissions.find(
+          (submission) => submission.id === submissionId,
+        );
+        const optimisticTask = optimisticState.tasks.find((task) => {
+          const previousTask = serviceContext.state.tasks.find((item) => item.id === task.id);
+          return previousTask && previousTask.status !== task.status;
+        });
+
+        if (optimisticSubmission) {
+          optimisticSubmissionsRef.current = upsertById(optimisticSubmissionsRef.current, optimisticSubmission);
+        }
+        if (optimisticTask) {
+          optimisticTasksRef.current = upsertById(optimisticTasksRef.current, optimisticTask);
+        }
+        dispatch({ type: 'hydrate', payload: optimisticState });
+        familyPointsService
+          .approveSubmission(reviewInput, serviceContext)
+          .then((nextState) => dispatch({ type: 'hydrate', payload: mergeOptimisticState(nextState, session) }))
+          .catch((error: unknown) => {
+            console.warn('Failed to sync easyQuest submission approval', error);
+          });
+      },
+      rejectSubmission: (submissionId) => {
+        const reviewInput = { submissionId };
+        const optimisticState = rejectSubmissionInState(serviceContext.state, reviewInput);
+        const optimisticSubmission = optimisticState.taskSubmissions.find(
+          (submission) => submission.id === submissionId,
+        );
+
+        if (optimisticSubmission) {
+          optimisticSubmissionsRef.current = upsertById(optimisticSubmissionsRef.current, optimisticSubmission);
+        }
+        dispatch({ type: 'hydrate', payload: optimisticState });
+        familyPointsService
+          .rejectSubmission(reviewInput, serviceContext)
+          .then((nextState) => dispatch({ type: 'hydrate', payload: mergeOptimisticState(nextState, session) }))
+          .catch((error: unknown) => {
+            console.warn('Failed to sync easyQuest submission rejection', error);
+          });
+      },
       addWish: (input) =>
         runServiceAction(() =>
           familyPointsService.addWish(
@@ -362,6 +623,22 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
         runAnimatedServiceAction(() => familyPointsService.setFavoriteGoal(input, serviceContext)),
       clearFavoriteGoal: (input) =>
         runAnimatedServiceAction(() => familyPointsService.clearFavoriteGoal(input, serviceContext)),
+      unlockSkill: async (input) => {
+        const nextState = unlockSkillInState(serviceContext.state, input);
+        const nextUnlock = nextState.childSkillUnlocks.find(
+          (unlock) => unlock.childId === input.childId && unlock.skillId === input.skillId,
+        );
+
+        if (nextUnlock) {
+          optimisticSkillUnlocksRef.current = [
+            nextUnlock,
+            ...optimisticSkillUnlocksRef.current.filter(
+              (unlock) => !skillUnlocksMatch(unlock, nextUnlock),
+            ),
+          ];
+        }
+        dispatch({ type: 'hydrate', payload: nextState });
+      },
       approveRewardRedemption: (redemptionId) =>
         runServiceAction(() =>
           familyPointsService.approveRewardRedemption({ redemptionId }, serviceContext),
@@ -377,12 +654,32 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
       createChild: async (input) => {
         const { state, childId } = await familyPointsService.createChild(input, serviceContext);
         dispatch({ type: 'hydrate', payload: state });
+        familyPointsService
+          .loadState(session)
+          .then((nextState) => {
+            if (nextState) {
+              dispatch({ type: 'hydrate', payload: mergeOptimisticState(nextState, session) });
+            }
+          })
+          .catch((error: unknown) => {
+            console.warn('Failed to refresh easyQuest state after child creation', error);
+          });
         return childId;
+      },
+      createParent: async (input) => {
+        const { state, parentId } = await familyPointsService.createParent(input, serviceContext);
+        dispatch({ type: 'hydrate', payload: state });
+        return parentId;
       },
       deleteChild: (input) =>
         runServiceAction(() => familyPointsService.deleteChild(input, serviceContext)),
+      deleteParent: (input) =>
+        runServiceAction(() => familyPointsService.deleteParent(input, serviceContext)),
+      updateParent: (input) =>
+        runServiceAction(() => familyPointsService.updateParent(input, serviceContext)),
       updateFamilyName: (input) =>
         runServiceAction(() => familyPointsService.updateFamilyName(input, serviceContext)),
+      reloadState: reloadFamilyPointsState,
       resetDemoData: () => {
         familyPointsService.resetState().catch((error: unknown) => {
           console.warn('Failed to reset easyQuest storage', error);
@@ -390,7 +687,16 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
         dispatch({ type: 'resetDemoData' });
       },
     }),
-    [hasHydrated, runAnimatedServiceAction, runServiceAction, serviceContext, state],
+    [
+      hasHydrated,
+      mergeOptimisticState,
+      reloadFamilyPointsState,
+      runAnimatedServiceAction,
+      runServiceAction,
+      session,
+      serviceContext,
+      state,
+    ],
   );
 
   return <FamilyPointsContext.Provider value={value}>{children}</FamilyPointsContext.Provider>;

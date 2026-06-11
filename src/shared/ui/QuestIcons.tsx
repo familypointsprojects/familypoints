@@ -1,12 +1,21 @@
 import React from 'react';
 import Svg, { Circle, Ellipse, Line, Path, Rect } from 'react-native-svg';
 
+
 type IconProps = { size?: number };
 
 /**
  * Quest-themed icon set for menu/navigation.
  * Vector ports of design/assets/icon-*.svg with shared brand palette.
  */
+
+export const IconAlert: React.FC<IconProps> = ({ size = 18 }) => (
+  <Svg width={size} height={size} viewBox="0 0 120 120">
+    <Circle cx={60} cy={60} r={46} fill="#F5B225" stroke="#8A5A06" strokeWidth={7} />
+    <Line x1={60} y1={30} x2={60} y2={66} stroke="#12314A" strokeWidth={10} strokeLinecap="round" />
+    <Circle cx={60} cy={86} r={6.5} fill="#12314A" />
+  </Svg>
+);
 
 export const IconMap: React.FC<IconProps> = ({ size = 26 }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
@@ -186,5 +195,30 @@ export const IconPlus: React.FC<IconProps> = ({ size = 24 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24">
     <Line x1={12} y1={5} x2={12} y2={19} stroke="#0E2536" strokeWidth={3} strokeLinecap="round" />
     <Line x1={5} y1={12} x2={19} y2={12} stroke="#0E2536" strokeWidth={3} strokeLinecap="round" />
+  </Svg>
+);
+
+export const IconSettings: React.FC<IconProps> = ({ size = 26 }) => (
+  <Svg width={size} height={size} viewBox="0 0 120 120">
+    {/* Gear outer ring */}
+    <Circle cx={60} cy={60} r={18} fill="#1C5E6E" stroke="#0A2A36" strokeWidth={4} />
+    <Circle cx={60} cy={60} r={9}  fill="#E7C45A" stroke="#0A2A36" strokeWidth={3} />
+    {/* Gear teeth — 6 teeth */}
+    {[0,60,120,180,240,300].map((angle) => {
+      const rad = (angle * Math.PI) / 180;
+      const x1 = 60 + 24 * Math.cos(rad);
+      const y1 = 60 + 24 * Math.sin(rad);
+      const x2 = 60 + 34 * Math.cos(rad);
+      const y2 = 60 + 34 * Math.sin(rad);
+      return (
+        <Line
+          key={angle}
+          x1={x1} y1={y1} x2={x2} y2={y2}
+          stroke="#1C5E6E"
+          strokeWidth={10}
+          strokeLinecap="round"
+        />
+      );
+    })}
   </Svg>
 );

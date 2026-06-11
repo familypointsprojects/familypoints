@@ -25,9 +25,13 @@ const getTodayDateString = (): string => new Date().toISOString().slice(0, 10);
  * True if the task is a daily quest available today.
  * If available_days is empty, the quest is available every day.
  */
-export const isDailyTaskAvailableToday = (task: Task): boolean => {
+export const isTaskAvailableForChild = (task: Task, childId: string): boolean =>
+  !task.childId || task.childId === childId;
+
+export const isDailyTaskAvailableToday = (task: Task, childId?: string): boolean => {
   if (!task.isDaily) return false;
   if (task.status !== 'active') return false;
+  if (childId && !isTaskAvailableForChild(task, childId)) return false;
   const days = task.availableDays ?? [];
   if (days.length === 0) return true;
   return days.includes(getTodayDayKey());
@@ -73,8 +77,8 @@ export const getTodaySubmission = (
  * Returns all daily tasks that should be shown for this child today,
  * regardless of submission status (for the "Today's Quests" section).
  */
-export const getDailyTasksForToday = (taskList: Task[]): Task[] =>
-  taskList.filter(isDailyTaskAvailableToday);
+export const getDailyTasksForToday = (taskList: Task[], childId?: string): Task[] =>
+  taskList.filter((task) => isDailyTaskAvailableToday(task, childId));
 
 /**
  * True when every daily quest due today has an approved submission today.
@@ -84,7 +88,7 @@ export const areDailyQuestsApprovedToday = (
   submissions: TaskSubmission[],
   childId: string,
 ): boolean => {
-  const todayDailyTasks = getDailyTasksForToday(taskList);
+  const todayDailyTasks = getDailyTasksForToday(taskList, childId);
   if (todayDailyTasks.length === 0) return true;
   const today = getTodayDateString();
   return todayDailyTasks.every((task) =>
@@ -116,7 +120,7 @@ export const getTotalAvailableTasksCount = (
   const oneTimeCount = getAvailableTasksForChild(taskList, submissions, childId).length;
 
   // Daily tasks available today that can still be submitted
-  const dailyCount = getDailyTasksForToday(taskList).filter((task) => {
+  const dailyCount = getDailyTasksForToday(taskList, childId).filter((task) => {
     const todaySubmission = submissions.find(
       (s) =>
         s.taskId === task.id &&
@@ -142,7 +146,7 @@ export const getPendingTasksForChild = (
       .filter((s) => s.childId === childId && s.status === 'pending')
       .map((s) => s.taskId),
   );
-  return taskList.filter((task) => pendingTaskIds.has(task.id));
+  return taskList.filter((task) => isTaskAvailableForChild(task, childId) && pendingTaskIds.has(task.id));
 };
 
 export const getActiveTasks = (taskList: Task[]): Task[] =>
@@ -161,7 +165,7 @@ export const getAvailableTasksForChild = (
 
   // Exclude daily quests from one-time task list; they appear in their own section
   return getActiveTasks(taskList).filter(
-    (task) => !task.isDaily && !pendingTaskIds.has(task.id),
+    (task) => !task.isDaily && isTaskAvailableForChild(task, childId) && !pendingTaskIds.has(task.id),
   );
 };
 

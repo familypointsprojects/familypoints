@@ -7,29 +7,25 @@ import { useGrowthMissions } from '@/shared/state/GrowthMissionsProvider';
 import { useFamilyPoints } from '@/shared/state';
 import { useActiveChild } from '@/shared/state/useActiveChild';
 import { AppButton, AppCard, AppScreen, AppTextInput, SectionTitle, StatusBadge } from '@/shared/ui';
+import { getMissionCountdown } from '@/shared/utils/growthMissions';
+import { applySavingsSkills } from '@/shared/utils/leveling';
 import { getBalance } from '@/shared/utils/points';
 import type { InvestmentProject } from '@/shared/types/family';
-
-// ── Countdown helper ──────────────────────────────────────────────────────────
-
-const getCountdown = (maturesAt: string): { days: number; hours: number; ready: boolean } => {
-  const diffMs = new Date(maturesAt).getTime() - Date.now();
-  if (diffMs <= 0) return { days: 0, hours: 0, ready: true };
-  const days  = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  return { days, hours, ready: false };
-};
 
 // ── Deposit Modal ─────────────────────────────────────────────────────────────
 
 const DepositModal = ({
   project,
+  effectiveBonusPercent,
+  skillBonusPercent,
   balance,
   visible,
   onClose,
   onDeposit,
 }: {
   project: InvestmentProject;
+  effectiveBonusPercent: number;
+  skillBonusPercent: number;
   balance: number;
   visible: boolean;
   onClose: () => void;
@@ -42,7 +38,7 @@ const DepositModal = ({
 
   const amount  = parseInt(amountStr, 10);
   const payout  = !isNaN(amount) && amount > 0
-    ? amount + Math.floor((amount * project.bonusPercent) / 100)
+    ? amount + Math.floor((amount * effectiveBonusPercent) / 100)
     : null;
 
   const handleDeposit = async () => {
@@ -80,9 +76,10 @@ const DepositModal = ({
           <Text style={styles.modalTitle}>{project.title}</Text>
           <Text style={styles.modalSubtitle}>
             {t('missions.bonusLabel', {
-              bonus: String(project.bonusPercent),
+              bonus: String(effectiveBonusPercent),
               days: String(project.durationDays),
             })}
+            {skillBonusPercent > 0 ? ` (+${skillBonusPercent}%)` : ''}
           </Text>
           <Text style={styles.balanceText}>
             {t('missions.depositBalance', { balance: String(balance) })}
@@ -142,7 +139,7 @@ const DepositModal = ({
 const ChildGrowthMissionsScreen = () => {
   const { t } = useLanguage();
   const { projects, myInvestments, deposit, claim, reload } = useGrowthMissions();
-  const { pointTransactions } = useFamilyPoints();
+  const { childSkillUnlocks, pointTransactions } = useFamilyPoints();
   const { activeChildId } = useActiveChild();
 
   // Refetch every time the screen comes into focus
@@ -159,6 +156,13 @@ const ChildGrowthMissionsScreen = () => {
   const claimedInvestments = myInvestments.filter((inv) => inv.claimedAt);
   // Projects where child already has an active (unclaimed) investment
   const investedProjectIds = new Set(activeInvestments.map((inv) => inv.projectId));
+  const getSavingsPreview = (project: InvestmentProject) =>
+    applySavingsSkills({
+      bonusPercent: project.bonusPercent,
+      durationDays: project.durationDays,
+      unlocks: childSkillUnlocks,
+      childId: activeChildId,
+    });
 
   const handleDeposit = async (amount: number) => {
     if (!selectedProject) return;
@@ -191,6 +195,8 @@ const ChildGrowthMissionsScreen = () => {
 
       {activeProjects.map((project) => {
         const alreadyInvested = investedProjectIds.has(project.id);
+        const savingsPreview = getSavingsPreview(project);
+        const skillBonusPercent = Math.max(0, savingsPreview.bonusPercent - project.bonusPercent);
         return (
           <AppCard key={project.id} style={alreadyInvested ? styles.projectCardInvested : undefined}>
             <Text style={styles.projectTitle}>{project.title}</Text>
@@ -200,9 +206,10 @@ const ChildGrowthMissionsScreen = () => {
             <View style={styles.metaRow}>
               <Text style={styles.metaChip}>
                 {t('missions.bonusLabel', {
-                  bonus: String(project.bonusPercent),
+                  bonus: String(savingsPreview.bonusPercent),
                   days:  String(project.durationDays),
                 })}
+                {skillBonusPercent > 0 ? ` (+${skillBonusPercent}%)` : ''}
               </Text>
               <Text style={styles.metaChip}>
                 {t('missions.range', {
@@ -233,7 +240,7 @@ const ChildGrowthMissionsScreen = () => {
       )}
 
       {activeInvestments.map((inv) => {
-        const { days, hours, ready } = getCountdown(inv.maturesAt);
+        const { days, hours, minutes, ready } = getMissionCountdown(inv.maturesAt);
         const isClaiming = claimingId === inv.id;
         const msg = claimMessage?.id === inv.id ? claimMessage.text : null;
         return (
@@ -244,7 +251,11 @@ const ChildGrowthMissionsScreen = () => {
                 <StatusBadge label={t('missions.readyToClaim')} tone="success" />
               ) : (
                 <StatusBadge
-                  label={t('missions.matureIn', { days: String(days), hours: String(hours) })}
+                  label={
+                    days > 0 || hours > 0
+                      ? t('missions.matureIn', { days: String(days), hours: String(hours) })
+                      : t('missions.matureInMinutes', { minutes: String(minutes) })
+                  }
                   tone="muted"
                 />
               )}
@@ -286,6 +297,8 @@ const ChildGrowthMissionsScreen = () => {
       {selectedProject && (
         <DepositModal
           project={selectedProject}
+          effectiveBonusPercent={getSavingsPreview(selectedProject).bonusPercent}
+          skillBonusPercent={Math.max(0, getSavingsPreview(selectedProject).bonusPercent - selectedProject.bonusPercent)}
           balance={balance}
           visible={Boolean(selectedProject)}
           onClose={() => setSelectedProject(null)}

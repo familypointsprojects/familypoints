@@ -6,6 +6,10 @@ export type ParentProfile = {
   id: string;
   name: string;
   role: 'parent';
+  /** True for the family creator — always has full permissions */
+  isOwner?: boolean;
+  /** If true, can manage all tasks/rewards/submissions regardless of creator */
+  hasFullPermissions?: boolean;
 };
 
 export type ChildProfile = {
@@ -15,10 +19,14 @@ export type ChildProfile = {
   avatarColor: string;
 };
 
+export type FamilyMemberRole = 'parent' | 'child';
+
 export type Family = {
   id: string;
   nameKey: TranslationKey;
-  parentId: string;
+  /** @deprecated use parentIds instead */
+  parentId?: string;
+  parentIds: string[];
   childIds: string[];
 };
 
@@ -35,6 +43,7 @@ export type DayOfWeek =
 
 export type Task = {
   id: string;
+  childId?: string;
   titleKey?: TranslationKey;
   title?: string;
   descriptionKey?: TranslationKey;
@@ -45,6 +54,8 @@ export type Task = {
   isDaily?: boolean;
   /** Which days the quest is available. Empty/undefined = every day */
   availableDays?: DayOfWeek[];
+  /** Parent who created this task */
+  createdBy?: string;
 };
 
 export type SubmissionStatus = 'pending' | 'approved' | 'rejected';
@@ -62,6 +73,7 @@ export type RewardType = 'screen_time' | 'experience' | 'toy' | 'treat' | 'wish'
 
 export type Reward = {
   id: string;
+  childId?: string;
   titleKey?: TranslationKey;
   title?: string;
   price: number;
@@ -73,6 +85,8 @@ export type Reward = {
   availableDays?: DayOfWeek[];
   /** If true, child must have all today's daily quests approved before buying */
   requiresDailyQuestsCompleted?: boolean;
+  /** Parent who created this reward */
+  createdBy?: string;
 };
 
 export type RewardRedemptionStatus = 'requested' | 'approved' | 'rejected' | 'fulfilled';
@@ -99,11 +113,56 @@ export type Wish = {
 
 export type PointTransactionType =
   | 'earn'
+  | 'skill_bonus'
   | 'spend'
   | 'penalty'
   | 'manual_adjustment'
   | 'investment_deposit'
   | 'investment_payout';
+
+export type ChildSkillId =
+  | 'task_bonus'
+  | 'savings_speed'
+  | 'savings_yield'
+  | 'combo_bonus'
+  | 'quest_chain'
+  | 'savings_master'
+  | 'legend_badge';
+
+export type ChildProgress = {
+  childId: string;
+  xp: number;
+  level: number;
+  unspentSkillPoints: number;
+};
+
+export type ChildSkillUnlock = {
+  childId: string;
+  skillId: ChildSkillId;
+  rank: number;
+  unlockedAt: string;
+};
+
+export type ChildAchievementId =
+  | 'first_task'
+  | 'tasks_10'
+  | 'tasks_25'
+  | 'tasks_50'
+  | 'first_investment'
+  | 'first_investment_payout'
+  | 'streak_3'
+  | 'first_reward'
+  | 'savings_profit_100';
+
+export type ChildAchievementProgress = {
+  childId: string;
+  achievementId: ChildAchievementId;
+  progress: number;
+  target: number;
+  unlocked: boolean;
+  xpAwarded: boolean;
+  unlockedAt?: string;
+};
 
 // ─── Growth Missions ─────────────────────────────────────────────────────────
 

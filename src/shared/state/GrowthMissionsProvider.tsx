@@ -10,8 +10,10 @@ import {
 
 import { useAuth } from '@/shared/auth';
 import { supabaseGrowthMissionsService } from '@/shared/services/growthMissions';
+import { useFamilyPoints } from '@/shared/state/FamilyPointsProvider';
 import type { ChildInvestment, InvestmentProject } from '@/shared/types/family';
 import type { CreateMissionInput, UpdateMissionInput } from '@/shared/services/growthMissions';
+import { applySavingsSkills } from '@/shared/utils/leveling';
 
 type GrowthMissionsContextValue = {
   hasHydrated: boolean;
@@ -29,6 +31,7 @@ const GrowthMissionsContext = createContext<GrowthMissionsContextValue | null>(n
 
 export const GrowthMissionsProvider = ({ children }: PropsWithChildren) => {
   const { session } = useAuth();
+  const { childSkillUnlocks, reloadState: reloadFamilyPointsState } = useFamilyPoints();
   const [hasHydrated, setHasHydrated] = useState(false);
   const [projects, setProjects]           = useState<InvestmentProject[]>([]);
   const [myInvestments, setMyInvestments] = useState<ChildInvestment[]>([]);
@@ -41,10 +44,67 @@ export const GrowthMissionsProvider = ({ children }: PropsWithChildren) => {
     setProjects(data);
   }, []);
 
-  const loadInvestments = useCallback(async (childId: string) => {
+  const loadInvestments = useCallback(async (childId: string, options?: { autoClaimReady?: boolean }) => {
     const data = await supabaseGrowthMissionsService.fetchChildInvestments(childId);
+
+    if (options?.autoClaimReady) {
+      const readyInvestments = data.filter(
+        (investment) =>
+          !investment.claimedAt && new Date(investment.maturesAt).getTime() <= Date.now(),
+      );
+
+      if (readyInvestments.length > 0) {
+        const results = await Promise.allSettled(
+          readyInvestments.map((investment) =>
+            supabaseGrowthMissionsService.claim({ investmentId: investment.id, childId }),
+          ),
+        );
+        const hasClaimed = results.some((result) => result.status === 'fulfilled');
+
+        if (hasClaimed) {
+          await reloadFamilyPointsState();
+          const refreshedData = await supabaseGrowthMissionsService.fetchChildInvestments(childId);
+          setMyInvestments(refreshedData);
+          return;
+        }
+      }
+    }
+
     setMyInvestments(data);
-  }, []);
+  }, [reloadFamilyPointsState]);
+
+  useEffect(() => {
+    if (session?.role !== 'child') {
+      return undefined;
+    }
+
+    const childId = session.childId ?? childIdRef.current;
+    const pendingInvestments = myInvestments.filter((investment) => !investment.claimedAt);
+
+    if (!childId || pendingInvestments.length === 0) {
+      return undefined;
+    }
+
+    const now = Date.now();
+    const nextMaturityDelay = pendingInvestments.reduce<number | null>((currentDelay, investment) => {
+      const delay = new Date(investment.maturesAt).getTime() - now;
+      const normalizedDelay = Math.max(delay, 5_000);
+
+      return currentDelay === null ? normalizedDelay : Math.min(currentDelay, normalizedDelay);
+    }, null);
+
+    if (nextMaturityDelay === null) {
+      return undefined;
+    }
+
+    const timeout = setTimeout(() => {
+      loadInvestments(childId, { autoClaimReady: true }).catch((error: unknown) => {
+        console.warn('[GrowthMissions] auto-claim check failed', error);
+      });
+    }, nextMaturityDelay + 250);
+
+    return () => clearTimeout(timeout);
+  }, [loadInvestments, myInvestments, session]);
 
   const hydrate = useCallback(async () => {
     if (!session) return;
@@ -93,7 +153,9 @@ export const GrowthMissionsProvider = ({ children }: PropsWithChildren) => {
           childIdRef.current  = resolvedChildId;
           await Promise.all([
             loadProjects(resolvedFamilyId, resolvedChildId || undefined),
-            resolvedChildId ? loadInvestments(resolvedChildId) : Promise.resolve(),
+            resolvedChildId
+              ? loadInvestments(resolvedChildId, { autoClaimReady: true })
+              : Promise.resolve(),
           ]);
         }
       }
@@ -117,7 +179,7 @@ export const GrowthMissionsProvider = ({ children }: PropsWithChildren) => {
       setHasHydrated(false);
       await Promise.all([
         loadProjects(fid, cid || undefined),
-        cid ? loadInvestments(cid) : Promise.resolve(),
+        cid ? loadInvestments(cid, { autoClaimReady: true }) : Promise.resolve(),
       ]);
       setHasHydrated(true);
     } else {
@@ -156,10 +218,28 @@ export const GrowthMissionsProvider = ({ children }: PropsWithChildren) => {
     async (projectId: string, amount: number) => {
       const cid = session?.childId ?? childIdRef.current;
       if (!cid) throw new Error('no_child_id');
-      await supabaseGrowthMissionsService.deposit({ projectId, childId: cid, amount });
-      await loadInvestments(cid);
+      const project = projects.find((item) => item.id === projectId);
+      const savingsPreview = project
+        ? applySavingsSkills({
+            bonusPercent: project.bonusPercent,
+            durationDays: project.durationDays,
+            unlocks: childSkillUnlocks,
+            childId: cid,
+          })
+        : undefined;
+      const skillBonusPercent = project && savingsPreview
+        ? Math.max(0, savingsPreview.bonusPercent - project.bonusPercent)
+        : 0;
+      await supabaseGrowthMissionsService.deposit({
+        projectId,
+        childId: cid,
+        amount,
+        skillBonusPercent,
+      });
+      await reloadFamilyPointsState();
+      await loadInvestments(cid, { autoClaimReady: true });
     },
-    [session, loadInvestments],
+    [childSkillUnlocks, projects, session, loadInvestments, reloadFamilyPointsState],
   );
 
   const claim = useCallback(
@@ -167,13 +247,9 @@ export const GrowthMissionsProvider = ({ children }: PropsWithChildren) => {
       const cid = session?.childId ?? childIdRef.current;
       if (!cid) throw new Error('no_child_id');
       await supabaseGrowthMissionsService.claim({ investmentId, childId: cid });
-      setMyInvestments((prev) =>
-        prev.map((inv) =>
-          inv.id === investmentId ? { ...inv, claimedAt: new Date().toISOString() } : inv,
-        ),
-      );
+      await Promise.all([reloadFamilyPointsState(), loadInvestments(cid)]);
     },
-    [session],
+    [session, loadInvestments, reloadFamilyPointsState],
   );
 
   return (

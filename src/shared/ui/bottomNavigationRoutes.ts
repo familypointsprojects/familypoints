@@ -3,13 +3,13 @@ const bottomNavigationRoutes = new Set([
   '/parent/tasks',
   '/parent/submissions',
   '/parent/rewards',
-  '/parent/redemptions',
   '/parent/growth-missions',
   '/child/dashboard',
   '/child/tasks',
   '/child/balance',
   '/child/rewards',
   '/child/growth-missions',
+  '/settings',
 ]);
 
 export const shouldShowBottomNavigation = (pathname: string): boolean =>

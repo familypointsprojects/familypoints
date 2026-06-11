@@ -6,7 +6,15 @@ import { FP } from '@/constants/theme';
 import { useLanguage } from '@/shared/i18n';
 import { useFamilyPoints } from '@/shared/state';
 import type { DayOfWeek } from '@/shared/types/family';
-import { AppButton, AppCard, AppScreen, AppTextInput, EmptyState, SectionTitle } from '@/shared/ui';
+import {
+  AppButton,
+  AppCard,
+  AppScreen,
+  AppTextInput,
+  EmptyState,
+  ParentChildFilter,
+  SectionTitle,
+} from '@/shared/ui';
 import { getTaskDescription, getTaskTitle } from '@/shared/utils/content';
 
 const ALL_DAYS: { key: DayOfWeek; label: string }[] = [
@@ -22,11 +30,12 @@ const ALL_DAYS: { key: DayOfWeek; label: string }[] = [
 const EditTaskScreen = () => {
   const { t } = useLanguage();
   const { taskId } = useLocalSearchParams<{ taskId?: string }>();
-  const { tasks, updateTask } = useFamilyPoints();
+  const { children, tasks, updateTask } = useFamilyPoints();
   const task = tasks.find((item) => item.id === taskId);
   const [title, setTitle] = useState(task ? getTaskTitle(task, t) : '');
   const [description, setDescription] = useState(task ? getTaskDescription(task, t) : '');
   const [points, setPoints] = useState(task ? String(task.points) : '');
+  const [selectedChildId, setSelectedChildId] = useState<string | undefined>(task?.childId);
   const [isDaily, setIsDaily] = useState(task?.isDaily ?? false);
   const [availableDays, setAvailableDays] = useState<DayOfWeek[]>(task?.availableDays ?? []);
 
@@ -60,6 +69,7 @@ const EditTaskScreen = () => {
       description: description.trim(),
       points: Number(points),
       status: task.status,
+      childId: selectedChildId,
       isDaily,
       availableDays: isDaily ? availableDays : [],
     });
@@ -82,6 +92,13 @@ const EditTaskScreen = () => {
           value={points}
           onChangeText={setPoints}
           keyboardType="number-pad"
+        />
+
+        <ParentChildFilter
+          childrenList={children}
+          label={t('parent.assignment.child')}
+          selectedChildId={selectedChildId}
+          onChange={setSelectedChildId}
         />
 
         <View style={styles.row}>

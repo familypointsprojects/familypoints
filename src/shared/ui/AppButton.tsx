@@ -1,4 +1,6 @@
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, TextStyle, ViewStyle } from 'react-native';
+import { View } from 'react-native';
 
 import { FP } from '@/constants/theme';
 
@@ -7,6 +9,7 @@ type AppButtonVariant = 'primary' | 'secondary' | 'accent' | 'danger' | 'ghost';
 type AppButtonProps = {
   title: string;
   subtitle?: string;
+  leftIcon?: ReactNode;
   onPress: () => void;
   variant?: AppButtonVariant;
   disabled?: boolean;
@@ -15,15 +18,17 @@ type AppButtonProps = {
 
 const containerStyles: Record<AppButtonVariant, ViewStyle> = {
   primary: {
-    backgroundColor: FP.primary,
+    backgroundColor: FP.primaryDark,
   },
   secondary: {
-    backgroundColor: FP.primaryLight,
+    backgroundColor: FP.white,
     borderColor: FP.primary,
     borderWidth: 1.5,
   },
   accent: {
     backgroundColor: FP.accent,
+    borderColor: '#FCE28B',
+    borderWidth: 1,
   },
   danger: {
     backgroundColor: FP.red,
@@ -44,6 +49,7 @@ const textStyles: Record<AppButtonVariant, TextStyle> = {
 export const AppButton = ({
   title,
   subtitle,
+  leftIcon,
   onPress,
   variant = 'primary',
   disabled = false,
@@ -60,9 +66,12 @@ export const AppButton = ({
       pressed && !disabled && styles.pressed,
       style,
     ]}>
-    <Text style={[styles.text, textStyles[variant], disabled && styles.disabledText]}>
-      {title}
-    </Text>
+    <View style={styles.contentRow}>
+      {leftIcon}
+      <Text style={[styles.text, textStyles[variant], disabled && styles.disabledText]}>
+        {title}
+      </Text>
+    </View>
     {Boolean(subtitle) && (
       <Text style={[styles.subtitle, textStyles[variant], disabled && styles.disabledText]}>
         {subtitle}
@@ -73,16 +82,22 @@ export const AppButton = ({
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 50,
-    borderRadius: 16,
+    minHeight: 52,
+    borderRadius: 18,
     paddingHorizontal: 18,
     paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  contentRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 7,
+    justifyContent: 'center',
+  },
   text: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '900',
     textAlign: 'center',
   },
   subtitle: {

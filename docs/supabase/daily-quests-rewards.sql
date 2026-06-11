@@ -83,7 +83,8 @@ $$;
 
 create or replace function count_daily_quests_due_today(
   family_id_input uuid,
-  day_of_week text  -- e.g. 'monday'
+  day_of_week text,  -- e.g. 'monday'
+  child_id_input uuid
 )
 returns integer
 language sql
@@ -96,6 +97,7 @@ as $$
   where family_id = family_id_input
     and is_daily = true
     and status = 'active'
+    and (child_id is null or child_id = child_id_input)
     and (
       array_length(available_days, 1) is null
       or array_length(available_days, 1) = 0
@@ -148,6 +150,10 @@ begin
     return jsonb_build_object('error', 'Reward does not belong to this family');
   end if;
 
+  if v_reward.child_id is not null and v_reward.child_id <> child_id_input then
+    return jsonb_build_object('error', 'Reward is not available for this child');
+  end if;
+
   -- 4. Reward must be active
   if not v_reward.is_active then
     return jsonb_build_object('error', 'Reward is not active');
@@ -167,7 +173,7 @@ begin
   -- 7. Check daily quests requirement
   if v_reward.requires_daily_quests_completed then
     select count_approved_daily_quests_today(child_id_input) into v_approved_count;
-    select count_daily_quests_due_today(v_family_id, day_of_week) into v_due_count;
+    select count_daily_quests_due_today(v_family_id, day_of_week, child_id_input) into v_due_count;
 
     if v_approved_count < v_due_count then
       return jsonb_build_object('error', 'Complete all daily quests first');
@@ -183,6 +189,16 @@ begin
     return jsonb_build_object('error', 'Not enough points');
   end if;
 
+  if exists (
+    select 1
+    from reward_redemptions
+    where reward_id = reward_id_input
+      and child_id = child_id_input
+      and status in ('requested', 'approved')
+  ) then
+    return jsonb_build_object('ok', true);
+  end if;
+
   -- 9. Create redemption (status = 'requested', spend tx created immediately)
   insert into reward_redemptions(reward_id, child_id, points_spent, status)
   values (reward_id_input, child_id_input, v_reward.price, 'requested')
@@ -194,3 +210,5 @@ begin
   return jsonb_build_object('redemption_id', v_redemption_id);
 end;
 $$;
+
+grant execute on function purchase_daily_reward(uuid, uuid, uuid, text) to anon, authenticated;

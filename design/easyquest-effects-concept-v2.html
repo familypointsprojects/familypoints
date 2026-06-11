@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>easyQuest — effects concept v2</title>
+<style>
+:root {
+  --app-bg: #edf5ff;
+  --surface: #ffffff;
+  --surface-2: #f7fbff;
+  --ink: #10233f;
+  --muted: #63758a;
+  --line: #dce8f5;
+  --blue: #1647b7;
+  --blue-dark: #0b2b70;
+  --graphite: #16283a;
+  --cyan: #10c7e8;
+  --mint: #25d989;
+  --lime: #d8ff3e;
+  --gold: #f7b721;
+  --gold-dark: #d88b08;
+  --orange: #ff642d;
+  --pink: #ff4f91;
+  --purple: #7557ff;
+  --red: #ef463d;
+  --shadow: 0 22px 62px rgba(16, 35, 63, .2);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: Inter, ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(16, 199, 232, .22), transparent 30%),
+    radial-gradient(circle at 86% 8%, rgba(216, 255, 62, .28), transparent 27%),
+    radial-gradient(circle at 70% 92%, rgba(255, 100, 45, .18), transparent 33%),
+    linear-gradient(180deg, #f8fcff 0%, var(--app-bg) 100%);
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: 390px 390px 330px;
+  gap: 28px;
+  margin: 0 auto;
+  max-width: 1210px;
+  padding: 34px 28px 48px;
+}
+
+.phone {
+  background: #071827;
+  border-radius: 42px;
+  box-shadow: var(--shadow);
+  padding: 10px;
+}
+
+.screen {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(16, 199, 232, .15), transparent 30%),
+    radial-gradient(circle at 86% 10%, rgba(216, 255, 62, .18), transparent 28%),
+    linear-gradient(180deg, #f8fcff 0%, #edf5ff 100%);
+  border-radius: 34px;
+  height: 760px;
+  overflow: hidden;
+  position: relative;
+}
+
+.screen::before {
+  background-image:
+    linear-gradient(rgba(22, 71, 183, .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(22, 71, 183, .03) 1px, transparent 1px);
+  background-size: 30px 30px;
+  content: "";
+  inset: 0;
+  mask-image: linear-gradient(180deg, rgba(0,0,0,.58), transparent 60%);
+  position: absolute;
+}
+
+.status {
+  display: flex;
+  font-size: 12px;
+  font-weight: 900;
+  justify-content: space-between;
+  padding: 14px 22px 6px;
+  position: relative;
+  z-index: 2;
+}
+
+.pad {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 16px 88px;
+  position: relative;
+  z-index: 2;
+}
+
+.topbar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.hello small {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.hello strong {
+  display: block;
+  font-size: 25px;
+  font-weight: 950;
+  letter-spacing: -.4px;
+}
+
+.coin-pill {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid #f1d28a;
+  border-radius: 999px;
+  box-shadow: 0 10px 24px rgba(247, 183, 33, .22);
+  color: #835100;
+  display: flex;
+  font-size: 18px;
+  font-weight: 950;
+  gap: 7px;
+  padding: 8px 12px;
+}
+
+.coin {
+  background: radial-gradient(circle at 34% 28%, #ffe47e 0 15%, #f7b721 16% 55%, #df930b 56% 100%);
+  border: 2px solid #8b5904;
+  border-radius: 50%;
+  display: inline-block;
+  height: 22px;
+  position: relative;
+  width: 22px;
+}
+
+.coin::after {
+  border: 2px solid #fff1a6;
+  border-left-color: transparent;
+  border-radius: 50%;
+  content: "";
+  height: 8px;
+  left: 5px;
+  position: absolute;
+  top: 5px;
+  transform: rotate(-35deg);
+  width: 8px;
+}
+
+.hero {
+  background: linear-gradient(145deg, var(--blue), var(--blue-dark));
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 22px;
+  box-shadow: 0 20px 40px rgba(22, 71, 183, .25);
+  color: white;
+  overflow: hidden;
+  padding: 15px;
+  position: relative;
+}
+
+.hero::after {
+  background: conic-gradient(from 180deg, transparent, rgba(216,255,62,.42), rgba(16,199,232,.18), transparent);
+  border-radius: 50%;
+  content: "";
+  height: 230px;
+  position: absolute;
+  right: -112px;
+  top: -100px;
+  transform: rotate(-18deg);
+  width: 230px;
+}
+
+.hero-grid {
+  align-items: center;
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.avatar {
+  align-items: center;
+  display: flex;
+  height: 96px;
+  justify-content: center;
+  overflow: visible;
+  position: relative;
+  width: 112px;
+}
+
+.avatar img {
+  display: block;
+  width: 118px;
+}
+
+.level-row {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.level-row strong {
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.level-row span {
+  background: var(--lime);
+  border-radius: 999px;
+  color: #264000;
+  font-size: 12px;
+  font-weight: 950;
+  padding: 5px 9px;
+}
+
+.mega-progress {
+  --progress: 72%;
+  background: rgba(8, 20, 34, .3);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  height: 22px;
+  overflow: visible;
+  padding: 3px;
+  position: relative;
+}
+
+.mega-progress::after {
+  background: radial-gradient(circle, rgba(216, 255, 62, .72) 0%, rgba(16, 199, 232, .34) 42%, transparent 72%);
+  border-radius: 50%;
+  content: "";
+  filter: blur(1px);
+  height: 36px;
+  left: calc(var(--progress) - 4px);
+  pointer-events: none;
+  position: absolute;
+  top: -7px;
+  width: 44px;
+  z-index: 2;
+}
+
+.mega-fill {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.42), transparent 18%, rgba(255,255,255,.26) 38%, transparent 58%),
+    repeating-linear-gradient(-18deg, rgba(255,255,255,.22) 0 7px, transparent 7px 15px),
+    linear-gradient(90deg, #ff3d24 0%, var(--orange) 32%, var(--gold) 68%, var(--lime) 100%);
+  background-size: 120px 100%, 48px 100%, 100% 100%;
+  border-radius: inherit;
+  box-shadow: 0 0 18px rgba(255, 100, 45, .42), 0 0 24px rgba(216, 255, 62, .34);
+  height: 100%;
+  position: relative;
+  width: var(--progress);
+}
+
+.rocket {
+  background: linear-gradient(145deg, #ffffff, #dff2ff);
+  border: 3px solid #09264f;
+  border-radius: 14px 60% 60% 14px;
+  box-shadow: 0 0 0 5px rgba(216, 255, 62, .22), 0 0 22px rgba(16, 199, 232, .55);
+  height: 22px;
+  left: calc(var(--progress) - 4px);
+  position: absolute;
+  top: 0;
+  width: 34px;
+  z-index: 3;
+}
+
+.rocket::before {
+  background: var(--cyan);
+  border: 2px solid #09264f;
+  border-radius: 50%;
+  content: "";
+  height: 8px;
+  left: 16px;
+  position: absolute;
+  top: 4px;
+  width: 8px;
+}
+
+.rocket::after {
+  background: linear-gradient(90deg, var(--red), var(--orange), var(--gold));
+  clip-path: polygon(0 50%, 100% 0, 78% 50%, 100% 100%);
+  content: "";
+  height: 16px;
+  left: -17px;
+  position: absolute;
+  top: 3px;
+  width: 20px;
+}
+
+.rocket-img {
+  filter: drop-shadow(0 0 8px rgba(216, 255, 62, .58)) drop-shadow(0 0 12px rgba(16, 199, 232, .36));
+  left: calc(var(--progress) - 23px);
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 64px;
+  z-index: 4;
+}
+
+.meta {
+  color: #d0e3f4;
+  display: flex;
+  font-size: 11.5px;
+  font-weight: 850;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.icon {
+  align-items: center;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: flex;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+}
+
+.icon svg {
+  display: block;
+  height: 27px;
+  width: 27px;
+}
+
+.effect-card {
+  background: linear-gradient(135deg, #faffdf, #ffffff);
+  border: 1px solid rgba(216, 255, 62, .8);
+  border-radius: 20px;
+  box-shadow: 0 14px 34px rgba(16, 199, 232, .13);
+  display: grid;
+  grid-template-columns: 66px 1fr;
+  gap: 12px;
+  overflow: hidden;
+  padding: 13px;
+  position: relative;
+}
+
+.effect-card.with-mascot {
+  padding-right: 76px;
+}
+
+.effect-card::before {
+  background:
+    radial-gradient(circle, var(--lime) 0 3px, transparent 4px),
+    radial-gradient(circle, var(--orange) 0 3px, transparent 4px),
+    radial-gradient(circle, var(--pink) 0 2px, transparent 3px),
+    radial-gradient(circle, var(--cyan) 0 2px, transparent 3px);
+  background-position: 18px 14px, 94px 22px, 192px 14px, 254px 48px;
+  background-repeat: no-repeat;
+  content: "";
+  inset: 0;
+  opacity: .9;
+  position: absolute;
+}
+
+.burst {
+  align-items: center;
+  background: conic-gradient(var(--lime), var(--cyan), var(--blue), var(--purple), var(--pink), var(--orange), var(--lime));
+  border: 3px solid #10233f;
+  border-radius: 20px;
+  box-shadow: 0 0 0 6px rgba(216, 255, 62, .22);
+  color: white;
+  display: flex;
+  font-size: 21px;
+  font-weight: 950;
+  height: 66px;
+  justify-content: center;
+  position: relative;
+  text-shadow: 0 2px 0 rgba(0,0,0,.18);
+  z-index: 1;
+}
+
+.effect-copy {
+  position: relative;
+  z-index: 1;
+}
+
+.effect-mascot {
+  bottom: -20px;
+  pointer-events: none;
+  position: absolute;
+  right: -22px;
+  width: 118px;
+  z-index: 2;
+}
+
+.effect-copy strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.effect-copy small {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+  font-weight: 850;
+  margin-top: 4px;
+}
+
+.coins-fly {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.coins-fly .coin {
+  height: 17px;
+  width: 17px;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.task {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 11px;
+  padding: 12px;
+  position: relative;
+}
+
+.task.mascot-supported {
+  border-color: rgba(22, 71, 183, .32);
+  box-shadow: 0 10px 24px rgba(22, 71, 183, .12);
+  overflow: visible;
+  padding-right: 68px;
+}
+
+.support-bot {
+  bottom: -14px;
+  height: 94px;
+  pointer-events: none;
+  position: absolute;
+  right: -20px;
+  width: 86px;
+  z-index: 1;
+}
+
+.support-bot img {
+  display: block;
+  width: 108px;
+}
+
+.task > .icon,
+.task > div:not(.support-bot) {
+  position: relative;
+  z-index: 2;
+}
+
+.mini-bot {
+  height: 70px;
+  position: relative;
+  width: 58px;
+}
+
+.mini-bot::before {
+  background: var(--gold);
+  border: 3px solid #08254c;
+  clip-path: polygon(10% 35%, 84% 8%, 64% 86%, 45% 55%);
+  content: "";
+  height: 23px;
+  position: absolute;
+  right: 7px;
+  top: -7px;
+  transform: rotate(12deg);
+  width: 25px;
+  z-index: 3;
+}
+
+.mini-body {
+  background: linear-gradient(145deg, var(--blue), var(--blue-dark));
+  border: 4px solid #08254c;
+  border-radius: 20px 20px 24px 24px;
+  bottom: 0;
+  height: 58px;
+  left: 3px;
+  position: absolute;
+  width: 50px;
+}
+
+.mini-screen {
+  background:
+    linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+    linear-gradient(180deg, #263845, #1d2c38);
+  background-size: 100% 5px, 100% 100%;
+  border: 4px solid #fff6e8;
+  border-radius: 13px;
+  height: 30px;
+  left: 5px;
+  position: absolute;
+  top: 8px;
+  width: 40px;
+}
+
+.mini-screen::before,
+.mini-screen::after {
+  background: #fff2a7;
+  border-radius: 4px;
+  box-shadow: 0 0 7px rgba(255,242,167,.5);
+  content: "";
+  height: 8px;
+  position: absolute;
+  top: 7px;
+  width: 4px;
+}
+
+.mini-screen::before { left: 9px; }
+.mini-screen::after { right: 9px; }
+
+.mini-smile {
+  border-bottom: 2px solid #fff2a7;
+  border-left: 2px solid #fff2a7;
+  border-radius: 0 0 4px 4px;
+  height: 5px;
+  left: 15px;
+  position: absolute;
+  top: 18px;
+  width: 10px;
+}
+
+.mini-arm {
+  background: var(--blue);
+  border: 4px solid #08254c;
+  border-radius: 999px;
+  height: 20px;
+  position: absolute;
+  right: -8px;
+  top: 33px;
+  transform: rotate(-26deg);
+  width: 13px;
+}
+
+.task.done {
+  background: linear-gradient(135deg, #ecfff6, white);
+  border-color: #b9eccb;
+}
+
+.task h3 {
+  font-size: 14px;
+  font-weight: 950;
+  margin: 0 0 2px;
+}
+
+.task p {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+  margin: 0;
+}
+
+.reward {
+  align-items: center;
+  color: #835100;
+  display: flex;
+  font-size: 13px;
+  font-weight: 950;
+  gap: 5px;
+  position: relative;
+  z-index: 2;
+}
+
+.button {
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  border-radius: 14px;
+  color: white;
+  font-size: 13px;
+  font-weight: 950;
+  padding: 10px 12px;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 10px 24px rgba(22, 71, 183, .22);
+}
+
+.info-pop {
+  align-items: center;
+  background: linear-gradient(135deg, #10233f, #173b74);
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 20px;
+  color: white;
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  gap: 10px;
+  overflow: hidden;
+  padding: 12px 14px;
+  position: relative;
+}
+
+.info-pop img {
+  align-self: end;
+  display: block;
+  justify-self: center;
+  margin-bottom: -17px;
+  margin-left: -12px;
+  width: 104px;
+}
+
+.info-pop strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.info-pop small {
+  color: #d0e3f4;
+  display: block;
+  font-size: 12px;
+  font-weight: 780;
+  line-height: 1.32;
+  margin-top: 4px;
+}
+
+.streak {
+  background: linear-gradient(135deg, var(--graphite), #0e2132);
+  border-radius: 19px;
+  color: white;
+  padding: 14px;
+}
+
+.streak-head {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.streak-head strong {
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.streak-head span {
+  color: var(--lime);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.streak-days {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(7, 1fr);
+  margin-top: 12px;
+}
+
+.day {
+  align-items: center;
+  background: rgba(255,255,255,.1);
+  border-radius: 11px;
+  color: #b7c8d6;
+  display: flex;
+  font-size: 13px;
+  font-weight: 950;
+  height: 38px;
+  justify-content: center;
+}
+
+.day.hot {
+  background: linear-gradient(180deg, var(--lime), var(--mint));
+  color: #10233f;
+  box-shadow: 0 0 16px rgba(216, 255, 62, .45);
+}
+
+.tabs {
+  background: rgba(248, 252, 255, .96);
+  border-top: 1px solid var(--line);
+  bottom: 0;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(4, 1fr);
+  left: 0;
+  padding: 9px 12px 12px;
+  position: absolute;
+  right: 0;
+  z-index: 4;
+}
+
+.tab {
+  align-items: center;
+  border-radius: 14px;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  font-size: 10px;
+  font-weight: 950;
+  gap: 3px;
+  padding: 7px 4px;
+}
+
+.tab.active {
+  background: #e5efff;
+  color: var(--blue);
+}
+
+.tab-icon {
+  align-items: center;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: flex;
+  height: 34px;
+  justify-content: center;
+  width: 42px;
+}
+
+.tab.active .tab-icon {
+  border-color: rgba(22, 71, 183, .24);
+  box-shadow: 0 8px 18px rgba(22, 71, 183, .12);
+}
+
+.tab-icon svg {
+  height: 24px;
+  width: 24px;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel {
+  background: rgba(255,255,255,.82);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: 0 18px 48px rgba(16, 35, 63, .14);
+  padding: 18px;
+}
+
+.mini-logo {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.logo-mark {
+  align-items: center;
+  background: linear-gradient(145deg, var(--blue), var(--blue-dark));
+  border: 3px solid #08254c;
+  border-radius: 18px;
+  display: flex;
+  height: 62px;
+  justify-content: center;
+  position: relative;
+  width: 62px;
+}
+
+.logo-mark::before {
+  background: var(--gold);
+  border: 3px solid #08254c;
+  clip-path: polygon(10% 35%, 84% 8%, 64% 86%, 45% 55%);
+  content: "";
+  height: 22px;
+  position: absolute;
+  right: -7px;
+  top: -13px;
+  transform: rotate(10deg);
+  width: 24px;
+}
+
+.logo-screen {
+  background:
+    linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+    linear-gradient(180deg, #283945, #1d2c38);
+  background-size: 100% 5px, 100% 100%;
+  border: 5px solid #fff6e8;
+  border-radius: 14px;
+  height: 38px;
+  position: relative;
+  width: 48px;
+}
+
+.logo-screen::before,
+.logo-screen::after {
+  background: #fff2a7;
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(255,242,167,.55);
+  content: "";
+  height: 12px;
+  position: absolute;
+  top: 10px;
+  width: 5px;
+}
+
+.logo-screen::before { left: 11px; }
+.logo-screen::after { right: 11px; }
+
+.brand-name {
+  font-size: 30px;
+  font-weight: 950;
+  letter-spacing: -.8px;
+}
+
+.brand-name span { color: var(--blue); }
+
+.panel h2 {
+  font-size: 18px;
+  font-weight: 950;
+  margin: 0 0 9px;
+}
+
+.panel p {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 760;
+  line-height: 1.42;
+  margin: 0;
+}
+
+.effect-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.effect-item {
+  align-items: center;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 11px;
+  padding: 11px;
+}
+
+.effect-item .icon {
+  border: 0;
+}
+
+.effect-item strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.effect-item small {
+  color: var(--muted);
+  display: block;
+  font-size: 11px;
+  font-weight: 780;
+  margin-top: 2px;
+}
+
+.palette {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(5, 1fr);
+  margin-top: 12px;
+}
+
+.swatch {
+  border: 2px solid rgba(16,35,63,.1);
+  border-radius: 12px;
+  height: 42px;
+}
+
+@media (max-width: 1120px) {
+  .stage {
+    grid-template-columns: 1fr;
+    max-width: 430px;
+  }
+}
+</style>
+</head>
+<body>
+<template id="icons">
+</template>
+
+<main class="stage">
+  <section class="phone">
+    <div class="screen">
+      <div class="status"><span>9:41</span><span>●●●</span></div>
+      <div class="pad">
+        <div class="topbar">
+          <div class="hello">
+            <small>Антон, вперед</small>
+            <strong>Квесты дня</strong>
+          </div>
+          <div class="coin-pill"><i class="coin"></i>236</div>
+        </div>
+
+        <div class="hero">
+          <div class="hero-grid">
+            <div class="avatar"><img src="assets/mascot/easyquest-mascot-xp-card.png" alt="Персонаж easyQuest с табличкой опыта"></div>
+            <div>
+              <div class="level-row"><strong>Следопыт</strong><span>ур. 12</span></div>
+              <div class="mega-progress"><div class="mega-fill"></div><img class="rocket-img" src="assets/mascot/easyquest-rocket-clean.png" alt=""></div>
+              <div class="meta"><span>720 / 900 XP</span><span>навык: +3%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="effect-card with-mascot">
+          <div class="burst">+15</div>
+          <div class="effect-copy">
+            <strong>Задание закрыто!</strong>
+            <small>Монеты летят в копилку, стрик сохранен</small>
+            <div class="coins-fly"><i class="coin"></i><i class="coin"></i><i class="coin"></i><i class="coin"></i></div>
+          </div>
+          <img class="effect-mascot" src="assets/mascot/easyquest-mascot-celebrate.png" alt="">
+        </div>
+
+        <div class="task-list">
+          <div class="task done">
+            <div class="icon">
+              <svg viewBox="0 0 32 32"><path d="M8 16.5l5.2 5.2L24.5 9.5" fill="none" stroke="#25d989" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div><h3>Заправить кровать</h3><p>готово, ждет подтверждения</p></div>
+            <div class="reward"><i class="coin"></i>+10</div>
+          </div>
+          <div class="task mascot-supported">
+            <div class="support-bot">
+              <img src="assets/mascot/easyquest-mascot-helper.png" alt="">
+            </div>
+            <div class="icon">
+              <svg viewBox="0 0 32 32"><path d="M9 6h12a4 4 0 014 4v16H11a4 4 0 01-4-4V8a2 2 0 012-2z" fill="#1647b7" stroke="#0b2b70" stroke-width="2"/><path d="M12 10h9M12 15h8" stroke="#d8ff3e" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <div><h3>Домашнее чтение</h3><p>15 минут фокуса</p></div>
+            <div class="button">Старт</div>
+          </div>
+          <div class="task">
+            <div class="icon">
+              <svg viewBox="0 0 32 32"><path d="M16 27V15" stroke="#15786a" stroke-width="3" stroke-linecap="round"/><path d="M16 16c-6-1-9-5-8-10 6 0 9 4 8 10z" fill="#25d989" stroke="#15786a" stroke-width="2"/><path d="M17 18c6-2 9-6 7-11-6 1-8 5-7 11z" fill="#d8ff3e" stroke="#7da100" stroke-width="2"/></svg>
+            </div>
+            <div><h3>Полить растения</h3><p>до 20:00</p></div>
+            <div class="reward"><i class="coin"></i>+15</div>
+          </div>
+        </div>
+
+        <div class="info-pop">
+          <img src="assets/mascot/easyquest-mascot-helper.png" alt="">
+          <div>
+            <strong>Подсказка от Квика</strong>
+            <small>Закрой одно короткое задание сейчас и доберешь серию до 7 дней.</small>
+          </div>
+        </div>
+
+        <div class="streak">
+          <div class="streak-head"><strong>Серия недели</strong><span>6 дней</span></div>
+          <div class="streak-days">
+            <div class="day hot">П</div><div class="day hot">В</div><div class="day hot">С</div>
+            <div class="day hot">Ч</div><div class="day hot">П</div><div class="day hot">С</div><div class="day">В</div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="tabs">
+        <div class="tab active">
+          <span class="tab-icon">
+            <svg viewBox="0 0 32 32"><rect x="7" y="6" width="18" height="22" rx="5" fill="#1647b7" stroke="#0b2b70" stroke-width="2.2"/><path d="M11 16l4 4 7-9" fill="none" stroke="#d8ff3e" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          Задания
+        </div>
+        <div class="tab">
+          <span class="tab-icon">
+            <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="#10c7e8" stroke="#0b6f8a" stroke-width="2.2"/><path d="M16 5l4 11-4 11-4-11z" fill="#ffffff" stroke="#0b2b70" stroke-width="1.6"/><path d="M16 5l4 11h-4z" fill="#ff642d"/></svg>
+          </span>
+          Рост
+        </div>
+        <div class="tab">
+          <span class="tab-icon">
+            <svg viewBox="0 0 32 32"><rect x="7" y="13" width="18" height="13" rx="3" fill="#f7b721" stroke="#8b5904" stroke-width="2.2"/><rect x="5" y="9" width="22" height="6" rx="2" fill="#ff642d" stroke="#8b5904" stroke-width="2.2"/><path d="M16 9v17" stroke="#fff1a6" stroke-width="3"/></svg>
+          </span>
+          Награды
+        </div>
+        <div class="tab">
+          <span class="tab-icon">
+            <svg viewBox="0 0 32 32"><path d="M10 6h12v6a6 6 0 01-12 0z" fill="#f7b721" stroke="#8b5904" stroke-width="2.2"/><path d="M12 27h8M16 18v9M9 9H5c0 5 2 8 6 8M23 9h4c0 5-2 8-6 8" fill="none" stroke="#8b5904" stroke-width="2.2" stroke-linecap="round"/><path d="M16 8l1.5 3 3.2.4-2.3 2.2.6 3.1-3-1.6-3 1.6.6-3.1-2.3-2.2 3.2-.4z" fill="#fff1a6"/></svg>
+          </span>
+          История
+        </div>
+      </nav>
+    </div>
+  </section>
+
+  <section class="phone">
+    <div class="screen">
+      <div class="status"><span>9:41</span><span>●●●</span></div>
+      <div class="pad">
+        <div class="topbar">
+          <div class="hello">
+            <small>Ранг и навыки</small>
+            <strong>Прогресс</strong>
+          </div>
+          <div class="coin-pill"><i class="coin"></i>236</div>
+        </div>
+
+        <div class="hero">
+          <div class="level-row"><strong>До ур. 13</strong><span>180 XP</span></div>
+              <div class="mega-progress" style="--progress:80%"><div class="mega-fill"></div><img class="rocket-img" src="assets/mascot/easyquest-rocket-clean.png" alt=""></div>
+          <div class="meta"><span>медленный рост</span><span>макс. бонус 10%</span></div>
+        </div>
+
+        <div class="info-pop">
+          <img src="assets/mascot/easyquest-mascot-helper.png" alt="">
+          <div>
+            <strong>Скоро новый навык</strong>
+            <small>Копилка будет созревать на 1% быстрее. Никакого резкого буста.</small>
+          </div>
+        </div>
+
+        <div class="task-list">
+          <div class="task mascot-supported">
+            <div class="support-bot">
+              <img src="assets/mascot/easyquest-mascot-savings.png" alt="">
+            </div>
+            <div class="icon">
+              <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="#f7b721" stroke="#8b5904" stroke-width="2.4"/><path d="M16 7l3 7h7l-6 3 2 7-6-4-6 4 2-7-6-3h7z" fill="#fff1a6"/></svg>
+            </div>
+            <div><h3>Бонус монет</h3><p>ур. 3 из 10, сейчас +3%</p></div>
+            <div class="reward">+3%</div>
+          </div>
+          <div class="task">
+            <div class="icon">
+              <svg viewBox="0 0 32 32"><path d="M8 17c0-5 4-8 10-8h3a5 5 0 015 5v7a5 5 0 01-5 5H10a4 4 0 01-4-4v-1H4v-5h4z" fill="#ffb8c5" stroke="#a84d63" stroke-width="2.3"/><circle cx="23" cy="16" r="1.5" fill="#a84d63"/><path d="M12 26v3M22 26v3" stroke="#a84d63" stroke-width="2.3" stroke-linecap="round"/></svg>
+            </div>
+            <div><h3>Быстрая копилка</h3><p>ур. 2 из 10, прибыль раньше</p></div>
+            <div class="reward">-2%</div>
+          </div>
+          <div class="task">
+            <div class="icon">
+              <svg viewBox="0 0 32 32"><path d="M16 4c4 4 1 7 5 11 2 2 3 4 3 7a8 8 0 01-16 0c0-4 3-7 6-10 2-2 1-5 2-8z" fill="#ff642d" stroke="#b8361a" stroke-width="2"/><path d="M16 18c2 2 4 3 4 6a4 4 0 01-8 0c0-2 2-4 4-6z" fill="#d8ff3e"/></svg>
+            </div>
+            <div><h3>Стрик-мастер</h3><p>эффект за 7 дней подряд</p></div>
+            <div class="reward">6/7</div>
+          </div>
+        </div>
+
+        <div class="effect-card with-mascot">
+          <div class="burst">
+            <svg viewBox="0 0 32 32" style="width:32px;height:32px"><path d="M7 13h18v13H7zM5 9h22v5H5z" fill="none" stroke="white" stroke-width="2.6" stroke-linejoin="round"/><path d="M16 9v17" stroke="white" stroke-width="2.6"/></svg>
+          </div>
+          <div class="effect-copy">
+            <strong>Награда получена</strong>
+            <small>вспышка компаса, частицы, звук монет</small>
+            <div class="coins-fly"><i class="coin"></i><i class="coin"></i><i class="coin"></i><i class="coin"></i></div>
+          </div>
+          <img class="effect-mascot" src="assets/mascot/easyquest-mascot-celebrate.png" alt="">
+        </div>
+      </div>
+
+      <nav class="tabs">
+        <div class="tab">
+          <span class="tab-icon">
+            <svg viewBox="0 0 32 32"><rect x="7" y="6" width="18" height="22" rx="5" fill="#1647b7" stroke="#0b2b70" stroke-width="2.2"/><path d="M11 16l4 4 7-9" fill="none" stroke="#d8ff3e" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          Задания
+        </div>
+        <div class="tab active">
+          <span class="tab-icon">
+            <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="#10c7e8" stroke="#0b6f8a" stroke-width="2.2"/><path d="M16 5l4 11-4 11-4-11z" fill="#ffffff" stroke="#0b2b70" stroke-width="1.6"/><path d="M16 5l4 11h-4z" fill="#ff642d"/></svg>
+          </span>
+          Рост
+        </div>
+        <div class="tab">
+          <span class="tab-icon">
+            <svg viewBox="0 0 32 32"><rect x="7" y="13" width="18" height="13" rx="3" fill="#f7b721" stroke="#8b5904" stroke-width="2.2"/><rect x="5" y="9" width="22" height="6" rx="2" fill="#ff642d" stroke="#8b5904" stroke-width="2.2"/><path d="M16 9v17" stroke="#fff1a6" stroke-width="3"/></svg>
+          </span>
+          Награды
+        </div>
+        <div class="tab">
+          <span class="tab-icon">
+            <svg viewBox="0 0 32 32"><path d="M10 6h12v6a6 6 0 01-12 0z" fill="#f7b721" stroke="#8b5904" stroke-width="2.2"/><path d="M12 27h8M16 18v9M9 9H5c0 5 2 8 6 8M23 9h4c0 5-2 8-6 8" fill="none" stroke="#8b5904" stroke-width="2.2" stroke-linecap="round"/><path d="M16 8l1.5 3 3.2.4-2.3 2.2.6 3.1-3-1.6-3 1.6.6-3.1-2.3-2.2 3.2-.4z" fill="#fff1a6"/></svg>
+          </span>
+          История
+        </div>
+      </nav>
+    </div>
+  </section>
+
+  <aside class="side">
+    <section class="panel">
+      <div class="mini-logo">
+        <div class="logo-mark"><div class="logo-screen"></div></div>
+        <div>
+          <div class="brand-name">easy<span>Quest</span></div>
+          <p>яркий, но не малышовый интерфейс</p>
+        </div>
+      </div>
+      <p>Основной цвет уводим в сине-электрическую палитру персонажа. Теплый беж остается только как мягкая поддержка, а не как главный тон приложения.</p>
+      <div class="palette">
+        <div class="swatch" style="background:#1647b7"></div>
+        <div class="swatch" style="background:#10c7e8"></div>
+        <div class="swatch" style="background:#d8ff3e"></div>
+        <div class="swatch" style="background:#f7b721"></div>
+        <div class="swatch" style="background:#ff642d"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Где появляется андроид</h2>
+      <div class="effect-list">
+        <div class="effect-item">
+          <div class="icon" style="background:#e5efff">
+            <svg viewBox="0 0 32 32"><path d="M8 20c4-8 12-8 16 0" fill="none" stroke="#1647b7" stroke-width="3" stroke-linecap="round"/><path d="M7 23h18" stroke="#1647b7" stroke-width="3" stroke-linecap="round"/></svg>
+          </div>
+          <div><strong>Подпирает карточку</strong><small>важное задание, новый навык, цель копилки</small></div>
+        </div>
+        <div class="effect-item">
+          <div class="icon" style="background:#faffdf">
+            <svg viewBox="0 0 32 32"><path d="M6 9h20v14H11l-5 5V9z" fill="#d8ff3e" stroke="#7da100" stroke-width="2.4" stroke-linejoin="round"/></svg>
+          </div>
+          <div><strong>Инфо-попап</strong><small>подсказки, обучение, объяснение бонусов</small></div>
+        </div>
+        <div class="effect-item">
+          <div class="icon" style="background:#fff4dc">
+            <svg viewBox="0 0 32 32"><path d="M16 3l3 9 9 3-9 3-3 11-3-11-9-3 9-3z" fill="#f7b721" stroke="#8b5904" stroke-width="2"/></svg>
+          </div>
+          <div><strong>Победный момент</strong><small>после выполнения, покупки награды, level up</small></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Иконки</h2>
+      <p>Эмодзи убираем. В приложении уже есть `QuestIcons.tsx`; его нужно расширить под реальные сущности: монета-компас, копилка, чтение, растения, стрик, уровень, награда, проверка.</p>
+    </section>
+  </aside>
+</main>
+</body>
+</html>

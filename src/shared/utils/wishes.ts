@@ -7,6 +7,7 @@ const getRewardIdentity = (reward: Reward): string => reward.titleKey ?? reward.
 const normalizeIdentity = (value: string): string => value.trim().replace(/\s+/g, ' ').toLowerCase();
 
 export const rewardMatchesWish = (reward: Reward, wish: Wish): boolean =>
+  (!reward.childId || !wish.childId || reward.childId === wish.childId) &&
   normalizeIdentity(getRewardIdentity(reward)) === normalizeIdentity(getWishIdentity(wish)) &&
   (reward.type === 'wish' || reward.price === wish.price);
 

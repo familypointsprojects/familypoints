@@ -64,6 +64,7 @@ create table task_submissions (
 create table rewards (
   id uuid primary key default gen_random_uuid(),
   family_id uuid not null references families(id) on delete cascade,
+  child_id uuid references children(id) on delete set null,
   title text not null,
   price integer not null check (price > 0),
   type text not null check (type in ('screen_time', 'experience', 'toy', 'treat', 'wish')),
@@ -123,6 +124,7 @@ alter table point_transactions
 create index tasks_family_id_idx on tasks(family_id);
 create index task_submissions_child_id_status_idx on task_submissions(child_id, status);
 create index rewards_family_id_is_active_idx on rewards(family_id, is_active);
+create index rewards_child_id_idx on rewards(child_id);
 create index wishes_child_id_is_archived_idx on wishes(child_id, is_archived);
 create index point_transactions_child_id_created_at_idx on point_transactions(child_id, created_at desc);
 create index favorite_goals_target_idx on favorite_goals(target_type, target_id);

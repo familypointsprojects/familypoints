@@ -1,11 +1,13 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { FP } from '@/constants/theme';
 import { useLanguage } from '@/shared/i18n';
 import { useFamilyPoints } from '@/shared/state';
 import type { DayOfWeek } from '@/shared/types/family';
-import { AppButton, AppCard, AppScreen, AppTextInput, StatusBadge } from '@/shared/ui';
+import { AppButton, AppCard, AppScreen, AppTextInput, ParentChildFilter, SegmentedControl, StatusBadge } from '@/shared/ui';
+import { getTaskPointSuggestions } from '@/shared/utils/pricingGuidance';
 
 const ALL_DAYS: { key: DayOfWeek; label: string }[] = [
   { key: 'monday', label: 'Пн' },
@@ -17,18 +19,169 @@ const ALL_DAYS: { key: DayOfWeek; label: string }[] = [
   { key: 'sunday', label: 'Вс' },
 ];
 
+type TaskTemplateCategory = 'home' | 'study' | 'routine' | 'help';
+
+type TaskTemplate = {
+  category: TaskTemplateCategory;
+  title: string;
+  description: string;
+  points: number;
+  isDaily?: boolean;
+  availableDays?: DayOfWeek[];
+};
+
+const WEEKDAYS: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+
+const TASK_TEMPLATE_CATEGORIES: { label: string; value: TaskTemplateCategory }[] = [
+  { label: 'Дом', value: 'home' },
+  { label: 'Учеба', value: 'study' },
+  { label: 'Режим', value: 'routine' },
+  { label: 'Помощь', value: 'help' },
+];
+
+const TASK_TEMPLATES: TaskTemplate[] = [
+  {
+    category: 'home',
+    title: 'Заправить кровать',
+    description: 'Аккуратно заправить кровать утром.',
+    points: 5,
+    isDaily: true,
+  },
+  {
+    category: 'home',
+    title: 'Убрать игрушки',
+    description: 'Собрать игрушки и положить их на место.',
+    points: 8,
+  },
+  {
+    category: 'home',
+    title: 'Навести порядок на столе',
+    description: 'Убрать лишнее со стола и протереть поверхность.',
+    points: 10,
+  },
+  {
+    category: 'home',
+    title: 'Помыть посуду',
+    description: 'Помыть свою посуду после еды.',
+    points: 10,
+  },
+  {
+    category: 'home',
+    title: 'Вынести мусор',
+    description: 'Вынести мусор и поставить новый пакет.',
+    points: 12,
+  },
+  {
+    category: 'study',
+    title: 'Сделать домашку',
+    description: 'Выполнить домашнее задание без напоминаний.',
+    points: 20,
+    isDaily: true,
+    availableDays: WEEKDAYS,
+  },
+  {
+    category: 'study',
+    title: 'Почитать 15 минут',
+    description: 'Почитать книгу 15 минут.',
+    points: 10,
+    isDaily: true,
+    availableDays: WEEKDAYS,
+  },
+  {
+    category: 'study',
+    title: 'Собрать портфель',
+    description: 'Собрать все нужное на завтра.',
+    points: 8,
+    isDaily: true,
+    availableDays: WEEKDAYS,
+  },
+  {
+    category: 'study',
+    title: 'Повторить слова',
+    description: 'Повторить новые слова или правила 10 минут.',
+    points: 10,
+  },
+  {
+    category: 'routine',
+    title: 'Почистить зубы утром и вечером',
+    description: 'Почистить зубы утром и перед сном.',
+    points: 6,
+    isDaily: true,
+  },
+  {
+    category: 'routine',
+    title: 'Сделать зарядку',
+    description: 'Сделать короткую зарядку 5-10 минут.',
+    points: 8,
+    isDaily: true,
+  },
+  {
+    category: 'routine',
+    title: 'Лечь спать вовремя',
+    description: 'Подготовиться ко сну и лечь в договоренное время.',
+    points: 10,
+    isDaily: true,
+  },
+  {
+    category: 'routine',
+    title: 'Собрать одежду в стирку',
+    description: 'Положить грязную одежду в корзину.',
+    points: 6,
+  },
+  {
+    category: 'help',
+    title: 'Покормить питомца',
+    description: 'Покормить питомца и проверить воду.',
+    points: 8,
+    isDaily: true,
+  },
+  {
+    category: 'help',
+    title: 'Полить растения',
+    description: 'Полить растения, которые попросил родитель.',
+    points: 8,
+  },
+  {
+    category: 'help',
+    title: 'Помочь с покупками',
+    description: 'Разобрать покупки или помочь донести пакет.',
+    points: 12,
+  },
+  {
+    category: 'help',
+    title: 'Убрать со стола после еды',
+    description: 'Убрать посуду и протереть стол после еды.',
+    points: 8,
+    isDaily: true,
+  },
+];
+
 const CreateTaskScreen = () => {
   const { t } = useLanguage();
-  const { createTask } = useFamilyPoints();
+  const { children, createTask } = useFamilyPoints();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [points, setPoints] = useState('');
+  const [selectedChildId, setSelectedChildId] = useState<string | undefined>();
+  const [selectedTemplateCategory, setSelectedTemplateCategory] = useState<TaskTemplateCategory>('home');
   const [isDaily, setIsDaily] = useState(false);
   const [availableDays, setAvailableDays] = useState<DayOfWeek[]>([]);
   const [message, setMessage] = useState('');
   const [messageTone, setMessageTone] = useState<'success' | 'warning'>('success');
+  const [isSaving, setIsSaving] = useState(false);
 
   const isValid = title.trim().length > 0 && description.trim().length > 0 && Number(points) > 0;
+  const visibleTemplates = TASK_TEMPLATES.filter((template) => template.category === selectedTemplateCategory);
+  const pointSuggestions = getTaskPointSuggestions({ title, description, isDaily });
+
+  const applyTemplate = (template: TaskTemplate) => {
+    setTitle(template.title);
+    setDescription(template.description);
+    setPoints(String(template.points));
+    setIsDaily(template.isDaily ?? false);
+    setAvailableDays(template.availableDays ?? []);
+    setMessage('');
+  };
 
   const toggleDay = (day: DayOfWeek) => {
     setAvailableDays((prev) =>
@@ -36,31 +189,68 @@ const CreateTaskScreen = () => {
     );
   };
 
-  const handleSubmit = () => {
-    if (!isValid) {
+  const handleSubmit = async () => {
+    if (!isValid || isSaving) {
       setMessageTone('warning');
       setMessage(t('parent.createTask.invalid'));
       return;
     }
 
     setMessageTone('success');
-    createTask({
-      title: title.trim(),
-      description: description.trim(),
-      points: Number(points),
-      isDaily,
-      availableDays: isDaily ? availableDays : [],
-    });
-    setMessage(t('parent.createTask.success', { title: title.trim() }));
-    setTitle('');
-    setDescription('');
-    setPoints('');
-    setIsDaily(false);
-    setAvailableDays([]);
+    setIsSaving(true);
+
+    try {
+      await createTask({
+        title: title.trim(),
+        description: description.trim(),
+        points: Number(points),
+        childId: selectedChildId,
+        isDaily,
+        availableDays: isDaily ? availableDays : [],
+      });
+      setMessage(t('parent.createTask.success', { title: title.trim() }));
+      router.replace('/parent/tasks');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setMessageTone('warning');
+      setMessage(errorMessage);
+      Alert.alert(t('common.error'), errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <AppScreen title={t('parent.createTask.title')} subtitle={t('parent.createTask.subtitle')}>
+      <AppCard>
+        <Text style={styles.templatesTitle}>Заготовки квестов</Text>
+        <SegmentedControl<TaskTemplateCategory>
+          options={TASK_TEMPLATE_CATEGORIES}
+          value={selectedTemplateCategory}
+          onChange={setSelectedTemplateCategory}
+        />
+        <View style={styles.templateGrid}>
+          {visibleTemplates.map((template) => (
+            <Pressable
+              accessibilityRole="button"
+              key={template.title}
+              onPress={() => applyTemplate(template)}
+              style={({ pressed }) => [styles.templateCard, pressed && styles.templateCardPressed]}>
+              <View style={styles.templateTop}>
+                <Text style={styles.templateTitle}>{template.title}</Text>
+                <StatusBadge label={`${template.points} ${t('common.pointsShort')}`} tone="muted" />
+              </View>
+              <Text style={styles.templateDescription}>{template.description}</Text>
+              {template.isDaily && (
+                <Text style={styles.templateMeta}>
+                  {template.availableDays?.length === WEEKDAYS.length ? 'Будни' : 'Ежедневный'}
+                </Text>
+              )}
+            </Pressable>
+          ))}
+        </View>
+      </AppCard>
+
       <AppCard>
         <AppTextInput
           label={t('common.title')}
@@ -81,6 +271,41 @@ const CreateTaskScreen = () => {
           onChangeText={setPoints}
           placeholder={t('parent.createTask.pointsPlaceholder')}
           keyboardType="number-pad"
+        />
+        <View style={styles.suggestionRow}>
+          {pointSuggestions.map((suggestion) => (
+            <Pressable
+              accessibilityRole="button"
+              key={suggestion.label}
+              onPress={() => setPoints(String(suggestion.value))}
+              style={({ pressed }) => [
+                styles.suggestionChip,
+                Number(points) === suggestion.value && styles.suggestionChipSelected,
+                pressed && styles.suggestionChipPressed,
+              ]}>
+              <Text
+                style={[
+                  styles.suggestionValue,
+                  Number(points) === suggestion.value && styles.suggestionValueSelected,
+                ]}>
+                {suggestion.label}: {suggestion.value}
+              </Text>
+              <Text
+                style={[
+                  styles.suggestionNote,
+                  Number(points) === suggestion.value && styles.suggestionNoteSelected,
+                ]}>
+                {suggestion.note}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <ParentChildFilter
+          childrenList={children}
+          label={t('parent.assignment.child')}
+          selectedChildId={selectedChildId}
+          onChange={setSelectedChildId}
         />
 
         <View style={styles.row}>
@@ -116,7 +341,11 @@ const CreateTaskScreen = () => {
           </>
         )}
 
-        <AppButton title={t('parent.createTask.submit')} onPress={handleSubmit} />
+        <AppButton
+          title={isSaving ? t('common.saving') : t('parent.createTask.submit')}
+          onPress={handleSubmit}
+          disabled={isSaving}
+        />
       </AppCard>
 
       {Boolean(message) && (
@@ -135,6 +364,90 @@ const CreateTaskScreen = () => {
 export default CreateTaskScreen;
 
 const styles = StyleSheet.create({
+  templatesTitle: {
+    color: FP.text,
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  templateGrid: {
+    gap: 8,
+  },
+  templateCard: {
+    backgroundColor: '#FFF8E8',
+    borderColor: '#E9D7A8',
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 6,
+    padding: 12,
+  },
+  templateCardPressed: {
+    opacity: 0.78,
+    transform: [{ scale: 0.99 }],
+  },
+  templateTop: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'space-between',
+  },
+  templateTitle: {
+    color: FP.text,
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '900',
+    lineHeight: 20,
+  },
+  templateDescription: {
+    color: FP.textSub,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  templateMeta: {
+    color: FP.primary,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  suggestionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  suggestionChip: {
+    backgroundColor: FP.primaryLight,
+    borderColor: FP.primaryBorder,
+    borderRadius: 8,
+    borderWidth: 1,
+    flexGrow: 1,
+    minWidth: 96,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  suggestionChipPressed: {
+    opacity: 0.78,
+  },
+  suggestionChipSelected: {
+    backgroundColor: FP.primary,
+    borderColor: FP.primary,
+  },
+  suggestionValue: {
+    color: FP.primaryDark,
+    fontSize: 13,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  suggestionValueSelected: {
+    color: '#FFFFFF',
+  },
+  suggestionNote: {
+    color: FP.textSub,
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  suggestionNoteSelected: {
+    color: '#EAF8F4',
+  },
   daysLabel: {
     color: FP.textSub,
     fontSize: 13,

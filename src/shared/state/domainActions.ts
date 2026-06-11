@@ -14,6 +14,8 @@ import type {
   SetRewardActiveInput,
   SetTaskStatusInput,
   SubmitTaskInput,
+  UnlockSkillInput,
+  UpdateRewardInput,
   UpdateTaskInput,
 } from '@/shared/state/types';
 import type {
@@ -25,8 +27,25 @@ import type {
   Wish,
 } from '@/shared/types/family';
 import { getBalance } from '@/shared/utils/points';
+import {
+  addXpToProgress,
+  calculateTaskSkillBonus,
+  createComboBonusTransactionTitle,
+  createTaskBonusTransactionTitle,
+  getComboBonusPoints,
+  getChildProgress,
+  getTaskXp,
+  shouldAwardComboBonus,
+  syncChildAchievements,
+  unlockSkill,
+  upsertChildProgress,
+} from '@/shared/utils/leveling';
+import { getDailyRewardLockReason } from '@/shared/utils/rewards';
+import { hasSubmittedDailyTaskToday, isDailyTaskAvailableToday } from '@/shared/utils/tasks';
+import { rewardMatchesWish } from '@/shared/utils/wishes';
 
-const createLocalId = (prefix: string): string => `${prefix}-${Date.now()}`;
+const createLocalId = (prefix: string): string =>
+  `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 const createSpendTransaction = (
   reward: Reward,
@@ -56,6 +75,7 @@ const createRewardRefundTransaction = (
 const createEarnTransaction = (
   submission: TaskSubmission,
   task: Task,
+  createdAt = new Date().toISOString(),
 ): PointTransaction => ({
   id: createLocalId('transaction'),
   childId: submission.childId,
@@ -63,7 +83,21 @@ const createEarnTransaction = (
   title: task.title,
   points: task.points,
   type: 'earn',
-  createdAt: new Date().toISOString(),
+  createdAt,
+});
+
+const createSkillBonusTransaction = (
+  childId: string,
+  title: string,
+  points: number,
+  createdAt = new Date().toISOString(),
+): PointTransaction => ({
+  id: createLocalId('transaction'),
+  childId,
+  title,
+  points,
+  type: 'skill_bonus',
+  createdAt,
 });
 
 export const createTaskInState = (
@@ -72,10 +106,13 @@ export const createTaskInState = (
 ): FamilyPointsState => {
   const newTask: Task = {
     id: createLocalId('task'),
+    childId: input.childId,
     title: input.title.trim(),
     description: input.description.trim(),
     points: input.points,
     status: 'active',
+    isDaily: input.isDaily,
+    availableDays: input.availableDays,
   };
 
   return {
@@ -97,6 +134,9 @@ export const updateTaskInState = (
           description: input.description.trim(),
           points: input.points,
           status: input.status,
+          childId: input.childId,
+          isDaily: input.isDaily,
+          availableDays: input.availableDays,
         }
       : task,
   ),
@@ -127,10 +167,14 @@ export const createRewardInState = (
 ): FamilyPointsState => {
   const newReward: Reward = {
     id: createLocalId('reward'),
+    childId: input.childId,
     title: input.title.trim(),
     price: input.price,
     type: input.type,
     isActive: true,
+    isDailyReward: input.isDailyReward,
+    availableDays: input.availableDays,
+    requiresDailyQuestsCompleted: input.requiresDailyQuestsCompleted,
   };
 
   return {
@@ -138,6 +182,28 @@ export const createRewardInState = (
     rewards: [newReward, ...state.rewards],
   };
 };
+
+export const updateRewardInState = (
+  state: FamilyPointsState,
+  input: UpdateRewardInput,
+): FamilyPointsState => ({
+  ...state,
+  rewards: state.rewards.map((reward) =>
+    reward.id === input.rewardId
+      ? {
+          ...reward,
+          childId: input.childId,
+          title: input.title.trim(),
+          price: input.price,
+          type: input.type,
+          isActive: input.isActive ?? reward.isActive,
+          isDailyReward: input.isDailyReward,
+          availableDays: input.availableDays,
+          requiresDailyQuestsCompleted: input.requiresDailyQuestsCompleted,
+        }
+      : reward,
+  ),
+});
 
 export const setRewardActiveInState = (
   state: FamilyPointsState,
@@ -172,6 +238,11 @@ export const clearFavoriteGoalInState = (
   favoriteGoals: state.favoriteGoals.filter((goal) => goal.childId !== input.childId),
 });
 
+export const unlockSkillInState = (
+  state: FamilyPointsState,
+  input: UnlockSkillInput,
+): FamilyPointsState => unlockSkill(state, input.childId, input.skillId);
+
 export const submitTaskInState = (
   state: FamilyPointsState,
   input: SubmitTaskInput,
@@ -182,8 +253,21 @@ export const submitTaskInState = (
       submission.childId === input.childId &&
       submission.status === 'pending',
   );
+  const task = state.tasks.find((item) => item.id === input.taskId);
+  const taskIsAvailableForChild = !task?.childId || task.childId === input.childId;
 
-  if (hasPendingSubmission) {
+  if (!task || !taskIsAvailableForChild || task.status !== 'active') {
+    return state;
+  }
+
+  if (task.isDaily) {
+    if (
+      !isDailyTaskAvailableToday(task, input.childId) ||
+      hasSubmittedDailyTaskToday(state.taskSubmissions, input.taskId, input.childId)
+    ) {
+      return state;
+    }
+  } else if (hasPendingSubmission) {
     return state;
   }
 
@@ -217,19 +301,70 @@ export const approveSubmissionInState = (
     return state;
   }
 
-  return {
+  const reviewedAt = new Date().toISOString();
+  const approvedSubmissions = state.taskSubmissions.map((item) =>
+    item.id === input.submissionId ? { ...item, status: 'approved' as const } : item,
+  );
+  const progressAfterTaskXp = addXpToProgress(
+    getChildProgress(state, submission.childId),
+    getTaskXp(task),
+  );
+  const earnTransaction = createEarnTransaction(submission, task, reviewedAt);
+  const taskBonus = calculateTaskSkillBonus({
+    pointTransactions: state.pointTransactions,
+    task,
+    unlocks: state.childSkillUnlocks,
+    childId: submission.childId,
+    now: new Date(reviewedAt),
+  });
+  const taskBonusTransaction = taskBonus.points > 0
+    ? createSkillBonusTransaction(
+        submission.childId,
+        createTaskBonusTransactionTitle(),
+        taskBonus.points,
+        reviewedAt,
+      )
+    : undefined;
+  const pointTransactionsBeforeCombo = [
+    ...(taskBonusTransaction ? [taskBonusTransaction] : []),
+    earnTransaction,
+    ...state.pointTransactions,
+  ];
+  const comboTransaction = shouldAwardComboBonus({
+    submissions: approvedSubmissions,
+    pointTransactions: pointTransactionsBeforeCombo,
+    unlocks: state.childSkillUnlocks,
+    childId: submission.childId,
+    now: new Date(reviewedAt),
+  })
+    ? createSkillBonusTransaction(
+        submission.childId,
+        createComboBonusTransactionTitle(),
+        getComboBonusPoints(state.childSkillUnlocks, submission.childId),
+        reviewedAt,
+      )
+    : undefined;
+
+  const nextState = {
     ...state,
-    taskSubmissions: state.taskSubmissions.map((item) =>
-      item.id === input.submissionId ? { ...item, status: 'approved' } : item,
-    ),
+    taskSubmissions: approvedSubmissions,
     tasks: state.tasks.map((taskItem) =>
-      taskItem.id === task.id ? { ...taskItem, status: 'inactive' } : taskItem,
+      taskItem.id === task.id && !task.isDaily
+        ? { ...taskItem, status: 'inactive' as const }
+        : taskItem,
     ),
     pointTransactions: [
-      createEarnTransaction(submission, task),
-      ...state.pointTransactions,
+      ...(comboTransaction ? [comboTransaction] : []),
+      ...pointTransactionsBeforeCombo,
     ],
+    childProgress: upsertChildProgress(state.childProgress, progressAfterTaskXp),
   };
+
+  return syncChildAchievements({
+    state: nextState,
+    childId: submission.childId,
+    awardNewXp: true,
+  });
 };
 
 export const rejectSubmissionInState = (
@@ -266,24 +401,33 @@ export const approveWishInState = (
 ): FamilyPointsState => {
   const wish = state.wishes.find((w) => w.id === input.wishId);
 
-  if (!wish || wish.status === 'approved') {
+  if (!wish) {
     return state;
   }
 
-  const newReward: Reward = {
-    id: createLocalId('reward'),
-    title: wish.title,
+  const approvedWish: Wish = { ...wish, status: 'approved', price: input.price };
+  const existingReward = state.rewards.find((reward) => rewardMatchesWish(reward, approvedWish));
+  const nextReward: Reward = {
+    id: existingReward?.id ?? createLocalId('reward'),
+    childId: approvedWish.childId,
+    title: approvedWish.title,
+    titleKey: approvedWish.titleKey,
     price: input.price,
     type: 'wish',
     isActive: true,
   };
+  const nextRewards = existingReward
+    ? state.rewards.map((reward) =>
+        reward.id === existingReward.id ? { ...reward, ...nextReward } : reward,
+      )
+    : [nextReward, ...state.rewards];
 
   return {
     ...state,
     wishes: state.wishes.map((w) =>
-      w.id === input.wishId ? { ...w, status: 'approved', price: input.price } : w,
+      w.id === input.wishId ? approvedWish : w,
     ),
-    rewards: [newReward, ...state.rewards],
+    rewards: nextRewards,
   };
 };
 
@@ -310,7 +454,26 @@ export const redeemRewardInState = (
       (redemption.status === 'requested' || redemption.status === 'approved'),
   );
 
-  if (!reward || balance < reward.price || hasOpenRequest) {
+  const rewardIsAvailableForChild = !reward?.childId || reward.childId === input.childId;
+
+  const dailyLockReason = reward?.isDailyReward
+    ? getDailyRewardLockReason(
+        reward,
+        balance,
+        state.tasks,
+        state.taskSubmissions,
+        input.childId,
+      )
+    : null;
+
+  if (
+    !reward ||
+    !rewardIsAvailableForChild ||
+    reward.isActive === false ||
+    balance < reward.price ||
+    hasOpenRequest ||
+    dailyLockReason
+  ) {
     return state;
   }
 

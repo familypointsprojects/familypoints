@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>EasyQuest — Sketch</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Caveat+Brush&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --paper:  #F9F7EF;
+  --ink:    #1E1A12;
+  --pencil: #6B6452;
+  --rule:   #C0D2E6;
+  --margin: rgba(255,140,140,.65);
+  --sy:  #FFFAB2;
+  --sb:  #C8E4FF;
+  --sg:  #C6FFE0;
+  --sp:  #F4CFFF;
+  --so:  #FFE2C0;
+  --sw:  #FFFFFF;
+  --mark-y: rgba(255,230,0,.45);
+  --mark-b: rgba(70,130,255,.25);
+  --mark-g: rgba(50,200,120,.25);
+  --mark-p: rgba(180,80,255,.2);
+  --col-b:  #3060C0;
+  --col-r:  #FF3060;
+  --col-g:  #22A855;
+  --col-o:  #E07010;
+  --col-p:  #8030D0;
+}
+
+body {
+  background: #D6CFBD;
+  font-family: 'Caveat', 'Comic Sans MS', cursive;
+  padding: 40px;
+  min-width: 1380px;
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+/* ─── notebook page column ─── */
+.nb {
+  background-color: var(--paper);
+  background-image:
+    repeating-linear-gradient(transparent 0,transparent 27px,var(--rule) 27px,var(--rule) 28.5px),
+    linear-gradient(to right, transparent 46px, var(--margin) 46px, var(--margin) 48px, transparent 48px);
+  border-radius: 3px 4px 3px 4px;
+  box-shadow: 3px 5px 16px rgba(0,0,0,.18), inset 0 0 30px rgba(0,0,0,.02);
+  padding: 24px 18px 32px 62px;
+  min-height: 700px;
+  position: relative;
+}
+/* no margin line on parent + concept */
+.nb.nomargin {
+  background-image: repeating-linear-gradient(transparent 0,transparent 27px,var(--rule) 27px,var(--rule) 28.5px);
+  padding-left: 20px;
+}
+/* graph paper */
+.nb.graph {
+  background-color: #F3F9F4;
+  background-image:
+    linear-gradient(rgba(160,210,170,.35) 1px, transparent 1px),
+    linear-gradient(to right, rgba(160,210,170,.35) 1px, transparent 1px);
+  background-size: 20px 20px;
+  padding-left: 20px;
+}
+
+/* ─── sticky note ─── */
+.st {
+  padding: 14px 14px 12px;
+  border-radius: 3px 7px 5px 4px / 5px 4px 7px 3px;
+  box-shadow: 2px 3px 10px rgba(0,0,0,.13);
+  margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
+}
+.st::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 18px;
+  width: 36px; height: 9px;
+  border-radius: 0 0 2px 2px;
+  opacity: .7;
+}
+.st.y  { background: var(--sy); } .st.y::before  { background: rgba(250,200,40,.85); }
+.st.b  { background: var(--sb); } .st.b::before  { background: rgba(80,160,255,.7); }
+.st.g  { background: var(--sg); } .st.g::before  { background: rgba(60,200,110,.7); }
+.st.p  { background: var(--sp); } .st.p::before  { background: rgba(180,80,255,.7); }
+.st.o  { background: var(--so); } .st.o::before  { background: rgba(240,150,50,.7); }
+.st.w  { background: var(--sw); } .st.w::before  { background: rgba(180,180,180,.6); }
+
+/* tiny rotation — alternating per child index */
+.st:nth-child(1) { transform: rotate(-.7deg); }
+.st:nth-child(2) { transform: rotate(.5deg); }
+.st:nth-child(3) { transform: rotate(-.4deg); }
+.st:nth-child(4) { transform: rotate(.6deg); }
+.st:nth-child(5) { transform: rotate(-.3deg); }
+.st:nth-child(6) { transform: rotate(.4deg); }
+
+/* ─── text styles ─── */
+.ttl {
+  font-family: 'Caveat Brush', 'Caveat', cursive;
+  font-size: 20px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px; /* clear washi tape */
+}
+.hl  { background: var(--mark-y); padding: 0 3px; border-radius: 2px; }
+.hlb { background: var(--mark-b); padding: 0 3px; border-radius: 2px; }
+.hlg { background: var(--mark-g); padding: 0 3px; border-radius: 2px; }
+.hlp { background: var(--mark-p); padding: 0 3px; border-radius: 2px; }
+.small { font-size: 14px; color: var(--pencil); }
+.anno { font-size: 13px; color: var(--pencil); font-style: italic; margin: 6px 0 2px 4px; }
+.anno::before { content: '↳ '; }
+
+/* colored badge */
+.tag {
+  display: inline-block;
+  font-size: 13px; font-weight: 700;
+  padding: 1px 10px;
+  border-radius: 20px;
+  color: white;
+  line-height: 1.5;
+}
+
+/* ─── XP bar ─── */
+.xp-wrap {
+  height: 15px;
+  border: 1.5px solid var(--pencil);
+  border-radius: 20px;
+  background: rgba(255,255,255,.6);
+  overflow: hidden;
+  margin: 4px 0 2px;
+  transform: rotate(-.2deg);
+}
+.xp-fill {
+  height: 100%;
+  width: 62%;
+  background: repeating-linear-gradient(45deg,
+    var(--col-b), var(--col-b) 4px,
+    rgba(80,130,255,.7) 4px, rgba(80,130,255,.7) 8px);
+  border-radius: 20px;
+  opacity: .8;
+}
+
+/* ─── coin display ─── */
+.coins {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--mark-y);
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 20px; font-weight: 700;
+  border: 1px solid rgba(200,160,0,.3);
+}
+
+/* ─── quest row ─── */
+.qr {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--rule);
+  font-size: 16px;
+}
+.qr:last-child { border-bottom: none; }
+.qbox {
+  width: 20px; height: 20px;
+  border: 1.5px solid var(--pencil);
+  border-radius: 3px 4px 3px 4px;
+  flex-shrink: 0; margin-top: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.qi { flex: 1; }
+.qname { font-weight: 700; }
+.qpts  { font-size: 14px; color: var(--pencil); }
+.qbtn {
+  font-family: 'Caveat', cursive;
+  font-size: 14px; font-weight: 700;
+  padding: 3px 13px;
+  border-radius: 20px;
+  border: 1.5px solid var(--pencil);
+  cursor: pointer;
+  box-shadow: 1px 2px 4px rgba(0,0,0,.1);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.qbtn.go   { background: var(--sg); transform: rotate(-1deg); }
+.qbtn.wait { background: var(--sy); transform: rotate(.5deg); }
+
+/* ─── reward row ─── */
+.rr {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--rule);
+  font-size: 16px;
+}
+.rr:last-child { border-bottom: none; }
+.rname { flex: 1; font-weight: 700; }
+.rdesc { font-size: 13px; color: var(--pencil); }
+.rprice {
+  background: var(--mark-y);
+  padding: 1px 9px; border-radius: 4px;
+  font-size: 15px; font-weight: 700; flex-shrink: 0;
+}
+.rbtn {
+  font-family: 'Caveat', cursive;
+  font-size: 14px; font-weight: 700;
+  padding: 3px 12px; border-radius: 20px;
+  border: 1.5px solid var(--pencil);
+  cursor: pointer; box-shadow: 1px 2px 4px rgba(0,0,0,.1);
+  flex-shrink: 0;
+}
+.rbtn.can  { background: var(--sg); }
+.rbtn.cant { background: var(--sp); color: var(--pencil); }
+
+/* ─── submission ─── */
+.sub {
+  padding: 9px 0;
+  border-bottom: 1px dashed var(--rule);
+  font-size: 16px;
+}
+.sub:last-child { border-bottom: none; }
+.subname { font-weight: 700; }
+.submeta { font-size: 13px; color: var(--pencil); }
+.subbtns { display: flex; gap: 8px; margin-top: 6px; }
+.bok, .bno {
+  font-family: 'Caveat', cursive;
+  font-size: 15px; font-weight: 700;
+  padding: 4px 14px; border-radius: 20px;
+  border: 1.5px solid var(--pencil);
+  cursor: pointer; box-shadow: 1px 2px 4px rgba(0,0,0,.1);
+}
+.bok { background: var(--sg); transform: rotate(-1deg); }
+.bno { background: var(--sp); transform: rotate(.6deg); }
+
+/* ─── stat boxes ─── */
+.stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.sbox {
+  flex: 1; text-align: center;
+  padding: 10px 6px;
+  border-radius: 6px;
+  box-shadow: 1px 2px 6px rgba(0,0,0,.1);
+  min-width: 62px;
+}
+.snum { font-family: 'Caveat Brush', 'Caveat', cursive; font-size: 36px; line-height: 1; }
+.slbl { font-size: 12px; color: var(--pencil); }
+
+/* ─── concept item ─── */
+.ci {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed rgba(160,210,170,.8);
+  font-size: 16px;
+}
+.ci:last-child { border-bottom: none; }
+.ciico { font-size: 22px; flex-shrink: 0; }
+.ciname { font-weight: 700; }
+.cidesc { font-size: 13px; color: var(--pencil); }
+.cistatus {
+  margin-left: auto;
+  font-size: 13px;
+  padding: 1px 9px; border-radius: 10px;
+  background: var(--mark-y);
+  border: 1px solid rgba(0,0,0,.1);
+  flex-shrink: 0;
+}
+
+/* ─── margin note ─── */
+.mnote {
+  position: absolute;
+  left: 4px; top: 50%;
+  font-size: 10px; color: var(--pencil); font-style: italic;
+  transform: rotate(-90deg) translateX(-50%);
+  transform-origin: center left;
+  white-space: nowrap;
+  opacity: .6;
+}
+
+/* ─── layout ─── */
+.page { max-width: 1380px; margin: 0 auto; }
+.cols {
+  display: grid;
+  grid-template-columns: 390px 390px 280px;
+  gap: 24px;
+  align-items: start;
+}
+.col-lbl {
+  font-family: 'Caveat Brush', 'Caveat', cursive;
+  font-size: 17px; text-align: center;
+  margin-bottom: 14px; opacity: .6; letter-spacing: 2px;
+}
+
+/* ─── title ─── */
+.main-title {
+  text-align: center;
+  margin-bottom: 36px;
+}
+.app-title {
+  font-family: 'Caveat Brush', 'Caveat', cursive;
+  font-size: 90px;
+  color: var(--ink);
+  line-height: 1;
+  display: inline-block;
+  position: relative;
+}
+/* wobbly hand-drawn underline as SVG */
+.title-deco { display: block; margin: 4px auto 0; }
+
+/* sketch action buttons */
+.skbtn {
+  font-family: 'Caveat', cursive;
+  font-size: 15px; font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--pencil);
+  cursor: pointer;
+  box-shadow: 1px 2px 5px rgba(0,0,0,.1);
+  display: inline-block;
+}
+</style>
+</head>
+<body>
+
+<!-- SVG rough filter + title deco shapes (hidden) -->
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs>
+    <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.8" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<div class="page">
+
+  <!-- ═══ MAIN TITLE ═══ -->
+  <div class="main-title">
+    <div style="position:relative; display:inline-block;">
+      <!-- doodle decorations -->
+      <span style="position:absolute; top:-14px; left:-36px; font-size:28px; transform:rotate(-22deg); opacity:.4;">✦</span>
+      <span style="position:absolute; top:8px; right:-28px; font-size:18px; transform:rotate(18deg); opacity:.4;">★</span>
+      <span style="position:absolute; bottom:-2px; left:-18px; font-size:12px; opacity:.3;">✦</span>
+      <span style="position:absolute; bottom:8px; right:-18px; font-size:10px; opacity:.3;">✦</span>
+      <div class="app-title">EasyQuest</div>
+      <!-- hand-drawn underline SVG -->
+      <svg class="title-deco" width="360" height="12" viewBox="0 0 360 12" fill="none">
+        <path d="M4 6 Q40 2 80 7 Q120 12 160 6 Q200 1 240 7 Q280 12 320 6 Q340 3 356 6"
+          stroke="#1E1A12" stroke-width="2.5" stroke-linecap="round" opacity=".55"/>
+      </svg>
+    </div>
+    <div style="font-size:16px; color:var(--pencil); margin-top:10px; font-style:italic;">
+      ← скетч-концепция дизайна &nbsp;·&nbsp; 2026 →
+    </div>
+  </div>
+
+  <div class="cols">
+
+  <!-- ═══════════════ CHILD COLUMN ═══════════════ -->
+  <div class="nb" style="transform:rotate(-.4deg);">
+    <div class="mnote">ребёнок</div>
+    <div class="col-lbl" style="color:var(--col-b);">[ ребёнок — герой ]</div>
+
+    <!-- HERO STATUS -->
+    <div class="st y" style="padding-top:20px;">
+
+      <!-- sketched character — right float -->
+      <div style="float:right; margin:0 0 8px 12px; transform:rotate(1.8deg);">
+        <svg width="72" height="84" viewBox="0 0 72 84" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:url(#rough)">
+          <!-- cape -->
+          <path d="M23 55 Q13 74 19 80 L36 70 L53 80 Q59 74 49 55" stroke="#1E1A12" stroke-width="1.8" fill="#FF8888" stroke-linecap="round"/>
+          <text x="28" y="71" font-size="9" fill="#FFD600">★</text>
+          <!-- body -->
+          <rect x="26" y="46" width="20" height="16" rx="3" fill="#88AAFF" stroke="#1E1A12" stroke-width="1.5"/>
+          <!-- head (wobbly path) -->
+          <path d="M19 30 Q17 18 26 14 Q36 10 46 14 Q55 18 53 30 Q53 42 46 46 Q36 50 26 46 Q19 42 19 30"
+            fill="#FFD3A8" stroke="#1E1A12" stroke-width="1.8"/>
+          <!-- messy hair -->
+          <path d="M21 27 Q18 15 23 12 Q27 6 31 13 Q33 7 36 13 Q39 7 41 13 Q45 6 49 12 Q54 15 51 27"
+            fill="#5B3A29" stroke="#1E1A12" stroke-width="1.5"/>
+          <!-- big eyes -->
+          <ellipse cx="28.5" cy="30" rx="4.5" ry="5.5" fill="white" stroke="#1E1A12" stroke-width="1.5"/>
+          <ellipse cx="43.5" cy="30" rx="4.5" ry="5.5" fill="white" stroke="#1E1A12" stroke-width="1.5"/>
+          <circle cx="29.5" cy="31" r="3.2" fill="#1E1A12"/>
+          <circle cx="44.5" cy="31" r="3.2" fill="#1E1A12"/>
+          <circle cx="30.5" cy="29.5" r="1.1" fill="white"/>
+          <circle cx="45.5" cy="29.5" r="1.1" fill="white"/>
+          <!-- eyebrows -->
+          <path d="M24 23 Q29 20 33 23" stroke="#5B3A29" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M39 23 Q43 20 48 23" stroke="#5B3A29" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <!-- smile -->
+          <path d="M28 39 Q36 46 44 39" stroke="#1E1A12" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+          <!-- cheeks -->
+          <circle cx="22" cy="35" r="4.5" fill="#FF9999" opacity=".35"/>
+          <circle cx="50" cy="35" r="4.5" fill="#FF9999" opacity=".35"/>
+          <!-- action speed lines -->
+          <line x1="11" y1="22" x2="5"  y2="18" stroke="#1E1A12" stroke-width="1"   opacity=".25"/>
+          <line x1="10" y1="28" x2="3"  y2="27" stroke="#1E1A12" stroke-width=".8"  opacity=".2"/>
+          <line x1="61" y1="22" x2="67" y2="18" stroke="#1E1A12" stroke-width="1"   opacity=".25"/>
+          <line x1="62" y1="28" x2="69" y2="27" stroke="#1E1A12" stroke-width=".8"  opacity=".2"/>
+          <!-- star top left -->
+          <text x="4" y="12" font-size="11" fill="#FFD600" opacity=".7">✦</text>
+          <text x="60" y="10" font-size="8"  fill="#FF6666" opacity=".6">✦</text>
+        </svg>
+      </div>
+
+      <div class="ttl" style="font-size:24px;">Максим <span class="small">· 10 лет</span></div>
+      <div style="margin-bottom:8px;">
+        <span class="tag" style="background:var(--col-b);">Уровень 3</span>
+        <span style="margin-left:6px; font-size:15px; color:var(--pencil);">Искатель</span>
+      </div>
+      <div class="small">Опыт: 620 / 1000</div>
+      <div class="xp-wrap"><div class="xp-fill"></div></div>
+      <div style="margin-top:10px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; clear:both;">
+        <div class="coins">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="#B8860B" stroke="#1E1A12" stroke-width="1.5"><circle cx="12" cy="12" r="10"/></svg>
+          250 монет
+        </div>
+        <span style="font-size:15px; color:var(--pencil);">🔥 серия <span class="hl">7 дней!</span></span>
+      </div>
+      <div class="anno" style="margin-top:10px;">выполни «уборку» сегодня → монеты ×1.1!</div>
+    </div>
+
+    <!-- QUEST BOARD -->
+    <div class="st b" style="padding-top:20px;">
+      <div class="ttl">
+        Доска квестов
+        <span class="tag" style="background:var(--col-r); font-size:13px;">4</span>
+      </div>
+
+      <div class="qr">
+        <div class="qbox"></div>
+        <div class="qi">
+          <div class="qname">Домашнее задание <span class="tag" style="background:var(--col-b); font-size:12px;">учёба</span></div>
+          <div class="qpts"><span class="hlb">+50 монет</span></div>
+        </div>
+        <button class="qbtn go">✓ сделал!</button>
+      </div>
+
+      <div class="qr">
+        <div class="qbox" style="background:rgba(255,220,50,.3); font-size:12px;">⏳</div>
+        <div class="qi">
+          <div class="qname">Убрать комнату <span class="tag" style="background:var(--col-g); font-size:12px;">дом</span></div>
+          <div class="qpts">+30 монет</div>
+        </div>
+        <button class="qbtn wait">на проверке</button>
+      </div>
+
+      <div class="qr">
+        <div class="qbox"></div>
+        <div class="qi">
+          <div class="qname">Зарядка 15 мин <span class="tag" style="background:var(--col-o); font-size:12px;">спорт</span></div>
+          <div class="qpts"><span class="hlg">+40 монет</span></div>
+        </div>
+        <button class="qbtn go">✓ сделал!</button>
+      </div>
+
+      <div class="qr">
+        <div class="qbox"></div>
+        <div class="qi">
+          <div class="qname">Помочь с посудой ×3 <span class="tag" style="background:var(--col-p); font-size:12px;">особый</span></div>
+          <div class="qpts">+80 монет · <span class="hl">прогресс 2/3</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TREASURY -->
+    <div class="st g" style="padding-top:20px;">
+      <div class="ttl">Сокровищница</div>
+
+      <div class="rr">
+        <div>
+          <div class="rname">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            2 часа видеоигр
+          </div>
+          <div class="rdesc">доп. игровое время</div>
+        </div>
+        <div class="rprice">150 🪙</div>
+        <button class="rbtn can">взять!</button>
+      </div>
+
+      <div class="rr">
+        <div>
+          <div class="rname">Поход в кино</div>
+          <div class="rdesc">выбираешь фильм сам</div>
+        </div>
+        <div class="rprice">400 🪙</div>
+        <button class="rbtn cant">мало монет</button>
+      </div>
+
+      <div class="rr">
+        <div>
+          <div class="rname">LEGO набор <span style="font-size:12px; color:var(--col-p);">★ желание</span></div>
+          <div class="rdesc">просил сам</div>
+        </div>
+        <div class="rprice">600 🪙</div>
+        <button class="rbtn cant">мало монет</button>
+      </div>
+
+      <div class="anno">до кино не хватает 150 монет</div>
+    </div>
+
+  </div>
+  <!-- end child -->
+
+  <!-- ═══════════════ PARENT COLUMN ═══════════════ -->
+  <div class="nb nomargin" style="transform:rotate(.3deg);">
+    <div class="col-lbl" style="color:var(--pencil);">[ родитель — штаб ]</div>
+
+    <!-- CHILD OVERVIEW -->
+    <div class="st w" style="padding-top:20px;">
+      <div class="ttl">Ребёнок</div>
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+        <!-- mini avatar -->
+        <svg width="52" height="58" viewBox="0 0 52 58" fill="none" style="flex-shrink:0; filter:url(#rough)">
+          <path d="M10 24 Q9 14 17 10 Q26 6 35 10 Q43 14 42 24 Q42 34 35 38 Q26 42 17 38 Q10 34 10 24"
+            fill="#FFD3A8" stroke="#1E1A12" stroke-width="1.5"/>
+          <path d="M12 22 Q10 12 14 9 Q18 4 22 9 Q26 4 30 9 Q34 4 38 9 Q42 12 40 22"
+            fill="#4A2C17" stroke="#1E1A12" stroke-width="1.2"/>
+          <ellipse cx="20" cy="23" rx="3.5" ry="4" fill="white" stroke="#1E1A12" stroke-width="1.2"/>
+          <ellipse cx="32" cy="23" rx="3.5" ry="4" fill="white" stroke="#1E1A12" stroke-width="1.2"/>
+          <circle cx="21" cy="24.5" r="2.2" fill="#1E1A12"/>
+          <circle cx="33" cy="24.5" r="2.2" fill="#1E1A12"/>
+          <path d="M20 32 Q26 37 32 32" stroke="#1E1A12" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <rect x="17" y="42" width="18" height="16" rx="3" fill="#88AAFF" stroke="#1E1A12" stroke-width="1.5"/>
+        </svg>
+        <div>
+          <div style="font-size:20px; font-weight:700;">Максим, 10 лет</div>
+          <div class="small">баланс: <span class="hl"><strong>250</strong> монет</span></div>
+          <div class="small">уровень 3 · серия 7 дней 🔥</div>
+        </div>
+        <span class="tag" style="background:var(--col-g); margin-left:auto;">онлайн</span>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="sbox" style="background:#FFE0E8;">
+        <div class="snum" style="color:var(--col-r);">2</div>
+        <div class="slbl">на проверке</div>
+      </div>
+      <div class="sbox" style="background:#E0E8FF;">
+        <div class="snum" style="color:var(--col-b);">1</div>
+        <div class="slbl">запрос награды</div>
+      </div>
+      <div class="sbox" style="background:#E0FFE8;">
+        <div class="snum" style="color:var(--col-g);">5</div>
+        <div class="slbl">активных</div>
+      </div>
+      <div class="sbox" style="background:var(--sy);">
+        <div class="snum" style="color:var(--col-o);">380</div>
+        <div class="slbl">заработано</div>
+      </div>
+    </div>
+
+    <!-- SUBMISSIONS -->
+    <div class="st p" style="padding-top:20px;">
+      <div class="ttl">
+        Проверка заявок
+        <span class="tag" style="background:var(--col-r); font-size:13px;">2</span>
+      </div>
+
+      <div class="sub">
+        <div class="subname">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--col-b)" stroke-width="2" style="vertical-align:middle"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          Домашнее задание — <span class="hlb">+50 монет</span>
+        </div>
+        <div class="submeta">Максим · сегодня 15:42</div>
+        <div class="subbtns">
+          <button class="bok">✓ одобрить</button>
+          <button class="bno">✗ отклонить</button>
+        </div>
+      </div>
+
+      <div class="sub">
+        <div class="subname">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--col-g)" stroke-width="2" style="vertical-align:middle"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Убрать комнату — <span class="hlg">+30 монет</span>
+        </div>
+        <div class="submeta">Максим · сегодня 12:15</div>
+        <div class="subbtns">
+          <button class="bok">✓ одобрить</button>
+          <button class="bno">✗ отклонить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="st o" style="padding-top:20px;">
+      <div class="ttl">Быстрые действия</div>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;">
+        <button class="skbtn" style="background:var(--sb); transform:rotate(-1deg);">+ добавить квест</button>
+        <button class="skbtn" style="background:var(--sg); transform:rotate(.5deg);">+ создать награду</button>
+        <button class="skbtn" style="background:var(--sp); transform:rotate(-1.2deg);">💌 желание (1)</button>
+        <button class="skbtn" style="background:var(--sy); transform:rotate(.8deg);">начислить монеты</button>
+      </div>
+    </div>
+
+    <!-- ALL TASKS -->
+    <div class="st w" style="padding-top:20px;">
+      <div class="ttl">Все квесты</div>
+
+      <div class="qr">
+        <div class="qbox" style="background:rgba(60,200,120,.3);">✓</div>
+        <div class="qi"><div class="qname">Домашнее задание</div><div class="qpts"><span class="hl">50 монет</span></div></div>
+        <span class="tag" style="background:var(--col-g); font-size:12px;">активен</span>
+      </div>
+      <div class="qr">
+        <div class="qbox" style="background:rgba(60,200,120,.3);">✓</div>
+        <div class="qi"><div class="qname">Убрать комнату</div><div class="qpts"><span class="hl">30 монет</span></div></div>
+        <span class="tag" style="background:var(--col-g); font-size:12px;">активен</span>
+      </div>
+      <div class="qr">
+        <div class="qbox" style="background:rgba(60,200,120,.3);">✓</div>
+        <div class="qi"><div class="qname">Зарядка 15 минут</div><div class="qpts"><span class="hl">40 монет</span></div></div>
+        <span class="tag" style="background:var(--col-g); font-size:12px;">активен</span>
+      </div>
+      <div class="qr" style="opacity:.45;">
+        <div class="qbox" style="background:#eee; font-size:12px;">—</div>
+        <div class="qi">
+          <div class="qname" style="text-decoration:line-through; color:var(--pencil);">Почитать книгу</div>
+          <div class="qpts">25 монет</div>
+        </div>
+        <button class="skbtn" style="background:white; font-size:13px; padding:2px 10px;">↻ повторить</button>
+      </div>
+    </div>
+
+  </div>
+  <!-- end parent -->
+
+  <!-- ═══════════════ CONCEPT COLUMN ═══════════════ -->
+  <div class="nb graph" style="transform:rotate(.6deg);">
+    <div class="col-lbl" style="color:var(--col-p);">[ концепция ]</div>
+
+    <div style="text-align:center; margin-bottom:16px;">
+      <span style="font-size:14px; color:var(--pencil); background:rgba(180,80,255,.12); padding:3px 14px; border-radius:20px; border:1px dashed var(--col-p);">✏️ будущие механики</span>
+    </div>
+
+    <!-- LEVELS -->
+    <div class="st p" style="padding-top:20px;">
+      <div class="ttl">Уровни героя</div>
+
+      <div class="ci">
+        <div class="ciico">🌱</div>
+        <div><div class="ciname">Новичок</div><div class="cidesc">0 — 200 опыта</div></div>
+        <div class="cistatus" style="background:rgba(60,200,120,.3);">✓</div>
+      </div>
+      <div class="ci">
+        <div class="ciico">🗺️</div>
+        <div><div class="ciname">Искатель</div><div class="cidesc">200 — 1000 опыта</div></div>
+        <div class="cistatus" style="background:rgba(60,200,120,.3);">✓</div>
+      </div>
+      <div class="ci" style="background:rgba(255,230,0,.2); border-radius:6px; padding:6px 4px; margin:0 -4px;">
+        <div class="ciico">⚔️</div>
+        <div><div class="ciname"><span class="hl">Герой</span></div><div class="cidesc">1000 — 3000</div></div>
+        <div class="cistatus" style="background:rgba(240,150,50,.7); color:white;">← сейчас</div>
+      </div>
+      <div class="ci" style="opacity:.4;">
+        <div class="ciico">🐉</div>
+        <div><div class="ciname">Легенда</div><div class="cidesc">3000+ опыта</div></div>
+        <div class="cistatus">🔒</div>
+      </div>
+      <div class="anno">каждый уровень = новые скиллы</div>
+    </div>
+
+    <!-- ACHIEVEMENTS -->
+    <div class="st y" style="padding-top:20px;">
+      <div class="ttl">Ачивки</div>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;">
+        <div style="text-align:center; padding:6px 8px; background:rgba(255,255,255,.65); border-radius:8px; border:1px dashed #ccc;">
+          <div style="font-size:22px;">🔥</div><div style="font-size:10px; color:var(--pencil);">7 дней</div>
+        </div>
+        <div style="text-align:center; padding:6px 8px; background:rgba(255,255,255,.65); border-radius:8px; border:1px dashed #ccc;">
+          <div style="font-size:22px;">📚</div><div style="font-size:10px; color:var(--pencil);">учёба</div>
+        </div>
+        <div style="text-align:center; padding:6px 8px; background:rgba(255,255,255,.65); border-radius:8px; border:1px dashed #ccc;">
+          <div style="font-size:22px;">💪</div><div style="font-size:10px; color:var(--pencil);">спорт</div>
+        </div>
+        <div style="text-align:center; padding:6px 8px; background:rgba(255,255,255,.65); border-radius:8px; border:1px dashed #ccc; opacity:.3;">
+          <div style="font-size:22px;">⭐</div><div style="font-size:10px; color:var(--pencil);">?</div>
+        </div>
+        <div style="text-align:center; padding:6px 8px; background:rgba(255,255,255,.65); border-radius:8px; border:1px dashed #ccc; opacity:.3;">
+          <div style="font-size:22px;">🏆</div><div style="font-size:10px; color:var(--pencil);">?</div>
+        </div>
+        <div style="text-align:center; padding:6px 8px; background:rgba(255,255,255,.65); border-radius:8px; border:1px dashed #ccc; opacity:.3;">
+          <div style="font-size:22px;">💰</div><div style="font-size:10px; color:var(--pencil);">?</div>
+        </div>
+      </div>
+      <div class="anno">бейджи открываются за достижения</div>
+    </div>
+
+    <!-- SKILLS -->
+    <div class="st b" style="padding-top:20px;">
+      <div class="ttl">Скиллы</div>
+
+      <div class="ci">
+        <div class="ciico">🔥</div>
+        <div><div class="ciname">Бонус серии</div><div class="cidesc">+10% за день</div></div>
+        <div class="cistatus" style="background:rgba(60,200,120,.3);">ВКЛ</div>
+      </div>
+      <div class="ci">
+        <div class="ciico">🛡️</div>
+        <div><div class="ciname">Защита монет</div><div class="cidesc">штрафы -25%</div></div>
+        <div class="cistatus" style="background:rgba(60,200,120,.3);">ВКЛ</div>
+      </div>
+      <div class="ci" style="opacity:.4;">
+        <div class="ciico">⚡</div>
+        <div><div class="ciname">Двойные монеты</div><div class="cidesc">×2 по выходным</div></div>
+        <div class="cistatus">🔒</div>
+      </div>
+      <div class="ci" style="opacity:.4;">
+        <div class="ciico">📈</div>
+        <div><div class="ciname">Инвестор</div><div class="cidesc">+5% к вкладам</div></div>
+        <div class="cistatus">🔒</div>
+      </div>
+      <div class="anno">скиллы меняют правила игры</div>
+    </div>
+
+    <!-- NOTE -->
+    <div style="margin-top:14px; padding:14px; background:rgba(255,255,255,.5); border:1.5px dashed var(--col-p); border-radius:8px; font-size:15px; color:var(--ink); line-height:1.8; transform:rotate(.5deg);">
+      <strong style="color:var(--col-p);">💡 поток:</strong><br>
+      квесты → опыт<br>
+      → уровень вверх<br>
+      → ачивки<br>
+      → скиллы<br>
+      → новые правила<br>
+      <span style="font-size:12px; color:#aaa; display:block; margin-top:6px; text-align:right;">* to be designed ✏️</span>
+    </div>
+
+  </div>
+  <!-- end concept -->
+
+  </div><!-- cols -->
+</div><!-- page -->
+</body>
+</html>

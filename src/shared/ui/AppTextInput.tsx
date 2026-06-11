@@ -32,7 +32,7 @@ export const AppTextInput = ({
       value={value}
       onChangeText={onChangeText}
       placeholder={placeholder}
-      placeholderTextColor="#A7B4BC"
+      placeholderTextColor="#8B9CAF"
       keyboardType={keyboardType}
       multiline={multiline}
       secureTextEntry={secureTextEntry}
@@ -49,12 +49,12 @@ const styles = StyleSheet.create({
   label: {
     color: FP.text,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '800',
   },
   input: {
     minHeight: 50,
-    borderColor: FP.border,
-    borderRadius: 14,
+    borderColor: FP.primaryBorder,
+    borderRadius: 16,
     borderWidth: 1.5,
     color: FP.text,
     backgroundColor: FP.white,

@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EasyQuest — Quest Camp</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+
+/* ═══════════════════════════════════════════════
+   ДИЗАЙН-ТОКЕНЫ
+═══════════════════════════════════════════════ */
+:root {
+  --teal:       #0BA896;
+  --teal-l:     #00D4B4;
+  --teal-d:     #088878;
+  --teal-glow:  rgba(11,168,150,.28);
+  --yellow:     #FFB800;
+  --yellow-l:   #FFC83A;
+  --yellow-glow:rgba(255,184,0,.22);
+  --coral:      #FF6B3D;
+  --coral-l:    #FF8C5A;
+  --coral-glow: rgba(255,107,61,.22);
+  --purple:     #7C4DFF;
+  --purple-l:   #9E6FFF;
+  --purple-glow:rgba(124,77,255,.22);
+  --bg:         #15113A;
+  --c1:         #1E1A50;
+  --c2:         #252060;
+  --c3:         #2D2870;
+  --border:     rgba(255,255,255,.08);
+  --border2:    rgba(255,255,255,.14);
+  --t1:         rgba(255,255,255,.96);
+  --t2:         rgba(255,255,255,.54);
+  --t3:         rgba(255,255,255,.24);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse at 12% 18%, rgba(11,168,150,.14) 0%, transparent 48%),
+    radial-gradient(ellipse at 88% 82%, rgba(124,77,255,.09) 0%, transparent 48%),
+    radial-gradient(ellipse at 50% 50%, rgba(255,184,0,.04) 0%, transparent 60%);
+  font-family: 'Nunito', 'Arial Rounded MT Bold', sans-serif;
+  color: var(--t1);
+  min-height: 100vh;
+  padding: 24px 20px 48px;
+}
+
+.page { max-width: 1300px; margin: 0 auto; }
+
+/* ─── TOPBAR ─── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding: 0 4px;
+}
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-wordmark {
+  font-size: 26px; font-weight: 900;
+  background: linear-gradient(90deg, var(--teal-l), #80FFE8);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  letter-spacing: -.5px;
+}
+.logo-tag {
+  font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--t3);
+}
+.topbar-r { display: flex; align-items: center; gap: 10px; }
+.top-coins {
+  display: flex; align-items: center; gap: 7px;
+  background: rgba(255,184,0,.1); border: 1px solid rgba(255,184,0,.2);
+  border-radius: 20px; padding: 7px 16px;
+  font-size: 16px; font-weight: 900; color: var(--yellow-l);
+}
+.top-switch {
+  background: var(--c1); border: 1px solid var(--border2);
+  border-radius: 20px; padding: 7px 16px;
+  font-family: inherit; font-size: 13px; font-weight: 700; color: var(--t2); cursor: pointer;
+}
+
+/* ─── 3-COLUMN GRID ─── */
+.grid3 {
+  display: grid;
+  grid-template-columns: 340px 1fr 300px;
+  gap: 18px;
+  align-items: start;
+}
+.col { display: flex; flex-direction: column; gap: 14px; }
+
+/* ─── CARD ─── */
+.card {
+  background: var(--c1);
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,.3);
+}
+.ch {
+  padding: 14px 18px 0;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.ch-title { font-size: 16px; font-weight: 900; }
+.ch-badge {
+  font-size: 12px; font-weight: 800;
+  padding: 3px 11px; border-radius: 20px;
+}
+.ch-badge.teal { background:rgba(11,168,150,.18); color:var(--teal-l); border:1px solid rgba(11,168,150,.3); }
+
+/* ─── HERO PANEL ─── */
+.hero-panel {
+  background: linear-gradient(148deg, #20185A 0%, #160F3E 100%);
+  border-radius: 24px;
+  border: 1px solid rgba(11,168,150,.22);
+  padding: 22px 20px 18px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 56px rgba(0,0,0,.45), 0 0 0 1px rgba(11,168,150,.08);
+}
+.hero-panel::before {
+  content: '';
+  position: absolute; top: -60px; right: -60px;
+  width: 240px; height: 240px;
+  background: radial-gradient(circle, rgba(11,168,150,.16) 0%, transparent 65%);
+  pointer-events: none;
+}
+.hero-top {
+  display: flex; align-items: flex-start; gap: 16px;
+  position: relative; z-index: 1; margin-bottom: 20px;
+}
+.hero-info { flex: 1; }
+.hero-greeting { font-size: 13px; font-weight: 700; color: var(--t2); margin-bottom: 4px; }
+.hero-name { font-size: 30px; font-weight: 900; line-height: 1; margin-bottom: 8px; }
+.hero-level {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(11,168,150,.18); border: 1px solid rgba(11,168,150,.32);
+  border-radius: 20px; padding: 5px 14px;
+  font-size: 13px; font-weight: 800; color: var(--teal-l);
+}
+.hero-level-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--teal-l); box-shadow: 0 0 6px var(--teal-glow);
+}
+
+/* ─── XP ROAD ─── */
+.xp-road-wrap { position: relative; z-index: 1; margin-bottom: 16px; }
+.xp-road-top {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+}
+.xp-road-lbl { font-size: 12px; font-weight: 800; color: var(--t2); }
+.xp-road-val { font-size: 12px; font-weight: 800; color: var(--yellow-l); }
+
+/* Track with path styling */
+.xp-track {
+  height: 18px;
+  background: rgba(0,0,0,.35);
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.08);
+  position: relative;
+  overflow: visible;
+}
+/* dashed path lines on top of fill */
+.xp-track::before {
+  content: '';
+  position: absolute;
+  top: 6px; left: 6px; right: 6px; height: 2px;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,.12) 0px, rgba(255,255,255,.12) 6px, transparent 6px, transparent 12px);
+  z-index: 2;
+  pointer-events: none;
+}
+.xp-fill {
+  height: 100%;
+  width: 72%;
+  background: linear-gradient(90deg, var(--teal-d), var(--teal), var(--teal-l));
+  border-radius: 20px;
+  position: relative;
+}
+.xp-fill::after {
+  content: '';
+  position: absolute; top: 4px; left: 8px; right: 8px; height: 4px;
+  background: rgba(255,255,255,.28); border-radius: 4px;
+}
+/* milestone circles */
+.xp-mile {
+  position: absolute; top: 50%; transform: translate(-50%,-50%);
+  width: 12px; height: 12px; border-radius: 50%; z-index: 3;
+  border: 2px solid rgba(255,255,255,.35); background: var(--c2);
+}
+.xp-mile.passed {
+  background: var(--teal-l); border-color: white;
+  box-shadow: 0 0 8px var(--teal-glow);
+}
+/* Bruno mini on road */
+.bruno-road {
+  position: absolute; top: -18px; left: 71%;
+  transform: translateX(-50%); z-index: 4;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,.5));
+}
+
+/* ─── BALANCE + STREAK ─── */
+.balance-row { display: flex; gap: 10px; position: relative; z-index: 1; margin-bottom: 12px; }
+.bal-chip {
+  flex: 1; background: rgba(0,0,0,.22); border: 1px solid var(--border2);
+  border-radius: 14px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.bal-num { font-size: 22px; font-weight: 900; line-height: 1; }
+.bal-lbl { font-size: 11px; font-weight: 700; color: var(--t2); }
+
+.streak-pill {
+  display: flex; align-items: center; gap: 9px;
+  background: rgba(255,107,61,.1); border: 1px solid rgba(255,107,61,.22);
+  border-radius: 14px; padding: 10px 14px;
+  position: relative; z-index: 1;
+}
+.streak-txt { font-size: 15px; font-weight: 800; color: var(--coral-l); flex: 1; }
+.streak-bonus {
+  background: linear-gradient(90deg, var(--coral), var(--yellow));
+  color: white; font-size: 12px; font-weight: 900;
+  padding: 3px 11px; border-radius: 20px;
+  box-shadow: 0 2px 8px var(--coral-glow);
+}
+
+/* ─── MASTERY BARS ─── */
+.mas-wrap { padding: 2px 18px 16px; display: flex; flex-direction: column; gap: 10px; }
+.mas-row { display: flex; align-items: center; gap: 10px; }
+.mas-ico { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+.mas-name { font-size: 13px; font-weight: 700; width: 80px; flex-shrink: 0; }
+.mas-bar { flex: 1; height: 10px; background: rgba(0,0,0,.3); border-radius: 5px; overflow: hidden; border: 1px solid rgba(255,255,255,.06); }
+.mas-fill { height: 100%; border-radius: 5px; }
+.mas-fill.s { background:linear-gradient(90deg,#5A3ACC,#8B6AFF); width:75%; }
+.mas-fill.h { background:linear-gradient(90deg,var(--teal-d),var(--teal-l)); width:55%; }
+.mas-fill.p { background:linear-gradient(90deg,#CC5000,var(--coral)); width:80%; }
+.mas-fill.x { background:linear-gradient(90deg,#880090,#CC66DD); width:40%; }
+.mas-lv { font-size: 12px; font-weight: 800; color: var(--t2); width: 24px; text-align: right; flex-shrink: 0; }
+
+/* ─── QUEST CARDS ─── */
+.quest-list { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+
+.qcard {
+  background: var(--c2); border-radius: 16px;
+  border: 1px solid var(--border); padding: 14px;
+  position: relative; overflow: hidden;
+  transition: transform .1s, box-shadow .1s;
+}
+.qcard:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,.35); }
+.qcard-bar {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: 16px 16px 0 0;
+}
+.qcard-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.qcat {
+  font-size: 11px; font-weight: 800; letter-spacing: 1px;
+  text-transform: uppercase; padding: 2px 10px; border-radius: 20px; flex-shrink: 0;
+}
+.qcat.s { background:rgba(90,58,204,.22); color:#A888FF; border:1px solid rgba(90,58,204,.38); }
+.qcat.h { background:rgba(11,168,150,.18); color:var(--teal-l); border:1px solid rgba(11,168,150,.32); }
+.qcat.p { background:rgba(255,107,61,.18); color:var(--coral-l); border:1px solid rgba(255,107,61,.32); }
+.qcat.x { background:rgba(136,0,144,.2); color:#DD88EE; border:1px solid rgba(136,0,144,.35); }
+.qbar-s { background:linear-gradient(90deg,#5A3ACC,#9060FF); }
+.qbar-h { background:linear-gradient(90deg,var(--teal-d),var(--teal-l)); }
+.qbar-p { background:linear-gradient(90deg,#CC5000,var(--coral)); }
+.qbar-x { background:linear-gradient(90deg,#880090,#CC66DD); }
+
+.qcard-title { font-size: 15px; font-weight: 800; line-height: 1.3; margin-bottom: 10px; }
+.qcard-rewards { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.qrp {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 13px; font-weight: 800;
+  padding: 4px 10px; border-radius: 20px;
+}
+.qrp.coin { background:rgba(255,184,0,.14); color:var(--yellow-l); border:1px solid rgba(255,184,0,.24); }
+.qrp.xp   { background:rgba(11,168,150,.14); color:var(--teal-l);   border:1px solid rgba(11,168,150,.24); }
+.qbtn {
+  display: block; width: 100%;
+  font-family: inherit; font-size: 14px; font-weight: 800;
+  padding: 10px; border-radius: 12px; border: none; cursor: pointer;
+  letter-spacing: .3px; transition: transform .07s, filter .07s;
+  text-align: center;
+}
+.qbtn:active { transform: scale(.96); }
+.qbtn.go {
+  background: linear-gradient(135deg, var(--teal-d), var(--teal), var(--teal-l));
+  color: white; box-shadow: 0 4px 16px var(--teal-glow);
+}
+.qbtn.wait { background: rgba(255,255,255,.07); color: var(--t2); border: 1px solid var(--border); cursor: default; }
+.qbtn.special {
+  background: linear-gradient(135deg, #880090, #CC66DD);
+  color: white; box-shadow: 0 4px 16px rgba(136,0,144,.3);
+}
+
+/* progress in quest */
+.qprog { height: 5px; background: rgba(0,0,0,.3); border-radius: 5px; overflow: hidden; margin-bottom: 10px; }
+.qprog-f { height: 100%; border-radius: 5px; }
+
+/* ─── CELEBRATION CARD ─── */
+.qcard-done {
+  background: linear-gradient(148deg, rgba(11,168,150,.14), rgba(0,212,184,.07));
+  border-color: rgba(11,168,150,.38);
+  box-shadow: 0 0 24px rgba(11,168,150,.14);
+}
+.done-top {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.done-check {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal-d), var(--teal-l));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+  box-shadow: 0 0 14px var(--teal-glow);
+}
+.done-title { font-size: 15px; font-weight: 900; color: var(--teal-l); }
+.done-sub   { font-size: 12px; color: var(--t2); margin-top: 2px; }
+.done-reward {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(11,168,150,.1); border: 1px solid rgba(11,168,150,.22);
+  border-radius: 12px; padding: 10px 14px; flex-wrap: wrap;
+}
+.done-num { font-size: 20px; font-weight: 900; color: var(--yellow-l); }
+.done-xp  { font-size: 16px; font-weight: 800; color: var(--teal-l); }
+/* sparkles */
+.sparkle-field { position: absolute; top: 10px; right: 14px; pointer-events: none; }
+.sp {
+  position: absolute; border-radius: 50%;
+  animation: sparkle-fade 2s ease-in-out infinite;
+}
+@keyframes sparkle-fade { 0%,100%{opacity:0;transform:scale(.5)} 50%{opacity:1;transform:scale(1)} }
+.sp:nth-child(1) { width:6px;height:6px;background:var(--yellow);top:0;right:0;animation-delay:0s; }
+.sp:nth-child(2) { width:4px;height:4px;background:var(--teal-l);top:12px;right:14px;animation-delay:.4s; }
+.sp:nth-child(3) { width:5px;height:5px;background:var(--coral);top:4px;right:28px;animation-delay:.8s; }
+.sp:nth-child(4) { width:3px;height:3px;background:var(--yellow-l);top:18px;right:6px;animation-delay:1.2s; }
+
+/* ─── REWARD SHOP ─── */
+.reward-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; padding: 0 14px 14px; }
+.rcard {
+  border-radius: 16px; overflow: hidden; border: 1px solid var(--border);
+  cursor: pointer; transition: transform .1s; position: relative;
+  box-shadow: 0 6px 20px rgba(0,0,0,.3);
+}
+.rcard:hover { transform: translateY(-3px); }
+.rcard-inner {
+  padding: 16px 12px 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  min-height: 144px; justify-content: space-between;
+  position: relative; overflow: hidden;
+}
+.rcard-inner::before { content:''; position:absolute; top:0;left:0;right:0;height:3px; }
+.rcard.common  .rcard-inner { background:linear-gradient(160deg,#252060,#1C1850); }
+.rcard.common  .rcard-inner::before { background:rgba(255,255,255,.2); }
+.rcard.rare    .rcard-inner { background:linear-gradient(160deg,#1A2E5C,#101D3A); }
+.rcard.rare    .rcard-inner::before { background:linear-gradient(90deg,#1E60CC,#60A0FF); }
+.rcard.rare    { border-color:rgba(64,144,255,.3); box-shadow:0 6px 24px rgba(30,96,204,.2); }
+.rcard.legend  .rcard-inner { background:linear-gradient(160deg,#2E1E54,#1E1034); }
+.rcard.legend  .rcard-inner::before { background:linear-gradient(90deg,var(--purple),var(--purple-l)); }
+.rcard.legend  { border-color:rgba(124,77,255,.38); box-shadow:0 6px 24px rgba(124,77,255,.22); }
+.rcard.can     { box-shadow:0 0 0 2px rgba(11,168,150,.4), 0 8px 28px rgba(0,0,0,.3); }
+.rcard-rar {
+  position:absolute; top:8px; right:9px; z-index:1;
+  font-size:9px; font-weight:800; letter-spacing:1px;
+  padding:2px 7px; border-radius:20px;
+}
+.rcard.common  .rcard-rar { background:rgba(255,255,255,.1); color:var(--t2); }
+.rcard.rare    .rcard-rar { background:rgba(30,96,204,.2); color:#80BBFF; border:1px solid rgba(30,96,204,.35); }
+.rcard.legend  .rcard-rar { background:rgba(124,77,255,.2); color:var(--purple-l); border:1px solid rgba(124,77,255,.3); }
+.rcard-ico  { font-size:32px; line-height:1; position:relative;z-index:1; }
+.rcard-name { font-size:12px; font-weight:800; text-align:center; line-height:1.3; position:relative;z-index:1; }
+.rcard-price { display:flex; align-items:center; gap:4px; font-size:14px; font-weight:900; color:var(--yellow-l); position:relative;z-index:1; }
+.rcard-btn {
+  width:100%; font-family:inherit; font-size:11px; font-weight:800;
+  padding:7px; border-radius:10px; border:none; cursor:pointer;
+  text-transform:uppercase; letter-spacing:.5px; position:relative;z-index:1;
+  transition: transform .07s;
+}
+.rcard-btn:active { transform:scale(.96); }
+.rcard-btn.go  { background:linear-gradient(135deg,var(--teal-d),var(--teal-l)); color:white; box-shadow:0 3px 10px var(--teal-glow); }
+.rcard-btn.no  { background:rgba(255,255,255,.07); color:var(--t2); border:1px solid var(--border); cursor:default; }
+
+/* ─── LEVEL ROAD (right col) ─── */
+.level-road {
+  padding: 18px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: relative;
+}
+.level-road::before {
+  content: '';
+  position: absolute; left: 44px; right: 44px; top: 50%;
+  height: 2px; background: rgba(255,255,255,.1); transform: translateY(-50%);
+}
+.lv-node { display: flex; flex-direction: column; align-items: center; gap: 5px; position: relative; z-index: 1; }
+.lv-circle {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; border: 2px solid var(--border);
+  background: var(--c2); transition: transform .15s;
+}
+.lv-circle.done { background:linear-gradient(135deg,var(--teal-d),var(--teal)); border-color:var(--teal-l); box-shadow:0 0 12px var(--teal-glow); }
+.lv-circle.now  { background:linear-gradient(135deg,var(--yellow),var(--coral)); border-color:var(--yellow-l); box-shadow:0 0 18px var(--yellow-glow); transform:scale(1.18); }
+.lv-circle.lock { opacity:.32; }
+.lv-name { font-size:11px; font-weight:800; color:var(--t2); text-align:center; }
+.lv-name.now { color:var(--yellow-l); }
+.lv-num  { font-size:10px; color:var(--t3); font-weight:700; }
+/* connecting filled segment */
+.lv-seg {
+  position: absolute; top: 50%; height: 2px;
+  background: var(--teal); box-shadow: 0 0 5px var(--teal-glow);
+  transform: translateY(-50%); z-index: 0;
+}
+
+/* ─── ACHIEVEMENT BADGES ─── */
+.badges { display: grid; grid-template-columns: repeat(3,1fr); gap: 9px; padding: 2px 14px 14px; }
+.badge {
+  border-radius: 14px; padding: 14px 10px; text-align: center;
+  background: var(--c2); border: 1.5px solid var(--border);
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  position: relative; overflow: hidden;
+}
+.badge.earned {
+  border-color: rgba(255,184,0,.3);
+  background: linear-gradient(145deg, rgba(255,184,0,.09), var(--c2));
+}
+.badge.earned::before { content:''; position:absolute; top:0;left:0;right:0;height:3px; background:linear-gradient(90deg,var(--yellow),var(--coral)); }
+.badge.locked { opacity:.25; }
+.badge-ico  { font-size:26px; }
+.badge-name { font-size:11px; font-weight:800; line-height:1.2; }
+.badge-desc { font-size:10px; color:var(--t2); font-weight:600; }
+
+/* ─── SKILLS (узлы в рюкзаке) ─── */
+.skills { padding: 2px 14px 14px; display: flex; flex-direction: column; gap: 8px; }
+.sk-node {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 13px; border-radius: 14px;
+  background: var(--c2); border: 1px solid var(--border);
+  transition: background .1s;
+}
+.sk-node.active { border-color:rgba(124,77,255,.32); background:rgba(124,77,255,.08); }
+.sk-node.locked { opacity:.3; }
+.sk-ico {
+  width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 19px;
+  background: rgba(124,77,255,.14); border: 1px solid rgba(124,77,255,.22);
+}
+.sk-node.active .sk-ico { background:rgba(124,77,255,.26); box-shadow:0 0 10px rgba(124,77,255,.3); }
+.sk-body { flex: 1; }
+.sk-name { font-size: 13px; font-weight: 800; }
+.sk-fx   { font-size: 12px; color: var(--t2); margin-top: 2px; }
+.sk-tag  { font-size:11px; font-weight:800; padding:3px 10px; border-radius:20px; flex-shrink:0; }
+.sk-tag.on   { background:rgba(11,168,150,.18); color:var(--teal-l); border:1px solid rgba(11,168,150,.3); }
+.sk-tag.lock { background:rgba(255,255,255,.06); color:var(--t3); border:1px solid var(--border); }
+
+/* ─── GROWTH CAPSULE (Копилка) ─── */
+.capsule {
+  margin: 0 14px 14px; padding: 16px; border-radius: 16px;
+  background: linear-gradient(145deg, rgba(11,168,150,.13), rgba(124,77,255,.07));
+  border: 1px solid rgba(11,168,150,.26);
+  box-shadow: 0 0 24px rgba(11,168,150,.09);
+}
+.cap-head {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+}
+.cap-icon {
+  width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
+  background: rgba(11,168,150,.18); border: 1px solid rgba(11,168,150,.32);
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+}
+.cap-title { font-size: 15px; font-weight: 900; }
+.cap-sub   { font-size: 12px; color: var(--t2); margin-top: 2px; }
+.cap-flow {
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(0,0,0,.22); border-radius: 12px; padding: 12px 16px;
+  margin-bottom: 12px;
+}
+.cap-side { text-align: center; }
+.cap-num { font-size: 22px; font-weight: 900; line-height: 1; }
+.cap-lbl { font-size: 11px; color: var(--t2); font-weight: 700; margin-top: 3px; }
+.cap-arrow { font-size: 24px; color: var(--teal-l); }
+.cap-bar-meta {
+  display: flex; justify-content: space-between;
+  font-size: 11px; font-weight: 700; color: var(--t2); margin-bottom: 6px;
+}
+.cap-bar { height: 8px; background: rgba(0,0,0,.3); border-radius: 4px; overflow: hidden; }
+.cap-bar-f { height: 100%; width: 65%; background: linear-gradient(90deg, var(--teal-d), var(--teal-l)); border-radius: 4px; }
+.cap-btn {
+  display: block; width: 100%; margin-top: 12px;
+  font-family: inherit; font-size: 13px; font-weight: 800;
+  padding: 10px; border: none; border-radius: 12px; cursor: pointer;
+  color: white; background: linear-gradient(135deg, var(--teal-d), var(--teal));
+  box-shadow: 0 3px 10px var(--teal-glow); text-align: center;
+}
+
+/* ─── DIVIDERS ─── */
+.sdiv {
+  font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--t3); padding: 0 14px; margin: 4px 0 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sdiv::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 1100px) {
+  .grid3 { grid-template-columns: 1fr 1fr; }
+  .grid3 > *:nth-child(3) { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+}
+@media (max-width: 680px) {
+  body { padding: 16px 14px 40px; }
+  .grid3 { grid-template-columns: 1fr; }
+  .grid3 > *:nth-child(3) { grid-template-columns: 1fr; }
+  .reward-grid { grid-template-columns: 1fr 1fr; }
+  .badges { grid-template-columns: repeat(2,1fr); }
+  .topbar { flex-wrap: wrap; gap: 12px; }
+  .hero-name { font-size: 24px; }
+}
+
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ═══ TOPBAR ═══ -->
+<div class="topbar">
+  <div class="logo">
+    <!-- Mini Bruno in logo -->
+    <svg width="38" height="44" viewBox="0 0 38 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="9" y="8" width="20" height="6" rx="3" fill="#089077"/>
+      <rect x="4" y="12" width="30" height="28" rx="11" fill="#00BFA5"/>
+      <ellipse cx="19" cy="14" rx="12" ry="3" fill="rgba(255,255,255,.18)"/>
+      <ellipse cx="13" cy="20" rx="4" ry="4.5" fill="white"/>
+      <ellipse cx="25" cy="20" rx="4" ry="4.5" fill="white"/>
+      <circle cx="13.5" cy="21" r="2.8" fill="#0D1B2A"/>
+      <circle cx="25.5" cy="21" r="2.8" fill="#0D1B2A"/>
+      <circle cx="15" cy="19.5" r="1" fill="white"/>
+      <circle cx="27" cy="19.5" r="1" fill="white"/>
+      <path d="M13 27 Q19 32 25 27" stroke="#0D1B2A" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <rect x="7" y="32" width="10" height="4" rx="2" fill="#089077"/>
+      <rect x="21" y="32" width="10" height="4" rx="2" fill="#089077"/>
+      <circle cx="19" cy="34" r="3" fill="#FFB800" stroke="rgba(0,0,0,.2)" stroke-width=".5"/>
+      <path d="M19 31 L19 37" stroke="#CC8800" stroke-width="1" stroke-linecap="round"/>
+      <path d="M16 34 L22 34" stroke="#CC8800" stroke-width="1" stroke-linecap="round"/>
+      <rect x="9" y="38" width="6" height="6" rx="3" fill="#07806A"/>
+      <rect x="23" y="38" width="6" height="6" rx="3" fill="#07806A"/>
+    </svg>
+    <div>
+      <div class="logo-wordmark">EasyQuest</div>
+      <div class="logo-tag">Квест-Лагерь</div>
+    </div>
+  </div>
+  <div class="topbar-r">
+    <div class="top-coins">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFB800"><circle cx="12" cy="12" r="10"/></svg>
+      380 монет
+    </div>
+    <button class="top-switch">👨‍👩‍👧 Для родителей</button>
+  </div>
+</div>
+
+<!-- ═══ 3 COLUMNS ═══ -->
+<div class="grid3">
+
+<!-- ════════ COLUMN 1: CHILD DASHBOARD ════════ -->
+<div class="col">
+
+  <!-- HERO PANEL with Bruno -->
+  <div class="hero-panel">
+    <div class="hero-top">
+
+      <!-- BRUNO-KWIK main mascot SVG -->
+      <svg width="108" height="130" viewBox="0 0 108 130" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0; filter:drop-shadow(0 8px 16px rgba(0,0,0,.4));">
+        <!-- LEGS -->
+        <rect x="28" y="110" width="20" height="24" rx="10" fill="#08907A"/>
+        <rect x="60" y="110" width="20" height="24" rx="10" fill="#08907A"/>
+        <!-- feet shadows -->
+        <ellipse cx="38" cy="132" rx="12" ry="4" fill="rgba(0,0,0,.3)"/>
+        <ellipse cx="70" cy="132" rx="12" ry="4" fill="rgba(0,0,0,.3)"/>
+        <!-- BODY -->
+        <rect x="8" y="22" width="92" height="94" rx="34" fill="#00BFA5"/>
+        <!-- body depth top highlight -->
+        <ellipse cx="54" cy="24" rx="36" ry="8" fill="rgba(255,255,255,.2)"/>
+        <!-- body depth bottom shadow -->
+        <ellipse cx="54" cy="114" rx="40" ry="6" fill="rgba(0,0,0,.14)"/>
+        <!-- SHOULDER STRAP LOOPS -->
+        <path d="M26 22 Q19 12 24 4" stroke="#009982" stroke-width="7" stroke-linecap="round" fill="none"/>
+        <path d="M82 22 Q89 12 84 4" stroke="#009982" stroke-width="7" stroke-linecap="round" fill="none"/>
+        <!-- TOP HANDLE -->
+        <path d="M38 6 Q54 0 70 6" stroke="#009982" stroke-width="6" stroke-linecap="round" fill="none"/>
+        <!-- FACE AREA highlight -->
+        <ellipse cx="54" cy="52" rx="32" ry="28" fill="rgba(0,200,170,.22)"/>
+        <!-- EYES -->
+        <ellipse cx="40" cy="46" rx="10" ry="11" fill="white"/>
+        <ellipse cx="68" cy="46" rx="10" ry="11" fill="white"/>
+        <!-- iris -->
+        <circle cx="41.5" cy="47.5" r="6.5" fill="#0D1B2A"/>
+        <circle cx="69.5" cy="47.5" r="6.5" fill="#0D1B2A"/>
+        <!-- pupils reflect -->
+        <circle cx="44" cy="45" r="2.5" fill="white"/>
+        <circle cx="72" cy="45" r="2.5" fill="white"/>
+        <circle cx="41" cy="50" r="1.2" fill="rgba(255,255,255,.5)"/>
+        <circle cx="69" cy="50" r="1.2" fill="rgba(255,255,255,.5)"/>
+        <!-- eyebrows (friendly arched) -->
+        <path d="M31 37 Q40 32 48 37" stroke="#0D1B2A" stroke-width="3" fill="none" stroke-linecap="round" opacity=".5"/>
+        <path d="M60 37 Q68 32 77 37" stroke="#0D1B2A" stroke-width="3" fill="none" stroke-linecap="round" opacity=".5"/>
+        <!-- SMILE (warm open smile) -->
+        <path d="M38 64 Q54 76 70 64" stroke="#0D1B2A" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <!-- smile fill hint -->
+        <path d="M42 65 Q54 73 66 65" fill="rgba(255,255,255,.25)" stroke="none"/>
+        <!-- rosy cheeks -->
+        <circle cx="24" cy="60" r="10" fill="#FF9F7A" opacity=".25"/>
+        <circle cx="84" cy="60" r="10" fill="#FF9F7A" opacity=".25"/>
+        <!-- FRONT POCKET FLAP -->
+        <rect x="16" y="78" width="76" height="40" rx="20" fill="#089A84" stroke="#077A69" stroke-width="1.5"/>
+        <!-- pocket highlight -->
+        <ellipse cx="54" cy="80" rx="28" ry="4" fill="rgba(255,255,255,.12)"/>
+        <!-- COMPASS on pocket -->
+        <!-- compass rose background -->
+        <circle cx="54" cy="94" r="14" fill="rgba(0,0,0,.2)" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>
+        <!-- compass ticks -->
+        <text x="50.5" y="86" font-size="7" fill="rgba(255,255,255,.45)" font-weight="800">N</text>
+        <text x="50.5" y="105" font-size="7" fill="rgba(255,255,255,.3)" font-weight="800">S</text>
+        <!-- ARROW (yellow, pointing NE/North) -->
+        <!-- north half: yellow pointing up -->
+        <polygon points="54,80 50,94 54,92 58,94" fill="#FFB800"/>
+        <!-- south half: dimmer -->
+        <polygon points="54,108 50,94 54,96 58,94" fill="rgba(255,255,255,.3)"/>
+        <!-- center pin -->
+        <circle cx="54" cy="94" r="3" fill="#FFB800" stroke="#CC8800" stroke-width="1.5"/>
+        <!-- CORAL BUTTON accent top right of pocket -->
+        <circle cx="78" cy="84" r="5.5" fill="#FF6B3D" stroke="rgba(255,255,255,.3)" stroke-width="1.5"/>
+        <circle cx="78" cy="84" r="2.5" fill="rgba(255,255,255,.5)"/>
+      </svg>
+
+      <div class="hero-info">
+        <div class="hero-greeting">Привет, герой!</div>
+        <div class="hero-name">Максим</div>
+        <div class="hero-level">
+          <div class="hero-level-dot"></div>
+          Lv. 4 · Следопыт
+        </div>
+      </div>
+    </div>
+
+    <!-- XP ROAD BAR -->
+    <div class="xp-road-wrap">
+      <div class="xp-road-top">
+        <span class="xp-road-lbl">Путь к уровню 5</span>
+        <span class="xp-road-val">720 / 1000 XP</span>
+      </div>
+      <div class="xp-track">
+        <div class="xp-fill"></div>
+        <!-- milestones -->
+        <div class="xp-mile passed" style="left:0%"></div>
+        <div class="xp-mile passed" style="left:33%"></div>
+        <div class="xp-mile passed" style="left:66%"></div>
+        <div class="xp-mile" style="left:100%"></div>
+        <!-- mini Bruno on road -->
+        <div class="bruno-road">
+          <svg width="20" height="24" viewBox="0 0 20 24" fill="none">
+            <rect x="3" y="5" width="14" height="16" rx="5" fill="#00BFA5"/>
+            <ellipse cx="7" cy="10" rx="2" ry="2.5" fill="white"/><ellipse cx="13" cy="10" rx="2" ry="2.5" fill="white"/>
+            <circle cx="7.5" cy="10.5" r="1.5" fill="#0D1B2A"/><circle cx="13.5" cy="10.5" r="1.5" fill="#0D1B2A"/>
+            <path d="M7 14 Q10 17 13 14" stroke="#0D1B2A" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <rect x="4" y="21" width="5" height="3" rx="1.5" fill="#089A84"/>
+            <rect x="11" y="21" width="5" height="3" rx="1.5" fill="#089A84"/>
+            <circle cx="10" cy="16" r="2.5" fill="#FFB800" stroke="#CC8800" stroke-width=".5"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- BALANCE + STREAK -->
+    <div class="balance-row">
+      <div class="bal-chip">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFB800"><circle cx="12" cy="12" r="10"/></svg>
+        <div>
+          <div class="bal-num" style="color:var(--yellow-l);">380</div>
+          <div class="bal-lbl">монет</div>
+        </div>
+      </div>
+      <div class="bal-chip">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--teal-l)" stroke-width="2.5" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <div>
+          <div class="bal-num" style="color:var(--teal-l);">720</div>
+          <div class="bal-lbl">XP</div>
+        </div>
+      </div>
+    </div>
+    <div class="streak-pill">
+      <span style="font-size:22px;">🔥</span>
+      <span class="streak-txt">7 дней подряд!</span>
+      <div class="streak-bonus">+10% БОНУС</div>
+    </div>
+  </div>
+
+  <!-- MASTERY CARD -->
+  <div class="card">
+    <div class="ch">
+      <span class="ch-title">Прогресс по направлениям</span>
+    </div>
+    <div class="mas-wrap">
+      <div class="mas-row"><div class="mas-ico">📚</div><div class="mas-name">Учёба</div><div class="mas-bar"><div class="mas-fill s"></div></div><div class="mas-lv">75</div></div>
+      <div class="mas-row"><div class="mas-ico">🏕️</div><div class="mas-name">Дом</div><div class="mas-bar"><div class="mas-fill h"></div></div><div class="mas-lv">55</div></div>
+      <div class="mas-row"><div class="mas-ico">⚡</div><div class="mas-name">Спорт</div><div class="mas-bar"><div class="mas-fill p"></div></div><div class="mas-lv">80</div></div>
+      <div class="mas-row"><div class="mas-ico">🌟</div><div class="mas-name">Особое</div><div class="mas-bar"><div class="mas-fill x"></div></div><div class="mas-lv">40</div></div>
+    </div>
+  </div>
+
+</div>
+<!-- end col 1 -->
+
+<!-- ════════ COLUMN 2: QUESTS + REWARDS ════════ -->
+<div class="col">
+
+  <!-- QUEST SECTION -->
+  <div class="card">
+    <div class="ch">
+      <span class="ch-title">Активные квесты</span>
+      <span class="ch-badge teal">4 квеста</span>
+    </div>
+    <div class="quest-list">
+
+      <!-- Quest 1: study -->
+      <div class="qcard">
+        <div class="qcard-bar qbar-s"></div>
+        <div class="qcard-head">
+          <span class="qcat s">Учёба</span>
+          <span style="font-size:12px;color:var(--t2);font-weight:700;">Зал Знаний</span>
+        </div>
+        <div class="qcard-title">Сделать домашнее задание</div>
+        <div class="qcard-rewards">
+          <span class="qrp coin">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFB800"><circle cx="12" cy="12" r="10"/></svg>
+            +50 монет
+          </span>
+          <span class="qrp xp">⚡ +50 XP</span>
+        </div>
+        <button class="qbtn go">✓ Выполнил!</button>
+      </div>
+
+      <!-- Quest 2: CELEBRATION — approved -->
+      <div class="qcard qcard-done" style="position:relative;">
+        <div class="sparkle-field">
+          <div class="sp" style="width:6px;height:6px;background:var(--yellow);top:0;right:0;"></div>
+          <div class="sp" style="width:4px;height:4px;background:var(--teal-l);top:14px;right:16px;animation-delay:.4s;"></div>
+          <div class="sp" style="width:5px;height:5px;background:var(--coral);top:5px;right:30px;animation-delay:.8s;"></div>
+          <div class="sp" style="width:3px;height:3px;background:var(--yellow-l);top:20px;right:7px;animation-delay:1.2s;"></div>
+        </div>
+        <div class="done-top">
+          <div class="done-check">✅</div>
+          <div>
+            <div class="done-title">Одобрено! Отличная работа!</div>
+            <div class="done-sub">Убрать комнату · База Лагеря</div>
+          </div>
+        </div>
+        <div class="done-reward">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFB800"><circle cx="12" cy="12" r="10"/></svg>
+          <span class="done-num">+30 монет</span>
+          <span style="color:var(--t2);font-size:14px;font-weight:700;">·</span>
+          <span class="done-xp">+30 XP получено!</span>
+        </div>
+      </div>
+
+      <!-- Quest 3: home — in progress -->
+      <div class="qcard">
+        <div class="qcard-bar qbar-h"></div>
+        <div class="qcard-head">
+          <span class="qcat h">Дом</span>
+          <span style="font-size:12px;color:var(--t2);font-weight:700;">База Лагеря</span>
+        </div>
+        <div class="qcard-title">Зарядка 15 минут</div>
+        <div class="qcard-rewards">
+          <span class="qrp coin"><svg width="14" height="14" viewBox="0 0 24 24" fill="#FFB800"><circle cx="12" cy="12" r="10"/></svg>+40 монет</span>
+          <span class="qrp xp">⚡ +40 XP</span>
+        </div>
+        <button class="qbtn go">✓ Выполнил!</button>
+      </div>
+
+      <!-- Quest 4: special — multi-step (boss) -->
+      <div class="qcard">
+        <div class="qcard-bar qbar-x"></div>
+        <div class="qcard-head">
+          <span class="qcat x">Особое</span>
+          <span style="font-size:12px;color:var(--t2);font-weight:700;">Особая Миссия</span>
+        </div>
+        <div class="qcard-title">Помочь с посудой 3 раза подряд</div>
+        <div class="qprog"><div class="qprog-f qbar-x" style="width:66%"></div></div>
+        <div style="font-size:12px;color:var(--t2);font-weight:700;margin-bottom:10px;">Прогресс: 2 / 3</div>
+        <div class="qcard-rewards">
+          <span class="qrp coin"><svg width="14" height="14" viewBox="0 0 24 24" fill="#FFB800"><circle cx="12" cy="12" r="10"/></svg>+80 монет</span>
+          <span class="qrp xp">⚡ +80 XP</span>
+        </div>
+        <button class="qbtn special">🌟 Иду к цели!</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- REWARD SHOP -->
+  <div class="card">
+    <div class="ch">
+      <span class="ch-title">Лавка наград</span>
+    </div>
+    <div class="reward-grid">
+
+      <div class="rcard common can">
+        <div class="rcard-inner">
+          <span class="rcard-rar">ОБЫЧНАЯ</span>
+          <span class="rcard-ico">🎮</span>
+          <span class="rcard-name">2 часа видеоигр</span>
+          <div class="rcard-price">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFB800"><circle cx="12" cy="12" r="10"/></svg>
+            150
+          </div>
+          <button class="rcard-btn go">Получить!</button>
+        </div>
+      </div>
+
+      <div class="rcard rare">
+        <div class="rcard-inner">
+          <span class="rcard-rar">РЕДКАЯ</span>
+          <span class="rcard-ico">🎬</span>
+          <span class="rcard-name">Поход в кино</span>
+          <div class="rcard-price">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFB800"><circle cx="12" cy="12" r="10"/></svg>
+            400
+          </div>
+          <button class="rcard-btn no">Мало монет</button>
+        </div>
+      </div>
+
+      <div class="rcard legend">
+        <div class="rcard-inner">
+          <span class="rcard-rar">ЭПИЧНАЯ</span>
+          <span class="rcard-ico">🧩</span>
+          <span class="rcard-name">LEGO набор ★</span>
+          <div class="rcard-price">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFB800"><circle cx="12" cy="12" r="10"/></svg>
+            600
+          </div>
+          <button class="rcard-btn no">Мало монет</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+<!-- end col 2 -->
+
+<!-- ════════ COLUMN 3: PROGRESS ════════ -->
+<div class="col">
+
+  <!-- LEVEL ROAD -->
+  <div class="card">
+    <div class="ch"><span class="ch-title">Путь героя</span></div>
+    <div class="level-road">
+      <div class="lv-node">
+        <div class="lv-circle done">🌱</div>
+        <div class="lv-name">Новичок</div>
+        <div class="lv-num">Lv.1</div>
+      </div>
+      <div class="lv-node">
+        <div class="lv-circle done">🗺️</div>
+        <div class="lv-name">Следопыт</div>
+        <div class="lv-num">Lv.2–3</div>
+      </div>
+      <div class="lv-node">
+        <div class="lv-circle now">⚡</div>
+        <div class="lv-name now">Следопыт+</div>
+        <div class="lv-num">Lv.4</div>
+      </div>
+      <div class="lv-node">
+        <div class="lv-circle lock">🐉</div>
+        <div class="lv-name">Легенда</div>
+        <div class="lv-num">Lv.5+</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACHIEVEMENT BADGES -->
+  <div class="card">
+    <div class="ch"><span class="ch-title">Значки</span></div>
+    <div class="badges">
+      <div class="badge earned">
+        <div class="badge-ico">🔥</div>
+        <div class="badge-name">Огненная серия</div>
+        <div class="badge-desc">7 дней подряд</div>
+      </div>
+      <div class="badge earned">
+        <div class="badge-ico">📚</div>
+        <div class="badge-name">Знаток</div>
+        <div class="badge-desc">10 учебных квестов</div>
+      </div>
+      <div class="badge earned">
+        <div class="badge-ico">💪</div>
+        <div class="badge-name">Спортсмен</div>
+        <div class="badge-desc">Мастерство 50+</div>
+      </div>
+      <div class="badge locked">
+        <div class="badge-ico">⭐</div>
+        <div class="badge-name">Легенда</div>
+        <div class="badge-desc">Lv.5+</div>
+      </div>
+      <div class="badge locked">
+        <div class="badge-ico">💰</div>
+        <div class="badge-name">Богач</div>
+        <div class="badge-desc">1000 монет</div>
+      </div>
+      <div class="badge locked">
+        <div class="badge-ico">🏆</div>
+        <div class="badge-name">Чемпион</div>
+        <div class="badge-desc">100 квестов</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SKILLS -->
+  <div class="card">
+    <div class="ch"><span class="ch-title">Скиллы рюкзака</span></div>
+    <div style="font-size:12px;color:var(--t2);padding:0 18px 10px;font-weight:600;">
+      Открываются с уровнем. Живут в рюкзаке Бруно.
+    </div>
+    <div class="skills">
+      <div class="sk-node active">
+        <div class="sk-ico">🔥</div>
+        <div class="sk-body">
+          <div class="sk-name">Бонус серии</div>
+          <div class="sk-fx">+5–10% монет за дни подряд</div>
+        </div>
+        <div class="sk-tag on">ВКЛ</div>
+      </div>
+      <div class="sk-node active">
+        <div class="sk-ico">🛡️</div>
+        <div class="sk-body">
+          <div class="sk-name">Защита монет</div>
+          <div class="sk-fx">Штрафы -25%</div>
+        </div>
+        <div class="sk-tag on">ВКЛ</div>
+      </div>
+      <div class="sk-node locked">
+        <div class="sk-ico">⚡</div>
+        <div class="sk-body">
+          <div class="sk-name">Ускорение</div>
+          <div class="sk-fx">×2 монеты по выходным</div>
+        </div>
+        <div class="sk-tag lock">🔒 Lv.5</div>
+      </div>
+      <div class="sk-node locked">
+        <div class="sk-ico">🌱</div>
+        <div class="sk-body">
+          <div class="sk-name">Садовник</div>
+          <div class="sk-fx">+5% к копилке</div>
+        </div>
+        <div class="sk-tag lock">🔒 Lv.6</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GROWTH CAPSULE (savings) -->
+  <div class="card">
+    <div class="ch"><span class="ch-title">Капсула роста</span></div>
+    <div class="capsule">
+      <div class="cap-head">
+        <div class="cap-icon">🌱</div>
+        <div>
+          <div class="cap-title">Копилка Бруно</div>
+          <div class="cap-sub">Вложи монеты — они вырастут!</div>
+        </div>
+      </div>
+      <div class="cap-flow">
+        <div class="cap-side">
+          <div class="cap-num" style="color:var(--yellow-l);">100 🪙</div>
+          <div class="cap-lbl">Вложено</div>
+        </div>
+        <div class="cap-arrow">→</div>
+        <div class="cap-side">
+          <div class="cap-num" style="color:var(--teal-l);">106 🪙</div>
+          <div class="cap-lbl">Вернётся</div>
+        </div>
+      </div>
+      <div class="cap-bar-meta">
+        <span>Прогресс</span>
+        <span style="color:var(--teal-l);">Через 3 дня</span>
+      </div>
+      <div class="cap-bar"><div class="cap-bar-f"></div></div>
+      <button class="cap-btn">+ Положить монеты в капсулу</button>
+    </div>
+  </div>
+
+</div>
+<!-- end col 3 -->
+
+</div><!-- grid3 -->
+</div><!-- page -->
+</body>
+</html>

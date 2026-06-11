@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EasyQuest — Adventure Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Adventure palette */
+  --night:   #0C0A2E;
+  --deep:    #13103D;
+  --card:    #1C1850;
+  --card2:   #241E60;
+  --rim:     rgba(120,100,255,.18);
+  --rimgold: rgba(245,158,11,.22);
+  --rimgrn:  rgba(16,220,130,.22);
+  --rimorng: rgba(255,120,50,.22);
+  --rimsky:  rgba(56,189,248,.22);
+
+  --purple:  #7C3AED;
+  --violet:  #A855F7;
+  --gold:    #F59E0B;
+  --amber:   #FCD34D;
+  --green:   #10DC82;
+  --teal:    #06B6D4;
+  --orange:  #FB7C3A;
+  --red:     #EF4444;
+  --sky:     #38BDF8;
+
+  --txt:     #EAE6FF;
+  --txt2:    #9D93CC;
+  --txt3:    #524D7A;
+
+  /* Parent (light) */
+  --pbg:   #F8F7FF;
+  --pcard: #FFFFFF;
+  --pdark: #0F172A;
+  --pmid:  #64748B;
+  --prim:  rgba(108,60,225,.09);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+body{font-family:'Nunito',sans-serif;background:#080621;color:#fff;overflow-x:auto;min-height:100vh;}
+
+/* ── CANVAS ── */
+.canvas{padding:44px 56px 80px;min-width:max-content;}
+.page-hd{display:flex;align-items:center;gap:16px;margin-bottom:40px;}
+.logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--purple),var(--violet));display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px rgba(168,85,247,.4);}
+.page-hd h1{font-size:28px;font-weight:900;color:#fff;letter-spacing:-.4px;}
+.page-hd p{font-size:12px;font-weight:600;color:#3D2E6E;margin-top:2px;}
+
+.layout{display:flex;gap:52px;align-items:flex-start;}
+.col{display:flex;flex-direction:column;}
+.col-lbl{font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#2D2460;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.col-lbl::after{content:'';display:inline-block;width:40px;height:1px;background:rgba(255,255,255,.06);}
+.screens{display:flex;gap:22px;align-items:flex-start;}
+.divider{width:1px;background:rgba(255,255,255,.05);align-self:stretch;margin:0 8px;flex-shrink:0;}
+
+/* ── PHONE ── */
+.pw{display:flex;flex-direction:column;gap:9px;}
+.pc{font-size:11px;font-weight:700;color:#2D2460;text-align:center;letter-spacing:.3px;}
+.phone{width:292px;background:#08061A;border-radius:46px;padding:10px;box-shadow:0 28px 70px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.04);flex-shrink:0;}
+.screen{width:100%;height:634px;border-radius:38px;overflow:hidden;display:flex;flex-direction:column;position:relative;}
+
+.sbar{display:flex;justify-content:space-between;align-items:center;padding:13px 20px 2px;font-size:12px;font-weight:800;flex-shrink:0;}
+
+/* ═══════════════════════════════
+   CHILD — ADVENTURE THEME
+═══════════════════════════════ */
+.as{background:var(--night);}
+.as .sbar{color:var(--txt2);}
+
+/* starfield texture via CSS */
+.as::before{content:'';position:absolute;inset:0;background-image:radial-gradient(1px 1px at 20% 15%,rgba(255,255,255,.35) 0%,transparent 100%),radial-gradient(1px 1px at 60% 8%,rgba(255,255,255,.25) 0%,transparent 100%),radial-gradient(1px 1px at 80% 25%,rgba(255,255,255,.3) 0%,transparent 100%),radial-gradient(1px 1px at 40% 35%,rgba(255,255,255,.2) 0%,transparent 100%),radial-gradient(1px 1px at 10% 40%,rgba(255,255,255,.25) 0%,transparent 100%);pointer-events:none;z-index:0;}
+
+/* ── HERO ── */
+.hero{
+  background:linear-gradient(170deg,#2A1A6E 0%,#1A1050 55%,var(--night) 100%);
+  padding:6px 18px 20px;flex-shrink:0;position:relative;z-index:1;overflow:hidden;
+}
+.hero::after{
+  content:'';position:absolute;
+  right:-40px;top:-40px;width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(168,85,247,.15) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero::before{
+  content:'';position:absolute;
+  left:20px;bottom:-30px;width:140px;height:140px;border-radius:50%;
+  background:radial-gradient(circle,rgba(245,158,11,.06) 0%,transparent 70%);
+  pointer-events:none;
+}
+
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;position:relative;z-index:1;}
+.hero-greeting{font-size:11px;font-weight:700;color:var(--txt3);}
+.hero-name{font-size:18px;font-weight:900;color:#fff;letter-spacing:-.2px;margin-top:1px;}
+.streak{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(251,124,58,.12);border:1px solid rgba(251,124,58,.25);
+  border-radius:20px;padding:5px 10px;
+  font-size:11px;font-weight:800;color:var(--orange);
+}
+
+.hero-body{display:flex;gap:14px;align-items:flex-end;position:relative;z-index:1;}
+.avatar-box{flex-shrink:0;position:relative;}
+.avatar{
+  width:70px;height:70px;border-radius:22px;
+  background:linear-gradient(145deg,#3D1E9E,#6B3FD8);
+  border:2px solid rgba(168,85,247,.5);
+  box-shadow:0 0 20px rgba(168,85,247,.3),0 4px 20px rgba(0,0,0,.4);
+  display:flex;align-items:center;justify-content:center;
+}
+.avatar svg{filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));}
+.lvl-badge{
+  position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(90deg,#F59E0B,#FBBF24);
+  color:#7A3F00;font-size:10px;font-weight:900;
+  border-radius:10px;padding:2px 9px;white-space:nowrap;
+  box-shadow:0 2px 10px rgba(245,158,11,.4);
+}
+
+.hero-stats{flex:1;}
+.class-name{font-size:12px;font-weight:800;color:var(--violet);margin-bottom:6px;}
+.xp-row{display:flex;justify-content:space-between;margin-bottom:5px;}
+.xp-lbl{font-size:10px;font-weight:700;color:var(--txt3);}
+.xp-bar{height:8px;background:rgba(255,255,255,.08);border-radius:8px;overflow:hidden;}
+.xp-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--purple),var(--violet));box-shadow:0 0 8px rgba(168,85,247,.6);width:62%;}
+
+.coins-strip{
+  display:flex;gap:7px;margin-top:11px;position:relative;z-index:1;
+}
+.coin-badge{
+  display:flex;align-items:center;gap:7px;
+  background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.22);
+  border-radius:22px;padding:6px 14px;
+  font-size:14px;font-weight:900;color:var(--amber);
+}
+.pend-badge{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(16,220,130,.08);border:1px solid rgba(16,220,130,.18);
+  border-radius:22px;padding:6px 11px;
+  font-size:11px;font-weight:800;color:var(--green);
+}
+
+/* ── QUEST LIST ── */
+.qbody{flex:1;overflow:hidden;padding:12px 14px 4px;display:flex;flex-direction:column;gap:9px;position:relative;z-index:1;}
+
+.sec-hd{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt3);margin-bottom:2px;}
+
+.qcard{
+  background:var(--card);
+  border:1px solid var(--rim);
+  border-radius:18px;padding:11px 13px;
+  display:flex;align-items:center;gap:11px;
+  position:relative;overflow:hidden;
+}
+.qcard::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px 0 0 2px;
+}
+.qcard.qp::before{background:linear-gradient(180deg,var(--purple),var(--violet));}
+.qcard.qg::before{background:linear-gradient(180deg,var(--gold),var(--orange));}
+.qcard.qgr::before{background:linear-gradient(180deg,var(--green),var(--teal));}
+.qcard.qs::before{background:linear-gradient(180deg,var(--sky),var(--teal));}
+
+.qcard-glow::after{
+  content:'';position:absolute;right:-20px;top:50%;transform:translateY(-50%);
+  width:80px;height:80px;border-radius:50%;
+  background:radial-gradient(circle,rgba(245,158,11,.07) 0%,transparent 70%);
+  pointer-events:none;
+}
+
+.q-ico{
+  width:42px;height:42px;border-radius:13px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
+.q-ico.p{background:rgba(124,58,237,.18);}
+.q-ico.g{background:rgba(245,158,11,.14);}
+.q-ico.gr{background:rgba(16,220,130,.12);}
+.q-ico.s{background:rgba(56,189,248,.12);}
+.q-ico.or{background:rgba(251,124,58,.12);}
+
+.q-txt{flex:1;min-width:0;}
+.q-title{font-size:12.5px;font-weight:800;color:var(--txt);margin-bottom:2px;line-height:1.2;}
+.q-sub{font-size:10.5px;font-weight:600;color:var(--txt3);}
+.q-sub.warn{color:var(--gold);}
+
+.q-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+.pts{font-size:12px;font-weight:900;color:var(--amber);display:flex;align-items:center;gap:3px;}
+
+.btn-go{
+  background:linear-gradient(135deg,var(--purple),var(--violet));
+  color:#fff;font-size:11px;font-weight:800;
+  border-radius:10px;padding:5px 11px;
+  box-shadow:0 3px 12px rgba(124,58,237,.4);
+  white-space:nowrap;
+}
+.btn-wait{
+  background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.2);
+  color:var(--gold);font-size:11px;font-weight:800;
+  border-radius:10px;padding:5px 10px;white-space:nowrap;
+}
+
+/* goal */
+.goal{
+  background:var(--card2);
+  border:1px solid var(--rimgold);
+  border-radius:14px;padding:10px 13px;
+  display:flex;align-items:center;gap:10px;
+}
+.goal-info{flex:1;}
+.goal-name{font-size:11px;font-weight:800;color:var(--txt);margin-bottom:4px;}
+.goal-bar{height:6px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden;}
+.goal-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--gold),var(--orange));box-shadow:0 0 6px rgba(245,158,11,.5);width:68%;}
+.goal-pts{font-size:11px;font-weight:900;color:var(--amber);}
+
+/* ── BOTTOM NAV ── */
+.cnav{
+  display:flex;justify-content:space-around;
+  padding:9px 8px 13px;
+  background:var(--deep);
+  border-top:1px solid rgba(120,100,255,.12);
+  flex-shrink:0;z-index:1;position:relative;
+}
+.ni{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;}
+.ni svg{opacity:.28;}
+.ni.on svg{opacity:1;filter:drop-shadow(0 0 4px rgba(168,85,247,.7));}
+.ni span{font-size:9px;font-weight:700;color:var(--txt3);}
+.ni.on span{color:var(--violet);}
+.ni-dot{width:4px;height:4px;border-radius:50%;background:var(--violet);margin-top:1px;}
+
+/* ── QUEST SCREEN ── */
+.qscreen-hd{
+  background:linear-gradient(170deg,#261860 0%,var(--night) 100%);
+  padding:8px 18px 16px;flex-shrink:0;z-index:1;position:relative;
+}
+.qscreen-hd h2{font-size:20px;font-weight:900;color:#fff;margin-bottom:3px;}
+.qscreen-hd p{font-size:11px;font-weight:600;color:var(--txt3);}
+
+.filter-row{display:flex;gap:6px;padding:10px 14px 6px;flex-shrink:0;overflow:hidden;position:relative;z-index:1;}
+.chip{
+  padding:5px 13px;border-radius:18px;
+  font-size:11px;font-weight:800;
+  border:1px solid rgba(120,100,255,.2);
+  color:var(--txt3);background:var(--card);white-space:nowrap;
+}
+.chip.on{
+  background:linear-gradient(135deg,var(--purple),var(--violet));
+  color:#fff;border-color:transparent;
+  box-shadow:0 3px 12px rgba(124,58,237,.35);
+}
+
+.ql{flex:1;overflow:hidden;padding:6px 14px 4px;display:flex;flex-direction:column;gap:8px;z-index:1;position:relative;}
+
+.qbig{
+  background:var(--card);border:1px solid var(--rim);
+  border-radius:18px;padding:13px;
+  position:relative;overflow:hidden;
+}
+.qbig::after{
+  content:'';position:absolute;top:-20px;right:-20px;
+  width:90px;height:90px;border-radius:50%;
+  pointer-events:none;
+}
+.qbig.qbp::after{background:radial-gradient(circle,rgba(124,58,237,.12) 0%,transparent 70%);}
+.qbig.qbo::after{background:radial-gradient(circle,rgba(251,124,58,.1) 0%,transparent 70%);}
+.qbig.qbg::after{background:radial-gradient(circle,rgba(16,220,130,.08) 0%,transparent 70%);}
+.qbig.qbs::after{background:radial-gradient(circle,rgba(56,189,248,.1) 0%,transparent 70%);}
+
+.qbt{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start;}
+.qb-ico{width:44px;height:44px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.qb-ico.p{background:rgba(124,58,237,.18);}
+.qb-ico.or{background:rgba(251,124,58,.14);}
+.qb-ico.g{background:rgba(16,220,130,.12);}
+.qb-ico.s{background:rgba(56,189,248,.12);}
+.qb-title{font-size:13px;font-weight:800;color:var(--txt);line-height:1.2;margin-bottom:3px;}
+.qb-desc{font-size:11px;font-weight:600;color:var(--txt3);line-height:1.3;}
+.qbfoot{display:flex;justify-content:space-between;align-items:center;}
+.diff{font-size:10px;font-weight:800;border-radius:8px;padding:3px 8px;}
+.diff.e{background:rgba(16,220,130,.12);color:var(--green);}
+.diff.m{background:rgba(245,158,11,.12);color:var(--amber);}
+.diff.h{background:rgba(239,68,68,.12);color:#FCA5A5;}
+.pts-lbl{font-size:14px;font-weight:900;color:var(--amber);display:flex;align-items:center;gap:4px;}
+
+/* ── REWARDS ── */
+.r-hd{
+  background:linear-gradient(170deg,#231A60 0%,var(--night) 100%);
+  padding:8px 18px 16px;flex-shrink:0;z-index:1;position:relative;
+}
+.r-hd h2{font-size:20px;font-weight:900;color:#fff;margin-bottom:7px;}
+.bal-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.22);
+  border-radius:20px;padding:5px 14px;
+  font-size:13px;font-weight:900;color:var(--amber);
+}
+.rtabs{
+  display:flex;border-bottom:1px solid rgba(120,100,255,.12);
+  flex-shrink:0;z-index:1;position:relative;
+  background:var(--deep);
+}
+.rtab{flex:1;text-align:center;padding:9px;font-size:11px;font-weight:800;color:var(--txt3);border-bottom:2px solid transparent;margin-bottom:-1px;}
+.rtab.on{color:var(--violet);border-bottom-color:var(--violet);}
+
+.rgrid{flex:1;overflow:hidden;padding:10px 12px 4px;display:grid;grid-template-columns:1fr 1fr;gap:9px;z-index:1;position:relative;}
+.rcard{
+  background:var(--card);border:1px solid var(--rim);
+  border-radius:16px;padding:12px 10px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;
+}
+.rcard.can{border-color:rgba(16,220,130,.22);}
+.r-ico{
+  width:52px;height:52px;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(124,58,237,.15);
+}
+.r-ico.g{background:rgba(56,189,248,.12);}
+.r-ico.o{background:rgba(251,124,58,.12);}
+.r-ico.gold{background:rgba(245,158,11,.12);}
+.r-ico.pur{background:rgba(124,58,237,.15);}
+.r-name{font-size:11px;font-weight:800;color:var(--txt);line-height:1.2;}
+.r-price{font-size:12px;font-weight:900;color:var(--amber);display:flex;align-items:center;gap:3px;}
+.r-btn{
+  background:linear-gradient(135deg,var(--purple),var(--violet));
+  color:#fff;font-size:10px;font-weight:800;
+  border-radius:9px;padding:5px 12px;width:100%;text-align:center;
+  box-shadow:0 3px 10px rgba(124,58,237,.3);
+}
+.r-btn.locked{background:rgba(255,255,255,.05);color:var(--txt3);box-shadow:none;}
+
+.wish-add{
+  margin:0 12px 10px;
+  background:var(--card2);border:1px dashed rgba(124,58,237,.25);
+  border-radius:14px;padding:10px 13px;
+  display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:1;position:relative;
+}
+.wish-t{font-size:12px;font-weight:800;color:var(--txt);}
+.wish-s{font-size:10px;font-weight:600;color:var(--txt3);}
+.wish-plus{
+  margin-left:auto;width:28px;height:28px;border-radius:9px;
+  background:rgba(124,58,237,.2);color:var(--violet);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;font-weight:700;flex-shrink:0;
+}
+
+/* ═══════════════════════════════
+   PARENT (light)
+═══════════════════════════════ */
+.ps{background:var(--pbg);}
+.ps .sbar{color:var(--pmid);}
+
+.p-hd{
+  background:#fff;padding:8px 18px 16px;
+  border-bottom:1px solid var(--prim);flex-shrink:0;
+}
+.p-hd-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.p-greet{font-size:11px;font-weight:600;color:var(--pmid);}
+.p-name{font-size:20px;font-weight:900;color:var(--pdark);}
+.p-bell{
+  width:38px;height:38px;border-radius:13px;
+  background:#fff;border:1.5px solid var(--prim);
+  display:flex;align-items:center;justify-content:center;position:relative;
+}
+.bell-dot{position:absolute;top:6px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--red);border:2px solid #fff;}
+
+.csel-row{display:flex;gap:7px;overflow:hidden;}
+.csel{display:flex;align-items:center;gap:6px;border-radius:24px;padding:5px 12px 5px 5px;}
+.csel.on{background:linear-gradient(135deg,var(--purple),var(--violet));box-shadow:0 3px 10px rgba(124,58,237,.28);}
+.csel:not(.on){background:rgba(124,58,237,.07);border:1.5px solid rgba(124,58,237,.14);}
+.csel-av{width:26px;height:26px;border-radius:9px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.csel-n{font-size:12px;font-weight:800;}
+.csel.on .csel-n{color:#fff;}
+.csel:not(.on) .csel-n{color:var(--purple);}
+
+.pbody{flex:1;overflow:hidden;padding:13px 15px 4px;display:flex;flex-direction:column;gap:10px;}
+
+.stats-row{display:flex;gap:7px;}
+.sc{flex:1;background:#fff;border-radius:14px;padding:11px 10px;border:1.5px solid var(--prim);box-shadow:0 2px 6px rgba(15,23,42,.04);}
+.sc-n{font-size:22px;font-weight:900;color:var(--pdark);}
+.sc-l{font-size:10px;font-weight:700;color:var(--pmid);margin-top:1px;}
+.sc-tag{display:flex;align-items:center;gap:3px;margin-top:4px;}
+.sc-tag span{font-size:10px;font-weight:700;}
+.sc-tag.r span{color:var(--red);}
+.sc-tag.g span{color:#059669;}
+.sc-tag.o span{color:var(--orange);}
+
+.bal-card{
+  background:linear-gradient(135deg,var(--purple),#7E22CE);
+  border-radius:18px;padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:0 6px 22px rgba(124,58,237,.32);
+}
+.bal-ico{width:42px;height:42px;background:rgba(255,255,255,.14);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.bal-lbl{font-size:11px;font-weight:700;color:rgba(255,255,255,.6);}
+.bal-val{font-size:22px;font-weight:900;color:#fff;}
+.bal-btn{margin-left:auto;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:11px;font-weight:800;border-radius:10px;padding:6px 11px;white-space:nowrap;}
+
+.p-lbl{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--pmid);}
+
+.att{
+  background:#fff;border-radius:16px;padding:12px 13px;
+  border:1.5px solid var(--prim);
+  display:flex;align-items:center;gap:10px;
+  box-shadow:0 2px 6px rgba(15,23,42,.04);
+}
+.att-ico{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.att-ico.pu{background:rgba(124,58,237,.08);}
+.att-ico.or{background:rgba(251,124,58,.08);}
+.att-ico.go{background:rgba(245,158,11,.08);}
+.att-title{font-size:13px;font-weight:800;color:var(--pdark);}
+.att-sub{font-size:11px;font-weight:600;color:var(--pmid);margin-top:2px;}
+.att-cnt{background:var(--red);color:#fff;font-size:11px;font-weight:900;border-radius:8px;padding:2px 7px;}
+.rev{
+  background:linear-gradient(135deg,var(--purple),var(--violet));
+  color:#fff;font-size:11px;font-weight:800;
+  border-radius:10px;padding:6px 11px;
+  box-shadow:0 3px 10px rgba(124,58,237,.25);
+  white-space:nowrap;margin-left:auto;
+}
+
+.pnav{display:flex;justify-content:space-around;padding:9px 8px 13px;background:#fff;border-top:1px solid var(--prim);flex-shrink:0;}
+.pni{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;}
+.pni svg{opacity:.28;}
+.pni.on svg{opacity:1;}
+.pni span{font-size:9px;font-weight:700;color:#94A3B8;}
+.pni.on span{color:var(--purple);}
+
+.p-tasks-h{background:#fff;padding:8px 18px 14px;border-bottom:1px solid var(--prim);flex-shrink:0;}
+.p-tasks-h h2{font-size:20px;font-weight:900;color:var(--pdark);}
+.p-tasks-h p{font-size:12px;font-weight:600;color:var(--pmid);margin-top:2px;}
+.ptabs{display:flex;border-bottom:1px solid var(--prim);flex-shrink:0;}
+.ptab{flex:1;text-align:center;padding:9px 4px;font-size:11px;font-weight:800;color:var(--pmid);border-bottom:2px solid transparent;margin-bottom:-1px;}
+.ptab.on{color:var(--purple);border-bottom-color:var(--purple);}
+
+.tlist{flex:1;overflow:hidden;padding:11px 15px 4px;display:flex;flex-direction:column;gap:8px;}
+
+.sub{
+  background:#fff;border-radius:16px;padding:12px 13px;
+  border:1.5px solid rgba(245,158,11,.2);
+  box-shadow:0 2px 6px rgba(15,23,42,.04);
+}
+.sub-hd{display:flex;align-items:center;gap:7px;margin-bottom:8px;}
+.sub-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+.sub-title{font-size:13px;font-weight:800;color:var(--pdark);}
+.sub-when{font-size:11px;font-weight:600;color:var(--pmid);margin-left:auto;}
+.sub-pts{font-size:11px;font-weight:800;color:#92400E;background:rgba(245,158,11,.1);border-radius:8px;padding:3px 8px;}
+.sub-proof{background:var(--pbg);border-radius:10px;padding:7px 10px;margin-bottom:8px;font-size:11px;font-weight:600;color:var(--pmid);line-height:1.4;display:flex;align-items:flex-start;gap:6px;}
+.sub-acts{display:flex;justify-content:flex-end;gap:6px;}
+.btn-r{font-size:11px;font-weight:800;color:var(--red);background:rgba(239,68,68,.07);border-radius:10px;padding:6px 12px;}
+.btn-a{font-size:11px;font-weight:800;color:#fff;background:#059669;border-radius:10px;padding:6px 12px;box-shadow:0 3px 8px rgba(5,150,105,.25);}
+
+.act{
+  background:#fff;border-radius:16px;padding:12px 13px;
+  border:1.5px solid var(--prim);
+  box-shadow:0 2px 6px rgba(15,23,42,.04);
+}
+.act-top{display:flex;gap:10px;margin-bottom:8px;}
+.act-ico{width:38px;height:38px;border-radius:12px;flex-shrink:0;background:rgba(124,58,237,.07);display:flex;align-items:center;justify-content:center;}
+.act-title{font-size:13px;font-weight:800;color:var(--pdark);margin-bottom:2px;}
+.act-desc{font-size:11px;font-weight:600;color:var(--pmid);line-height:1.3;}
+.act-foot{display:flex;justify-content:space-between;align-items:center;}
+.act-pts{display:flex;align-items:center;gap:4px;background:rgba(245,158,11,.1);border-radius:9px;padding:4px 9px;font-size:12px;font-weight:800;color:#92400E;}
+.act-edit{font-size:11px;font-weight:700;color:var(--pmid);background:var(--pbg);border-radius:9px;padding:5px 10px;}
+
+/* ═══════════════════════════════
+   CONCEPT PANEL
+═══════════════════════════════ */
+.concept{
+  width:600px;background:#fff;border-radius:24px;padding:26px;
+  border:1.5px solid rgba(124,58,237,.1);
+  box-shadow:0 4px 24px rgba(124,58,237,.07);flex-shrink:0;
+}
+.ctag{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(124,58,237,.07);border-radius:20px;padding:4px 12px;
+  font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--purple);
+  margin-bottom:10px;
+}
+.concept h2{font-size:20px;font-weight:900;color:var(--pdark);margin-bottom:4px;}
+.concept-sub{font-size:12px;font-weight:600;color:var(--pmid);line-height:1.5;margin-bottom:22px;}
+.clbl{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--pmid);margin-bottom:10px;}
+
+.lvl-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;margin-bottom:20px;}
+.lc{border-radius:16px;padding:14px;border:1.5px solid var(--prim);}
+.lc.cur{border-color:var(--purple);background:rgba(124,58,237,.03);}
+.lc.lkd{opacity:.42;}
+.lct{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.lcn{font-size:24px;font-weight:900;color:var(--pdark);}
+.lctag{font-size:10px;font-weight:800;border-radius:8px;padding:3px 8px;}
+.lctag.d{background:rgba(5,150,105,.1);color:#065F46;}
+.lctag.c{background:rgba(124,58,237,.1);color:var(--purple);}
+.lctag.l{background:var(--pbg);color:var(--pmid);}
+.lcname{font-size:13px;font-weight:800;color:var(--pdark);margin-bottom:2px;}
+.lcxp{font-size:11px;font-weight:600;color:var(--pmid);margin-bottom:8px;}
+.lcskills{display:flex;flex-wrap:wrap;gap:4px;}
+.sktag{font-size:10px;font-weight:800;border-radius:8px;padding:3px 8px;}
+.sktag.pu{background:rgba(124,58,237,.08);color:var(--purple);}
+.sktag.go{background:rgba(245,158,11,.1);color:#92400E;}
+.sktag.gr{background:rgba(5,150,105,.08);color:#065F46;}
+.sktag.or{background:rgba(249,115,22,.1);color:#9A3412;}
+
+.bot-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.cpanel{background:var(--pbg);border-radius:16px;padding:15px;border:1.5px solid var(--prim);}
+.cph{font-size:12px;font-weight:800;color:var(--pdark);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.cph svg{opacity:.5;}
+
+.ach-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.ach-it{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.ach-ic{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;}
+.ach-ic.e{background:rgba(124,58,237,.09);}
+.ach-ic.lk{background:rgba(0,0,0,.04);opacity:.4;}
+.ach-lb{font-size:9px;font-weight:700;color:var(--pmid);text-align:center;line-height:1.2;}
+.ach-lb.e{color:var(--purple);}
+
+.sk-list{display:flex;flex-direction:column;}
+.sk-r{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--prim);}
+.sk-r:last-child{border-bottom:none;}
+.sk-ic{width:32px;height:32px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.sk-ic.pu{background:rgba(124,58,237,.08);}
+.sk-ic.go{background:rgba(245,158,11,.08);}
+.sk-ic.gr{background:rgba(5,150,105,.08);}
+.sk-nm{font-size:12px;font-weight:800;color:var(--pdark);}
+.sk-ef{font-size:10px;font-weight:600;color:var(--pmid);}
+.sk-st{margin-left:auto;font-size:10px;font-weight:800;border-radius:8px;padding:3px 8px;}
+.sk-st.on{background:rgba(5,150,105,.1);color:#065F46;}
+.sk-st.off{background:var(--pbg);color:var(--pmid);}
+
+.flow{margin-top:16px;padding:13px 15px;background:rgba(124,58,237,.05);border-radius:14px;border:1px solid rgba(124,58,237,.1);}
+.flow-t{font-size:12px;font-weight:800;color:var(--purple);margin-bottom:5px;}
+.flow-b{font-size:11px;font-weight:600;color:var(--pmid);line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <div class="page-hd">
+    <div class="logo">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <path d="M13 3L16.5 9.5H23L17.5 14L19.5 21L13 17L6.5 21L8.5 14L3 9.5H9.5L13 3Z" fill="white"/>
+      </svg>
+    </div>
+    <div>
+      <h1>EasyQuest</h1>
+      <p>Design Concept v3 · Adventure Child UI + Parent Dashboard + Level System</p>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- ══════════ CHILD ══════════ -->
+    <div class="col">
+      <div class="col-lbl">Детский интерфейс · 7–12 лет</div>
+      <div class="screens">
+
+        <!-- CHILD DASHBOARD -->
+        <div class="pw">
+          <div class="pc">Главная</div>
+          <div class="phone">
+            <div class="screen as">
+              <div class="sbar"><span>9:41</span>
+                <svg width="48" height="12" viewBox="0 0 48 12" fill="#524D7A"><rect x="0" y="4" width="3" height="8" rx="1" opacity=".4"/><rect x="5" y="2" width="3" height="10" rx="1" opacity=".65"/><rect x="10" y="0" width="3" height="12" rx="1"/><rect x="18" y="1" width="14" height="10" rx="3" fill="none" stroke="#524D7A" stroke-width="1.2"/><rect x="19" y="2" width="8" height="8" rx="2"/><path d="M33 4.5v3a1.5 1.5 0 000-3z"/></svg>
+              </div>
+
+              <div class="hero">
+                <div class="hero-top">
+                  <div>
+                    <div class="hero-greeting">Добро пожаловать,</div>
+                    <div class="hero-name">Саша</div>
+                  </div>
+                  <div class="streak">
+                    <svg width="11" height="13" viewBox="0 0 12 14" fill="#FB7C3A"><path d="M7 1C7 1 9 4 9 6.5C9 8 8.1 9 7 9.5C7.5 8.5 7.2 7.5 6.5 7C5.5 8 5 9.5 5.5 11C4.3 10 3 8.5 3 6.5C3 4 5 1.5 5 1.5C4.8 3 5.5 4 6 4.5C5.8 3.5 6 2 7 1Z"/></svg>
+                    7 дней
+                  </div>
+                </div>
+                <div class="hero-body">
+                  <div class="avatar-box">
+                    <div class="avatar">
+                      <svg width="38" height="38" viewBox="0 0 40 40" fill="none">
+                        <!-- wizard hat -->
+                        <path d="M20 4L26 18H14L20 4Z" fill="#C084FC"/>
+                        <path d="M12 18h16v2H12z" fill="#A855F7"/>
+                        <!-- face -->
+                        <circle cx="20" cy="26" r="8" fill="#FDE68A"/>
+                        <!-- eyes -->
+                        <circle cx="17" cy="25" r="1.5" fill="#1A1040"/>
+                        <circle cx="23" cy="25" r="1.5" fill="#1A1040"/>
+                        <!-- smile -->
+                        <path d="M17 28.5 Q20 31 23 28.5" stroke="#1A1040" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                        <!-- star on hat -->
+                        <path d="M20 7l.6 1.8h1.9l-1.5 1.1.6 1.8L20 10.6l-1.6 1.1.6-1.8L17.5 8.8h1.9z" fill="#FCD34D"/>
+                      </svg>
+                    </div>
+                    <div class="lvl-badge">LVL 5</div>
+                  </div>
+                  <div class="hero-stats">
+                    <div class="class-name">Маг Учёбы</div>
+                    <div class="xp-row">
+                      <span class="xp-lbl">Опыт</span>
+                      <span class="xp-lbl">620 / 1000</span>
+                    </div>
+                    <div class="xp-bar"><div class="xp-fill"></div></div>
+                  </div>
+                </div>
+                <div class="coins-strip">
+                  <div class="coin-badge">
+                    <svg width="15" height="15" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#FCD34D"/><circle cx="8" cy="8" r="5" fill="#F59E0B"/><text x="8" y="11.5" text-anchor="middle" font-size="7" font-weight="900" fill="#7A3F00" font-family="sans-serif">Q</text></svg>
+                    340 монет
+                  </div>
+                  <div class="pend-badge">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10DC82" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    +50 ждёт
+                  </div>
+                </div>
+              </div>
+
+              <div class="qbody">
+                <div class="sec-hd">Активные квесты</div>
+
+                <div class="qcard qp">
+                  <div class="q-ico p">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+                  </div>
+                  <div class="q-txt">
+                    <div class="q-title">Прочитать 20 страниц</div>
+                    <div class="q-sub">Ежедневный · до 21:00</div>
+                  </div>
+                  <div class="q-right">
+                    <div class="pts"><svg width="12" height="12" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#F59E0B"/></svg>+30</div>
+                    <div class="btn-go">Готово!</div>
+                  </div>
+                </div>
+
+                <div class="qcard qg qcard-glow">
+                  <div class="q-ico g">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  </div>
+                  <div class="q-txt">
+                    <div class="q-title">Убраться в комнате</div>
+                    <div class="q-sub warn">На проверке у родителя...</div>
+                  </div>
+                  <div class="q-right">
+                    <div class="pts"><svg width="12" height="12" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#F59E0B"/></svg>+50</div>
+                    <div class="btn-wait">Ждём</div>
+                  </div>
+                </div>
+
+                <div class="qcard qgr">
+                  <div class="q-ico gr">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10DC82" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><path d="M9 20l3-7 3 7"/><path d="M6 10l6 2 6-2"/><path d="M12 7v5"/></svg>
+                  </div>
+                  <div class="q-txt">
+                    <div class="q-title">Прогулка 30 минут</div>
+                    <div class="q-sub">Срок: 3 дня</div>
+                  </div>
+                  <div class="q-right">
+                    <div class="pts"><svg width="12" height="12" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#F59E0B"/></svg>+40</div>
+                    <div class="btn-go">Готово!</div>
+                  </div>
+                </div>
+
+                <div class="goal">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                  <div class="goal-info">
+                    <div class="goal-name">Цель: Lego Technic</div>
+                    <div class="goal-bar"><div class="goal-fill"></div></div>
+                  </div>
+                  <div class="goal-pts">340/500</div>
+                </div>
+              </div>
+
+              <div class="cnav">
+                <div class="ni on">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2.2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                  <span>Главная</span><div class="ni-dot"></div>
+                </div>
+                <div class="ni">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#524D7A" stroke-width="2" stroke-linecap="round"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></svg>
+                  <span>Квесты</span>
+                </div>
+                <div class="ni">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#524D7A" stroke-width="2" stroke-linecap="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+                  <span>Награды</span>
+                </div>
+                <div class="ni">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#524D7A" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                  <span>Баланс</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHILD QUESTS -->
+        <div class="pw">
+          <div class="pc">Квесты</div>
+          <div class="phone">
+            <div class="screen as">
+              <div class="sbar"><span>9:41</span><svg width="48" height="12" viewBox="0 0 48 12" fill="#524D7A"><rect x="0" y="4" width="3" height="8" rx="1" opacity=".4"/><rect x="5" y="2" width="3" height="10" rx="1" opacity=".65"/><rect x="10" y="0" width="3" height="12" rx="1"/><rect x="18" y="1" width="14" height="10" rx="3" fill="none" stroke="#524D7A" stroke-width="1.2"/><rect x="19" y="2" width="8" height="8" rx="2"/><path d="M33 4.5v3a1.5 1.5 0 000-3z"/></svg></div>
+              <div class="qscreen-hd">
+                <h2>Доска квестов</h2>
+                <p>4 доступных · 1 на проверке</p>
+              </div>
+              <div class="filter-row">
+                <div class="chip on">Все</div>
+                <div class="chip">Учёба</div>
+                <div class="chip">Дом</div>
+                <div class="chip">Спорт</div>
+              </div>
+              <div class="ql">
+                <div class="qbig qbp">
+                  <div class="qbt">
+                    <div class="qb-ico p"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
+                    <div><div class="qb-title">Прочитать 20 страниц книги</div><div class="qb-desc">Сделай фото страницы как доказательство</div></div>
+                  </div>
+                  <div class="qbfoot"><div class="diff e">Лёгкий</div><div class="pts-lbl"><svg width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#F59E0B"/></svg>+30</div></div>
+                </div>
+                <div class="qbig qbo">
+                  <div class="qbt">
+                    <div class="qb-ico or"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FB7C3A" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+                    <div><div class="qb-title">Убраться в своей комнате</div><div class="qb-desc">Пол, стол, разложить вещи по местам</div></div>
+                  </div>
+                  <div class="qbfoot"><div class="diff m">Средний</div><div class="pts-lbl"><svg width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#F59E0B"/></svg>+50</div></div>
+                </div>
+                <div class="qbig qbg">
+                  <div class="qbt">
+                    <div class="qb-ico g"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10DC82" stroke-width="2" stroke-linecap="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+                    <div><div class="qb-title">Помыть посуду после ужина</div><div class="qb-desc">Каждый вечер до 21:00</div></div>
+                  </div>
+                  <div class="qbfoot"><div class="diff e">Лёгкий</div><div class="pts-lbl"><svg width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#F59E0B"/></svg>+25</div></div>
+                </div>
+                <div class="qbig qbs">
+                  <div class="qbt">
+                    <div class="qb-ico s"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><path d="M9 20l3-7 3 7"/><path d="M6 10l6 2 6-2"/><path d="M12 7v5"/></svg></div>
+                    <div><div class="qb-title">Зарядка утром 15 минут</div><div class="qb-desc">Сними видео как доказательство!</div></div>
+                  </div>
+                  <div class="qbfoot"><div class="diff h">Сложный</div><div class="pts-lbl"><svg width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#F59E0B"/></svg>+70</div></div>
+                </div>
+              </div>
+              <div class="cnav">
+                <div class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#524D7A" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Главная</span></div>
+                <div class="ni on"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2.2" stroke-linecap="round"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></svg><span>Квесты</span><div class="ni-dot"></div></div>
+                <div class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#524D7A" stroke-width="2" stroke-linecap="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg><span>Награды</span></div>
+                <div class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#524D7A" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span>Баланс</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHILD REWARDS -->
+        <div class="pw">
+          <div class="pc">Награды</div>
+          <div class="phone">
+            <div class="screen as">
+              <div class="sbar"><span>9:41</span><svg width="48" height="12" viewBox="0 0 48 12" fill="#524D7A"><rect x="0" y="4" width="3" height="8" rx="1" opacity=".4"/><rect x="5" y="2" width="3" height="10" rx="1" opacity=".65"/><rect x="10" y="0" width="3" height="12" rx="1"/><rect x="18" y="1" width="14" height="10" rx="3" fill="none" stroke="#524D7A" stroke-width="1.2"/><rect x="19" y="2" width="8" height="8" rx="2"/><path d="M33 4.5v3a1.5 1.5 0 000-3z"/></svg></div>
+              <div class="r-hd">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <h2>Сокровищница</h2>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </div>
+                <div class="bal-pill">
+                  <svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#FCD34D"/><circle cx="8" cy="8" r="5" fill="#F59E0B"/></svg>
+                  340 монет
+                </div>
+              </div>
+              <div class="rtabs">
+                <div class="rtab on">Магазин</div>
+                <div class="rtab">Желания</div>
+                <div class="rtab">Получено</div>
+              </div>
+              <div class="rgrid">
+                <div class="rcard can">
+                  <div class="r-ico g"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+                  <div class="r-name">1 час PlayStation</div>
+                  <div class="r-price"><svg width="11" height="11" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#F59E0B"/></svg>100</div>
+                  <div class="r-btn">Забрать</div>
+                </div>
+                <div class="rcard can">
+                  <div class="r-ico o"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FB7C3A" stroke-width="2" stroke-linecap="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+                  <div class="r-name">Пицца на ужин</div>
+                  <div class="r-price"><svg width="11" height="11" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#F59E0B"/></svg>200</div>
+                  <div class="r-btn">Забрать</div>
+                </div>
+                <div class="rcard">
+                  <div class="r-ico pur"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg></div>
+                  <div class="r-name">Поход в кино</div>
+                  <div class="r-price"><svg width="11" height="11" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#F59E0B"/></svg>350</div>
+                  <div class="r-btn locked">Ещё 10</div>
+                </div>
+                <div class="rcard">
+                  <div class="r-ico gold"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+                  <div class="r-name">Lego Technic</div>
+                  <div class="r-price"><svg width="11" height="11" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#F59E0B"/></svg>500</div>
+                  <div class="r-btn locked">Ещё 160</div>
+                </div>
+              </div>
+              <div class="wish-add">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <div><div class="wish-t">Добавь своё желание</div><div class="wish-s">Родители утвердят и назначат цену</div></div>
+                <div class="wish-plus">+</div>
+              </div>
+              <div class="cnav">
+                <div class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#524D7A" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Главная</span></div>
+                <div class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#524D7A" stroke-width="2" stroke-linecap="round"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/></svg><span>Квесты</span></div>
+                <div class="ni on"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2.2" stroke-linecap="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg><span>Награды</span><div class="ni-dot"></div></div>
+                <div class="ni"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#524D7A" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg><span>Баланс</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════════ PARENT ══════════ -->
+    <div class="col">
+      <div class="col-lbl">Панель родителя</div>
+      <div class="screens">
+
+        <!-- PARENT DASHBOARD -->
+        <div class="pw">
+          <div class="pc">Дашборд</div>
+          <div class="phone">
+            <div class="screen ps">
+              <div class="sbar" style="color:#64748B"><span>9:41</span><svg width="48" height="12" viewBox="0 0 48 12" fill="#94A3B8"><rect x="0" y="4" width="3" height="8" rx="1" opacity=".4"/><rect x="5" y="2" width="3" height="10" rx="1" opacity=".65"/><rect x="10" y="0" width="3" height="12" rx="1"/><rect x="18" y="1" width="14" height="10" rx="3" fill="none" stroke="#94A3B8" stroke-width="1.2"/><rect x="19" y="2" width="8" height="8" rx="2"/><path d="M33 4.5v3a1.5 1.5 0 000-3z"/></svg></div>
+              <div class="p-hd">
+                <div class="p-hd-row">
+                  <div><div class="p-greet">Добро пожаловать,</div><div class="p-name">Мария</div></div>
+                  <div class="p-bell"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><div class="bell-dot"></div></div>
+                </div>
+                <div class="csel-row">
+                  <div class="csel on"><div class="csel-av"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div><div class="csel-n">Саша</div></div>
+                  <div class="csel"><div class="csel-av" style="background:rgba(124,58,237,.1)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div><div class="csel-n">Маша</div></div>
+                  <div class="csel" style="border-style:dashed"><div class="csel-n" style="font-size:11px">+ Добавить</div></div>
+                </div>
+              </div>
+              <div class="pbody">
+                <div class="stats-row">
+                  <div class="sc"><div class="sc-n">3</div><div class="sc-l">На проверке</div><div class="sc-tag r"><svg width="6" height="6" viewBox="0 0 6 6" fill="#EF4444"><circle cx="3" cy="3" r="3"/></svg><span>Срочно</span></div></div>
+                  <div class="sc"><div class="sc-n">340</div><div class="sc-l">Монет</div><div class="sc-tag g"><svg width="7" height="7" viewBox="0 0 7 7" fill="#059669"><path d="M3.5 0L7 7H0z"/></svg><span>+80 сег.</span></div></div>
+                  <div class="sc"><div class="sc-n">5</div><div class="sc-l">Квестов</div><div class="sc-tag o"><svg width="6" height="6" viewBox="0 0 6 6" fill="#F97316"><circle cx="3" cy="3" r="3"/></svg><span>1 запрос</span></div></div>
+                </div>
+                <div class="bal-card">
+                  <div class="bal-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+                  <div><div class="bal-lbl">Баланс Саши</div><div class="bal-val">340 монет</div></div>
+                  <div class="bal-btn">+ Начислить</div>
+                </div>
+                <div class="p-lbl">Требуют внимания</div>
+                <div class="att">
+                  <div class="att-ico pu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.5 10.5a19.79 19.79 0 01-3.07-8.67A2 2 0 012.41 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.18 6.18l1.27-.8a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
+                  <div><div class="att-title">Проверка заданий</div><div class="att-sub">3 задания ждут одобрения</div></div>
+                  <div class="att-cnt">3</div>
+                  <div class="rev">Смотреть</div>
+                </div>
+                <div class="att">
+                  <div class="att-ico or"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FB7C3A" stroke-width="2" stroke-linecap="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></div>
+                  <div><div class="att-title">Запрос награды</div><div class="att-sub">Саша хочет 1 час PlayStation</div></div>
+                  <div class="rev">Решить</div>
+                </div>
+                <div class="att">
+                  <div class="att-ico go"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+                  <div><div class="att-title">Новое желание</div><div class="att-sub">Lego Technic · ~500 монет</div></div>
+                  <div class="rev">Смотреть</div>
+                </div>
+              </div>
+              <div class="pnav">
+                <div class="pni on"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Главная</span></div>
+                <div class="pni"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Задания</span></div>
+                <div class="pni"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg><span>Награды</span></div>
+                <div class="pni"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg><span>Профиль</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PARENT TASKS -->
+        <div class="pw">
+          <div class="pc">Задания</div>
+          <div class="phone">
+            <div class="screen ps">
+              <div class="sbar" style="color:#64748B"><span>9:41</span><svg width="48" height="12" viewBox="0 0 48 12" fill="#94A3B8"><rect x="0" y="4" width="3" height="8" rx="1" opacity=".4"/><rect x="5" y="2" width="3" height="10" rx="1" opacity=".65"/><rect x="10" y="0" width="3" height="12" rx="1"/><rect x="18" y="1" width="14" height="10" rx="3" fill="none" stroke="#94A3B8" stroke-width="1.2"/><rect x="19" y="2" width="8" height="8" rx="2"/><path d="M33 4.5v3a1.5 1.5 0 000-3z"/></svg></div>
+              <div class="p-tasks-h">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <div><h2>Задания</h2><p>Саша · 5 активных</p></div>
+                  <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--purple),var(--violet));border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(124,58,237,.3)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </div>
+                </div>
+              </div>
+              <div class="ptabs">
+                <div class="ptab on">На проверке (3)</div>
+                <div class="ptab">Активные</div>
+                <div class="ptab">История</div>
+              </div>
+              <div class="tlist">
+                <div class="sub">
+                  <div class="sub-hd">
+                    <div class="sub-dot"></div>
+                    <div class="sub-title">Прочитать 20 страниц</div>
+                    <div class="sub-when">18:42</div>
+                    <div class="sub-pts">+30</div>
+                  </div>
+                  <div class="sub-proof">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    "Вот фото страницы 147, дочитал до главы 8!"
+                  </div>
+                  <div class="sub-acts"><div class="btn-r">Отклонить</div><div class="btn-a">Одобрить +30</div></div>
+                </div>
+                <div class="sub">
+                  <div class="sub-hd">
+                    <div class="sub-dot"></div>
+                    <div class="sub-title">Убраться в комнате</div>
+                    <div class="sub-when">16:15</div>
+                    <div class="sub-pts">+50</div>
+                  </div>
+                  <div class="sub-proof">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    "Убрал всё, даже под кроватью!"
+                  </div>
+                  <div class="sub-acts"><div class="btn-r">Отклонить</div><div class="btn-a">Одобрить +50</div></div>
+                </div>
+                <div class="act">
+                  <div class="act-top">
+                    <div class="act-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><path d="M9 20l3-7 3 7"/><path d="M6 10l6 2 6-2"/><path d="M12 7v5"/></svg></div>
+                    <div><div class="act-title">Прогулка 30 минут</div><div class="act-desc">Каждый день. Активен у Саши.</div></div>
+                  </div>
+                  <div class="act-foot">
+                    <div class="act-pts"><svg width="11" height="11" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#F59E0B"/></svg>40</div>
+                    <div style="display:flex;gap:6px"><div class="act-edit">Изменить</div><div style="font-size:11px;font-weight:700;color:#EF4444;background:rgba(239,68,68,.07);border-radius:9px;padding:5px 10px">Убрать</div></div>
+                  </div>
+                </div>
+              </div>
+              <div class="pnav">
+                <div class="pni"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Главная</span></div>
+                <div class="pni on"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><span>Задания</span></div>
+                <div class="pni"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg><span>Награды</span></div>
+                <div class="pni"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg><span>Профиль</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════════ CONCEPT ══════════ -->
+    <div class="col">
+      <div class="col-lbl">Концепция · Уровни, ачивки, скиллы</div>
+      <div class="concept">
+        <div class="ctag"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2.5"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Следующая фича</div>
+        <h2>Прокачка персонажа</h2>
+        <p class="concept-sub">Выполняй квесты → зарабатывай XP → повышай уровень → разблокируй скиллы, которые дают бонусы к монетам и открывают особые квесты.</p>
+        <div class="clbl">Дерево уровней</div>
+        <div class="lvl-grid">
+          <div class="lc"><div class="lct"><div class="lcn">1–3</div><div class="lctag d">Пройдено</div></div><div class="lcname">Новичок</div><div class="lcxp">0 – 300 XP</div><div class="lcskills"><div class="sktag gr">Базовые квесты</div></div></div>
+          <div class="lc cur"><div class="lct"><div class="lcn">4–7</div><div class="lctag c">Сейчас</div></div><div class="lcname">Искатель</div><div class="lcxp">300 – 1200 XP</div><div class="lcskills"><div class="sktag pu">+10% монет</div><div class="sktag go">Дневной бонус</div></div></div>
+          <div class="lc lkd"><div class="lct"><div class="lcn">8–12</div><div class="lctag l">Закрыто</div></div><div class="lcname">Герой</div><div class="lcxp">1200 – 3000 XP</div><div class="lcskills"><div class="sktag or">Особые квесты</div><div class="sktag pu">+25% монет</div></div></div>
+        </div>
+        <div class="bot-grid">
+          <div class="cpanel">
+            <div class="cph"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--pdark)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>Ачивки</div>
+            <div class="ach-grid">
+              <div class="ach-it"><div class="ach-ic e"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="ach-lb e">Быстрый старт</div></div>
+              <div class="ach-it"><div class="ach-ic e"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round"><path d="M12 2c0 0 2 3 2 5.5S12.5 11 11 11s-2-1.5-2-3.5C7.5 9.5 7 11 7 12.5c0 2.5 2.2 5 5 5s5-2.5 5-5C17 9 14 5 12 2z"/></svg></div><div class="ach-lb e">7 дней подряд</div></div>
+              <div class="ach-it"><div class="ach-ic e"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div><div class="ach-lb e">Книгочей</div></div>
+              <div class="ach-it"><div class="ach-ic e"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div><div class="ach-lb e">Чистюля</div></div>
+              <div class="ach-it"><div class="ach-ic lk"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg></div><div class="ach-lb">100 квестов</div></div>
+              <div class="ach-it"><div class="ach-ic lk"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="ach-lb">Легенда</div></div>
+              <div class="ach-it"><div class="ach-ic lk"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><path d="M22 17H2a3 3 0 000 6h20a3 3 0 000-6z"/><path d="M12 17V1"/><path d="M5 8l7-7 7 7"/></svg></div><div class="ach-lb">Герой месяца</div></div>
+              <div class="ach-it"><div class="ach-ic lk"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div><div class="ach-lb">Чемпион</div></div>
+            </div>
+          </div>
+          <div class="cpanel">
+            <div class="cph"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--pdark)" stroke-width="2" stroke-linecap="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Скиллы</div>
+            <div class="sk-list">
+              <div class="sk-r"><div class="sk-ic pu"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sk-nm">Монетный магнит</div><div class="sk-ef">+10% ко всем наградам</div></div><div class="sk-st on">Активен</div></div>
+              <div class="sk-r"><div class="sk-ic go"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div><div class="sk-nm">Дневной бонус</div><div class="sk-ef">+5 монет каждый день</div></div><div class="sk-st on">Активен</div></div>
+              <div class="sk-r" style="opacity:.4"><div class="sk-ic" style="background:rgba(0,0,0,.04)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div><div class="sk-nm">Мастер квестов</div><div class="sk-ef">+25% за сложные задания</div></div><div class="sk-st off">LVL 8</div></div>
+              <div class="sk-r" style="opacity:.4"><div class="sk-ic gr"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div><div class="sk-nm">Инвестор</div><div class="sk-ef">+5% к Growth Missions</div></div><div class="sk-st off">LVL 10</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="flow">
+          <div class="flow-t">Механика прокачки</div>
+          <div class="flow-b">Квест → +XP → Уровень вверх → Скилл разблокирован → Больше монет → Мотивация делать больше квестов</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

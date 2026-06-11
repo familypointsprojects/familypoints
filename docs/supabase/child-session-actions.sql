@@ -18,7 +18,18 @@ as $$
 declare
   v_child children%rowtype;
   v_task tasks%rowtype;
+  v_day text;
 begin
+  v_day := case extract(dow from now() at time zone 'utc')::int
+    when 0 then 'sunday'
+    when 1 then 'monday'
+    when 2 then 'tuesday'
+    when 3 then 'wednesday'
+    when 4 then 'thursday'
+    when 5 then 'friday'
+    else 'saturday'
+  end;
+
   select * into v_child
   from children
   where id = child_id_input
@@ -33,20 +44,39 @@ begin
   where id = task_id_input
     and family_id = v_child.family_id
     and status = 'active'
-    and (child_id is null or child_id = v_child.id);
+    and (child_id is null or child_id = v_child.id)
+    and (
+      is_daily = false
+      or array_length(available_days, 1) is null
+      or array_length(available_days, 1) = 0
+      or v_day = any(available_days)
+    );
 
   if not found then
     return json_build_object('error', 'Task is not available');
   end if;
 
-  if exists (
-    select 1
-    from task_submissions
-    where task_id = v_task.id
-      and child_id = v_child.id
-      and status = 'pending'
-  ) then
-    return json_build_object('ok', true);
+  if v_task.is_daily then
+    if exists (
+      select 1
+      from task_submissions
+      where task_id = v_task.id
+        and child_id = v_child.id
+        and status in ('pending', 'approved')
+        and submitted_at::date = (now() at time zone 'utc')::date
+    ) then
+      return json_build_object('ok', true);
+    end if;
+  else
+    if exists (
+      select 1
+      from task_submissions
+      where task_id = v_task.id
+        and child_id = v_child.id
+        and status = 'pending'
+    ) then
+      return json_build_object('ok', true);
+    end if;
   end if;
 
   insert into task_submissions (task_id, child_id, status, photo_url)
@@ -119,10 +149,15 @@ begin
   from rewards
   where id = reward_id_input
     and family_id = v_child.family_id
+    and (child_id is null or child_id = v_child.id)
     and is_active = true;
 
   if not found then
     return json_build_object('error', 'Reward is not available');
+  end if;
+
+  if v_reward.is_daily_reward then
+    return json_build_object('error', 'Use daily reward purchase');
   end if;
 
   select coalesce(sum(points), 0) into v_balance
@@ -202,6 +237,7 @@ begin
     from rewards
     where id = target_id_input
       and family_id = v_child.family_id
+      and (child_id is null or child_id = v_child.id)
       and is_active = true
   ) then
     return json_build_object('error', 'Reward is not available');

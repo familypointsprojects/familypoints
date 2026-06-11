@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>EasyQuest — Blox Fruits</title>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:  #06101E;
+  --c1:  #0C1A30;
+  --c2:  #111E38;
+  --c3:  #162444;
+  --c4:  #1B2B52;
+  --ocean:  #0080FF;
+  --teal:   #00C8C8;
+  --gold:   #FFD700;
+  --frag:   #00BFFF;
+  --orange: #FF7A00;
+  --boss:   #FF3D5A;
+  --green:  #00E676;
+  --purple: #AA44FF;
+  --brd:  rgba(0,150,255,.22);
+  --brd2: rgba(0,200,200,.18);
+  --t1: rgba(255,255,255,.95);
+  --t2: rgba(255,255,255,.50);
+  --t3: rgba(255,255,255,.22);
+}
+
+body {
+  background: var(--bg);
+  /* subtle ocean gradient overlay */
+  background-image: radial-gradient(ellipse at 20% 30%, rgba(0,80,180,.18) 0%, transparent 55%),
+                    radial-gradient(ellipse at 80% 70%, rgba(0,160,200,.1) 0%, transparent 50%);
+  font-family: 'Exo 2', 'Arial', sans-serif;
+  padding: 44px;
+  min-width: 1380px;
+  color: var(--t1);
+}
+
+/* ═══ TITLE ═══ */
+.title { text-align: center; margin-bottom: 44px; }
+.title h1 {
+  font-size: 96px; font-weight: 900; letter-spacing: -2px; line-height: 1;
+  background: linear-gradient(180deg, #FFFFFF 0%, #00BFFF 50%, #0060CC 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 0 20px rgba(0,150,255,.5));
+  text-transform: uppercase;
+}
+.title .sub {
+  font-size: 13px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase;
+  color: var(--teal); margin-top: 8px; opacity: .7;
+}
+
+/* ═══ LAYOUT ═══ */
+.page { max-width: 1380px; margin: 0 auto; }
+.cols { display: grid; grid-template-columns: 390px 390px 280px; gap: 20px; align-items: start; }
+.col  { display: flex; flex-direction: column; gap: 12px; }
+.col-lbl { font-size: 11px; font-weight: 800; letter-spacing: 4px; text-transform: uppercase; color: var(--t3); text-align: center; padding-bottom: 2px; }
+
+/* ═══ CARD BASE ═══ */
+.card {
+  background: var(--c1);
+  border-radius: 14px; overflow: hidden;
+  border: 1px solid var(--brd);
+  box-shadow: 0 8px 32px rgba(0,0,0,.4);
+}
+.ch {
+  padding: 11px 16px;
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--brd);
+  font-size: 13px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--teal);
+}
+.cb { padding: 16px; }
+
+/* ═══ WANTED POSTER ═══ */
+.wanted {
+  background: linear-gradient(160deg, #0E1D38 0%, #060F1D 100%);
+  border-radius: 14px; overflow: hidden;
+  border: 2px solid rgba(255,200,50,.3);
+  box-shadow: 0 16px 48px rgba(0,0,0,.6), 0 0 0 1px rgba(255,200,50,.1);
+  position: relative;
+}
+/* torn paper edge at top */
+.wanted-top {
+  background: linear-gradient(90deg, #D4A017 0%, #FFD700 30%, #C8901C 60%, #FFD700 100%);
+  padding: 8px 18px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.wanted-top::after {
+  content: '';
+  position: absolute; bottom: -8px; left: 0; right: 0; height: 8px;
+  background: linear-gradient(180deg, #C8901C, transparent);
+  clip-path: polygon(0 0,2% 100%,4% 0,6% 100%,8% 0,10% 100%,12% 0,14% 100%,16% 0,18% 100%,20% 0,22% 100%,24% 0,26% 100%,28% 0,30% 100%,32% 0,34% 100%,36% 0,38% 100%,40% 0,42% 100%,44% 0,46% 100%,48% 0,50% 100%,52% 0,54% 100%,56% 0,58% 100%,60% 0,62% 100%,64% 0,66% 100%,68% 0,70% 100%,72% 0,74% 100%,76% 0,78% 100%,80% 0,82% 100%,84% 0,86% 100%,88% 0,90% 100%,92% 0,94% 100%,96% 0,98% 100%,100% 0);
+}
+.wanted-label { font-size: 28px; font-weight: 900; color: #1A0800; letter-spacing: 10px; text-transform: uppercase; }
+
+/* wanted body */
+.wanted-body {
+  padding: 20px 20px 0;
+  display: flex; flex-direction: column; align-items: center;
+  position: relative; overflow: hidden;
+}
+/* ocean waves pattern bg */
+.wanted-body::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent 0px, transparent 18px,
+    rgba(0,100,200,.06) 18px, rgba(0,100,200,.06) 19px
+  );
+  pointer-events: none;
+}
+/* rank banner */
+.rank-banner {
+  background: rgba(0,150,255,.15); border: 1px solid rgba(0,150,255,.3);
+  border-radius: 6px; padding: 4px 20px; margin-bottom: 12px;
+  font-size: 12px; font-weight: 800; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--teal);
+}
+/* wanted footer */
+.wanted-footer {
+  background: rgba(0,0,0,.5);
+  padding: 12px 18px;
+  border-top: 1px solid rgba(255,200,50,.2);
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 4px;
+}
+.bounty {
+  display: flex; align-items: center; gap: 8px;
+}
+.bounty-label { font-size: 10px; font-weight: 800; letter-spacing: 2px; color: var(--gold); opacity: .7; }
+.bounty-num   { font-size: 26px; font-weight: 900; color: var(--gold); line-height: 1; }
+.player-title {
+  font-size: 13px; font-weight: 800; color: var(--teal);
+  background: rgba(0,200,200,.1); border: 1px solid rgba(0,200,200,.25);
+  border-radius: 6px; padding: 3px 12px;
+}
+
+/* ═══ XP + MASTERY ═══ */
+.xp-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+}
+.xp-lbl { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--t2); white-space: nowrap; }
+.xp-bar { flex: 1; height: 12px; background: rgba(0,0,0,.4); border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); }
+.xp-fill { height: 100%; width: 62%; background: linear-gradient(90deg, #0060FF, #00C8FF); border-radius: 6px; position: relative; }
+.xp-fill::after { content:''; position:absolute; top:2px; left:3px; right:3px; height:3px; background:rgba(255,255,255,.3); border-radius:3px; }
+.xp-val { font-size: 12px; font-weight: 800; color: var(--frag); white-space: nowrap; }
+
+/* mastery bars */
+.mastery-list { display: flex; flex-direction: column; gap: 8px; }
+.mastery-row { display: flex; align-items: center; gap: 10px; }
+.mas-icon { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
+.mas-name { font-size: 12px; font-weight: 700; width: 70px; flex-shrink: 0; }
+.mas-bar { flex: 1; height: 10px; background: rgba(0,0,0,.4); border-radius: 5px; overflow: hidden; border: 1px solid rgba(255,255,255,.07); }
+.mas-fill { height: 100%; border-radius: 5px; }
+.mas-fill.study   { background: linear-gradient(90deg,#6040CC,#9060FF); width:75%; }
+.mas-fill.home    { background: linear-gradient(90deg,#006C40,#00CC70); width:55%; }
+.mas-fill.sport   { background: linear-gradient(90deg,#C04000,#FF7000); width:80%; }
+.mas-fill.special { background: linear-gradient(90deg,#8B0060,#FF00A0); width:40%; }
+.mas-lv { font-size: 12px; font-weight: 800; color: var(--t2); width: 30px; text-align: right; }
+
+/* ═══ QUEST TRACKER (left-panel style) ═══ */
+.qt-panel {
+  background: var(--c1);
+  border-radius: 14px; overflow: hidden;
+  border: 1px solid rgba(0,150,255,.3);
+  box-shadow: 0 0 0 1px rgba(0,80,200,.15), 0 8px 32px rgba(0,0,0,.5);
+}
+.qt-head {
+  background: linear-gradient(90deg, rgba(0,100,200,.5), rgba(0,60,140,.3));
+  padding: 10px 14px;
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid rgba(0,150,255,.25);
+}
+.qt-title { font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--teal); flex: 1; }
+.qt-count { font-size: 11px; font-weight: 800; background: rgba(0,150,255,.2); color: var(--frag); padding: 2px 10px; border-radius: 20px; border: 1px solid rgba(0,150,255,.3); }
+.qt-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+
+/* single quest item */
+.qi {
+  background: var(--c2); border-radius: 10px;
+  border: 1px solid var(--brd);
+  overflow: hidden; position: relative;
+  transition: background .1s;
+}
+.qi:hover { background: var(--c3); }
+/* colored left bar by island */
+.qi::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
+.qi.study   ::before, .qi.study  { border-left: 3px solid rgba(100,80,255,.7); }
+.qi.home    ::before, .qi.home   { border-left: 3px solid rgba(0,200,100,.7); }
+.qi.sport   ::before, .qi.sport  { border-left: 3px solid rgba(255,120,0,.7); }
+.qi.special ::before, .qi.special { border-left: 3px solid rgba(200,0,180,.7); }
+
+.qi-inner { padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+/* island location */
+.qi-island {
+  font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 20px; flex-shrink: 0;
+}
+.qi.study   .qi-island { background:rgba(100,80,255,.2); color:#9080FF; border:1px solid rgba(100,80,255,.3); }
+.qi.home    .qi-island { background:rgba(0,200,100,.15); color:#00CC70; border:1px solid rgba(0,200,100,.25); }
+.qi.sport   .qi-island { background:rgba(255,120,0,.18); color:#FF9040; border:1px solid rgba(255,120,0,.3); }
+.qi.special .qi-island { background:rgba(200,0,180,.18); color:#FF40E0; border:1px solid rgba(200,0,180,.28); }
+
+.qi-body { flex: 1; }
+.qi-name { font-size: 13px; font-weight: 800; line-height: 1.2; }
+/* objective style (Blox Fruits: "Defeat Bandits: 0/10") */
+.qi-obj { font-size: 11px; color: var(--t2); font-weight: 600; margin-top: 2px; }
+.qi-reward { font-size: 11px; font-weight: 700; margin-top: 4px; display: flex; gap: 10px; }
+.qi-xp  { color: var(--frag); }
+.qi-beli { color: var(--gold); }
+/* progress bar */
+.qi-prog { height: 3px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; margin-top: 5px; }
+.qi-prog-f { height: 100%; border-radius: 3px; background: linear-gradient(90deg,rgba(200,0,180,.8),rgba(255,40,220,.9)); }
+
+/* submit button */
+.qi-btn {
+  font-family:'Exo 2',sans-serif; font-size: 12px; font-weight: 800;
+  padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer;
+  flex-shrink: 0; letter-spacing: .5px; text-transform: uppercase;
+  transition: transform .07s;
+}
+.qi-btn:active { transform: scale(.95); }
+.qi-btn.go {
+  background: linear-gradient(135deg, #00A040, #00CC60);
+  color: white; box-shadow: 0 3px 10px rgba(0,200,80,.35);
+}
+.qi-btn.wait { background: rgba(255,255,255,.07); color: var(--t2); cursor: default; border: 1px solid var(--brd); }
+.qi-btn.boss {
+  background: linear-gradient(135deg, var(--orange), #FF4000);
+  color: white; box-shadow: 0 3px 10px rgba(255,100,0,.35);
+}
+
+/* ! quest marker */
+.excl {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--gold); color: #1A0800;
+  font-size: 13px; font-weight: 900; flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(255,215,0,.5);
+}
+
+/* ═══ DEVIL FRUITS ═══ */
+.fruits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.fruit {
+  border-radius: 12px; overflow: hidden;
+  background: var(--c2); border: 1px solid var(--brd);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 14px 10px 12px; gap: 7px; cursor: pointer;
+  transition: transform .1s;
+  position: relative;
+}
+.fruit:hover { transform: translateY(-2px); }
+/* rarity top glow line */
+.fruit::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:12px 12px 0 0; }
+.fruit.common   { border-color: rgba(150,150,150,.3); }
+.fruit.common::before { background: rgba(180,180,180,.5); }
+.fruit.rare     { border-color: rgba(0,160,255,.4); box-shadow: 0 0 12px rgba(0,100,255,.15); }
+.fruit.rare::before { background: linear-gradient(90deg,#0060CC,#00BFFF); }
+.fruit.legendary { border-color: rgba(255,150,0,.45); box-shadow: 0 0 14px rgba(255,100,0,.2); }
+.fruit.legendary::before { background: linear-gradient(90deg,#CC5000,var(--orange),#FFD700); }
+.fruit.mythical { border-color: rgba(180,0,255,.5); box-shadow: 0 0 16px rgba(150,0,255,.25); }
+.fruit.mythical::before { background: linear-gradient(90deg,#6600CC,var(--purple),#FF00CC); }
+.fruit.can .fruit-btn { background: linear-gradient(135deg,#007030,#00A040); color:white; box-shadow:0 3px 8px rgba(0,160,60,.3); }
+
+/* fruit SVG icon area */
+.fruit-ico { width: 56px; height: 56px; position: relative; }
+
+.fruit-rarity {
+  font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 20px;
+}
+.fruit.common   .fruit-rarity { background:rgba(180,180,180,.15); color:rgba(200,200,200,.7); }
+.fruit.rare     .fruit-rarity { background:rgba(0,160,255,.15); color:var(--frag); border:1px solid rgba(0,160,255,.25); }
+.fruit.legendary .fruit-rarity { background:rgba(255,150,0,.15); color:var(--orange); border:1px solid rgba(255,150,0,.25); }
+.fruit.mythical .fruit-rarity { background:rgba(180,0,255,.15); color:#CC88FF; border:1px solid rgba(180,0,255,.25); }
+
+.fruit-name { font-size: 12px; font-weight: 800; text-align: center; line-height: 1.2; }
+.fruit-price { font-size: 13px; font-weight: 800; color: var(--gold); }
+.fruit-btn {
+  width: 100%; font-family:'Exo 2',sans-serif; font-size: 11px; font-weight: 800;
+  padding: 6px; border-radius: 7px; border: none; cursor: pointer;
+  text-transform: uppercase; letter-spacing: .5px;
+  background: rgba(255,255,255,.07); color: var(--t2); border: 1px solid var(--brd);
+}
+
+/* ═══ PARENT ═══ */
+.p-card {
+  background: linear-gradient(140deg, #0E1D3C, #08121E);
+  border-radius: 14px; padding: 18px;
+  border: 1px solid var(--brd);
+  display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 12px 36px rgba(0,0,0,.4);
+}
+.p-av {
+  width: 58px; height: 58px; border-radius: 12px; flex-shrink: 0;
+  background: linear-gradient(160deg, #0A1E4A, #060E20);
+  border: 2px solid rgba(0,150,255,.4);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 16px rgba(0,100,200,.3);
+}
+.p-name { font-size: 20px; font-weight: 900; }
+.p-sub  { font-size: 12px; color: var(--t2); margin-top: 3px; font-weight: 600; }
+.p-bal  { margin-left: auto; text-align: right; }
+.p-bal-n { font-size: 26px; font-weight: 900; color: var(--gold); }
+.p-bal-l { font-size: 11px; color: var(--t2); }
+.online { display: inline-block; background: rgba(0,230,120,.15); color: var(--green); border: 1px solid rgba(0,230,120,.25); border-radius: 20px; font-size: 11px; font-weight: 800; padding: 2px 10px; margin-top: 4px; }
+
+.s4 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sb { background: var(--c1); border-radius: 12px; padding: 15px 17px; border: 1px solid var(--brd); }
+.sn { font-size: 38px; font-weight: 900; line-height: 1; }
+.sl { font-size: 10px; color: var(--t2); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; font-weight: 800; }
+
+.sub { padding: 13px 0; border-bottom: 1px solid var(--brd); }
+.sub:last-child { border-bottom: none; }
+.sub-n { font-size: 14px; font-weight: 800; margin-bottom: 3px; }
+.sub-m { font-size: 12px; color: var(--t2); margin-bottom: 10px; }
+.sub-b { display: flex; gap: 8px; }
+.bok,.bno { flex:1; padding:8px; border-radius:10px; font-family:inherit; font-size:13px; font-weight:800; color:white; cursor:pointer; text-align:center; border:none; }
+.bok { background: rgba(0,200,100,.25); border: 1px solid rgba(0,200,100,.4); }
+.bno { background: rgba(255,60,90,.2); border: 1px solid rgba(255,60,90,.35); }
+
+.qa4 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.qa  { background:var(--c2); border:1px solid var(--brd); border-radius:12px; padding:13px 14px; cursor:pointer; font-size:13px; font-weight:800; display:flex; flex-direction:column; gap:6px; transition:background .1s; }
+.qa:hover { background: var(--c3); }
+
+.tr { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--brd); font-size:14px; }
+.tr:last-child { border-bottom:none; }
+.td { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.tn { flex:1; font-weight:700; }
+.tp { font-size:13px; font-weight:800; color:var(--gold); background:rgba(255,215,0,.1); border:1px solid rgba(255,215,0,.18); padding:2px 10px; border-radius:20px; }
+.tr-r { font-family:inherit; font-size:12px; font-weight:800; padding:3px 10px; border-radius:8px; cursor:pointer; background:var(--c2); border:1px solid var(--brd); color:var(--t2); }
+
+/* ═══ CONCEPT ═══ */
+.lv { display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--brd); }
+.lv:last-child { border-bottom:none; }
+.lv-i  { font-size:22px; width:36px; text-align:center; flex-shrink:0; }
+.lv-n  { font-size:15px; font-weight:800; }
+.lv-r  { font-size:12px; color:var(--t2); }
+.lv-t  { margin-left:auto; font-size:11px; font-weight:800; padding:2px 10px; border-radius:20px; flex-shrink:0; }
+.lv-t.d { background:rgba(0,200,100,.15); color:var(--green); border:1px solid rgba(0,200,100,.25); }
+.lv-t.n { background:rgba(255,215,0,.15); color:var(--gold); border:1px solid rgba(255,215,0,.25); }
+.lv-t.l { background:var(--c2); color:var(--t3); border:1px solid var(--brd); }
+
+.sk { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--brd); }
+.sk:last-child { border-bottom:none; }
+.sk-i  { font-size:20px; flex-shrink:0; }
+.sk-n  { font-size:13px; font-weight:800; }
+.sk-fx { font-size:12px; color:var(--t2); }
+.sk-t  { margin-left:auto; font-size:11px; font-weight:800; padding:2px 10px; border-radius:20px; flex-shrink:0; }
+.sk-t.on  { background:rgba(0,200,100,.15); color:var(--green); border:1px solid rgba(0,200,100,.25); }
+.sk-t.off { background:var(--c2); color:var(--t3); border:1px solid var(--brd); }
+
+.ag { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.ac { background:var(--c2); border:1px solid var(--brd); border-radius:12px; padding:12px 8px; text-align:center; }
+.ac.off { opacity:.2; }
+.ac-i { font-size:24px; margin-bottom:4px; }
+.ac-l { font-size:10px; font-weight:800; color:var(--t2); }
+
+.nb { display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px; border-radius:20px; background:rgba(255,60,90,.25); border:1px solid rgba(255,60,90,.4); color:#FF8090; font-size:11px; font-weight:900; padding:0 7px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ═══ TITLE ═══ -->
+<div class="title">
+  <h1>EasyQuest</h1>
+  <div class="sub">семейный трекер заданий · в стиле Blox Fruits</div>
+</div>
+
+<div class="cols">
+
+<!-- ════════════ CHILD ════════════ -->
+<div class="col">
+  <div class="col-lbl">игрок</div>
+
+  <!-- WANTED POSTER -->
+  <div class="wanted">
+    <div class="wanted-top">
+      <span class="wanted-label">РАЗЫСКИВАЕТСЯ</span>
+    </div>
+    <div class="wanted-body">
+      <div style="height:10px"></div>
+      <div class="rank-banner">⚓ ПЕРВОЕ МОРЕ · ИСКАТЕЛЬ</div>
+
+      <!-- Anime pirate character -->
+      <svg width="160" height="172" viewBox="0 0 160 172" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:relative;z-index:1;">
+        <!-- shadow -->
+        <ellipse cx="80" cy="164" rx="46" ry="8" fill="rgba(0,0,0,.4)"/>
+        <!-- long scarf/bandana trailing -->
+        <path d="M95 52 Q130 40 145 28 Q155 20 152 12 Q148 4 140 8 Q130 14 118 30 Q108 42 102 52" fill="#CC2222" stroke="#880000" stroke-width="1.5"/>
+        <path d="M98 52 Q128 38 140 26 Q148 18 143 12" stroke="rgba(255,120,120,.35)" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <!-- coat / longcoat -->
+        <path d="M36 110 Q18 138 24 165 L80 148 L136 165 Q142 138 124 110 Q108 96 80 100 Q52 96 36 110Z" fill="#1A3280" stroke="#0A1E60" stroke-width="2"/>
+        <!-- coat lapels -->
+        <path d="M80 100 L68 116 L80 130 L92 116 Z" fill="#142060" stroke="#0A1440" stroke-width="1.5"/>
+        <!-- coat buttons -->
+        <circle cx="80" cy="118" r="3" fill="rgba(255,215,0,.6)"/>
+        <circle cx="80" cy="128" r="3" fill="rgba(255,215,0,.6)"/>
+        <circle cx="80" cy="138" r="3" fill="rgba(255,215,0,.6)"/>
+        <!-- belt -->
+        <rect x="56" y="130" width="48" height="8" rx="4" fill="#0A1440"/>
+        <circle cx="80" cy="134" r="6" fill="#CC8800" stroke="#996600" stroke-width="1.5"/>
+        <!-- PIRATE HAT -->
+        <path d="M36 54 Q34 38 80 34 Q126 38 124 54" fill="#1A1A30" stroke="#111128" stroke-width="2"/>
+        <!-- hat brim -->
+        <ellipse cx="80" cy="54" rx="52" ry="9" fill="#252540" stroke="#111128" stroke-width="2"/>
+        <!-- skull on hat -->
+        <circle cx="80" cy="44" r="8" fill="white" stroke="#111" stroke-width="1.5"/>
+        <circle cx="77" cy="42" r="2" fill="#111"/>
+        <circle cx="83" cy="42" r="2" fill="#111"/>
+        <path d="M77 47 Q80 50 83 47" stroke="#111" stroke-width="1.5" fill="none"/>
+        <text x="75" y="53" font-size="7" fill="#111">✕✕✕</text>
+
+        <!-- FACE -->
+        <path d="M36 78 Q34 60 44 50 Q62 38 80 37 Q98 38 116 50 Q126 60 124 78 Q124 102 112 110 Q96 118 80 118 Q64 118 48 110 Q36 102 36 78Z" fill="#FFD3A8" stroke="#C4956A" stroke-width="2"/>
+        <!-- scar (badass pirate mark) -->
+        <path d="M96 62 Q100 68 98 76" stroke="#C4502A" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+        <!-- EYES (anime, determined) -->
+        <ellipse cx="62" cy="74" rx="12" ry="14" fill="white" stroke="#1A1A1A" stroke-width="2"/>
+        <ellipse cx="98" cy="74" rx="12" ry="14" fill="white" stroke="#1A1A1A" stroke-width="2"/>
+        <!-- half-closed lids (cool expression) -->
+        <path d="M50 68 Q62 64 74 68" fill="#FFD3A8" stroke="#FFD3A8" stroke-width="1"/>
+        <path d="M86 68 Q98 64 110 68" fill="#FFD3A8" stroke="#FFD3A8" stroke-width="1"/>
+        <!-- iris -->
+        <circle cx="64" cy="76" r="8" fill="#1040A0"/>
+        <circle cx="100" cy="76" r="8" fill="#1040A0"/>
+        <!-- pupil -->
+        <circle cx="65" cy="77.5" r="5.5" fill="#060E20"/>
+        <circle cx="101" cy="77.5" r="5.5" fill="#060E20"/>
+        <!-- shine -->
+        <circle cx="67.5" cy="74" r="2.5" fill="white"/>
+        <circle cx="103.5" cy="74" r="2.5" fill="white"/>
+        <!-- eyebrows (fierce) -->
+        <path d="M50 63 Q62 57 72 63" stroke="#1A0A06" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M88 63 Q98 57 110 63" stroke="#1A0A06" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <!-- smirk -->
+        <path d="M60 96 Q76 106 94 98" stroke="#C4956A" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M68 97 Q80 104 90 99" stroke="white" stroke-width="4" fill="none" stroke-linecap="round" opacity=".8"/>
+        <!-- cheeks -->
+        <circle cx="44" cy="86" r="10" fill="#FF9999" opacity=".2"/>
+        <circle cx="116" cy="86" r="10" fill="#FF9999" opacity=".2"/>
+
+        <!-- ARMS / GLOVES (pirate) -->
+        <rect x="16" y="108" width="28" height="22" rx="9" fill="#CC8800" stroke="#996600" stroke-width="1.5"/>
+        <rect x="116" y="108" width="28" height="22" rx="9" fill="#CC8800" stroke="#996600" stroke-width="1.5"/>
+        <!-- glove lines -->
+        <rect x="19" y="118" width="22" height="4" rx="2" fill="rgba(0,0,0,.2)"/>
+        <rect x="119" y="118" width="22" height="4" rx="2" fill="rgba(0,0,0,.2)"/>
+
+        <!-- AURA effect lines -->
+        <line x1="10" y1="62" x2="2" y2="56" stroke="rgba(0,150,255,.6)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="8" y1="70" x2="0" y2="68" stroke="rgba(0,150,255,.4)" stroke-width="1" stroke-linecap="round"/>
+        <line x1="150" y1="62" x2="158" y2="56" stroke="rgba(0,150,255,.6)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="152" y1="70" x2="160" y2="68" stroke="rgba(0,150,255,.4)" stroke-width="1" stroke-linecap="round"/>
+        <!-- sparkle -->
+        <text x="0"   y="44" font-size="12" fill="rgba(0,200,255,.7)">✦</text>
+        <text x="146" y="40" font-size="10" fill="rgba(255,200,0,.7)">★</text>
+      </svg>
+    </div>
+    <div class="wanted-footer">
+      <div class="bounty">
+        <div>
+          <div class="bounty-label">BOUNTY</div>
+          <div class="bounty-num">🪙 250,000</div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:22px; font-weight:900; text-align:right; line-height:1.1;">Максим</div>
+        <div class="player-title">Lv.3 · ИСКАТЕЛЬ</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- XP + MASTERY -->
+  <div class="card">
+    <div class="ch">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      ПРОГРЕСС
+    </div>
+    <div class="cb">
+      <div class="xp-row">
+        <span class="xp-lbl">Опыт</span>
+        <div class="xp-bar"><div class="xp-fill"></div></div>
+        <span class="xp-val">620 / 1000</span>
+      </div>
+      <div style="font-size:11px; color:var(--t2); margin-bottom:12px; font-weight:700;">— до Lv.4 осталось 380 EXP —</div>
+
+      <div style="font-size:11px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--teal); margin-bottom:8px;">МАСТЕРСТВО</div>
+      <div class="mastery-list">
+        <div class="mastery-row">
+          <div class="mas-icon">📚</div>
+          <div class="mas-name">Учёба</div>
+          <div class="mas-bar"><div class="mas-fill study"></div></div>
+          <div class="mas-lv">75</div>
+        </div>
+        <div class="mastery-row">
+          <div class="mas-icon">🏠</div>
+          <div class="mas-name">Дом</div>
+          <div class="mas-bar"><div class="mas-fill home"></div></div>
+          <div class="mas-lv">55</div>
+        </div>
+        <div class="mastery-row">
+          <div class="mas-icon">⚔️</div>
+          <div class="mas-name">Спорт</div>
+          <div class="mas-bar"><div class="mas-fill sport"></div></div>
+          <div class="mas-lv">80</div>
+        </div>
+        <div class="mastery-row">
+          <div class="mas-icon">🌟</div>
+          <div class="mas-name">Особое</div>
+          <div class="mas-bar"><div class="mas-fill special"></div></div>
+          <div class="mas-lv">40</div>
+        </div>
+      </div>
+
+      <!-- streak / buff -->
+      <div style="margin-top:12px; display:flex; align-items:center; gap:10px; background:rgba(255,150,0,.1); border:1px solid rgba(255,150,0,.2); border-radius:10px; padding:9px 14px;">
+        <span style="font-size:20px;">🔥</span>
+        <div>
+          <div style="font-size:14px; font-weight:800; color:var(--orange);">Серия × 7 дней</div>
+          <div style="font-size:11px; color:var(--t2); font-weight:600;">Активный бафф: +10% к монетам</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUEST TRACKER (BF left-panel style) -->
+  <div class="qt-panel">
+    <div class="qt-head">
+      <span class="excl">!</span>
+      <span class="qt-title">Активные квесты</span>
+      <span class="qt-count">4 / 5</span>
+    </div>
+    <div class="qt-body">
+
+      <!-- Study island quest -->
+      <div class="qi study">
+        <div class="qi-inner">
+          <span class="excl">!</span>
+          <div class="qi-body">
+            <div class="qi-name">Домашнее задание</div>
+            <div class="qi-obj">📚 Остров Знаний · выполнить: 0/1</div>
+            <div class="qi-reward"><span class="qi-xp">EXP +50</span><span class="qi-beli">🪙 +50</span></div>
+          </div>
+          <div class="qi-island">УЧЁБА</div>
+          <button class="qi-btn go">СДАТЬ</button>
+        </div>
+      </div>
+
+      <!-- Home island quest -->
+      <div class="qi home">
+        <div class="qi-inner">
+          <span class="excl" style="background:rgba(0,200,100,.3); color:#00E676; box-shadow:0 0 6px rgba(0,200,100,.4);">!</span>
+          <div class="qi-body">
+            <div class="qi-name">Убрать комнату</div>
+            <div class="qi-obj">🏠 Деревня Дома · на проверке…</div>
+            <div class="qi-reward"><span class="qi-xp">EXP +30</span><span class="qi-beli">🪙 +30</span></div>
+          </div>
+          <div class="qi-island">ДОМ</div>
+          <button class="qi-btn wait">⏳ ЖДЁМ</button>
+        </div>
+      </div>
+
+      <!-- Sport/combat quest -->
+      <div class="qi sport">
+        <div class="qi-inner">
+          <span class="excl">!</span>
+          <div class="qi-body">
+            <div class="qi-name">Тренировка 15 мин</div>
+            <div class="qi-obj">⚔️ Арена Силы · выполнить: 0/1</div>
+            <div class="qi-reward"><span class="qi-xp">EXP +40</span><span class="qi-beli">🪙 +40</span></div>
+          </div>
+          <div class="qi-island">СПОРТ</div>
+          <button class="qi-btn go">СДАТЬ</button>
+        </div>
+      </div>
+
+      <!-- Special BOSS quest -->
+      <div class="qi special">
+        <div class="qi-inner">
+          <span class="excl" style="background:rgba(200,0,180,.35); color:#FF40E0; box-shadow:0 0 6px rgba(200,0,180,.5);">!</span>
+          <div class="qi-body">
+            <div class="qi-name">Помочь с посудой ×3 <span style="font-size:10px; color:#FF40E0; font-weight:800;">БОСС</span></div>
+            <div class="qi-obj">🌟 Особый Остров · прогресс: 2/3</div>
+            <div class="qi-reward"><span class="qi-xp">EXP +80</span><span class="qi-beli">🪙 +80</span></div>
+            <div class="qi-prog"><div class="qi-prog-f" style="width:66%"></div></div>
+          </div>
+          <div class="qi-island">ОСОБОЕ</div>
+          <button class="qi-btn boss">2 / 3</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DEVIL FRUIT INVENTORY -->
+  <div class="card">
+    <div class="ch">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      ФРУКТЫ-НАГРАДЫ
+    </div>
+    <div class="cb">
+      <div class="fruits">
+
+        <!-- Common fruit -->
+        <div class="fruit common can">
+          <div class="fruit-ico">
+            <svg width="56" height="56" viewBox="0 0 56 56">
+              <circle cx="28" cy="32" r="22" fill="#4A8F30" stroke="#2A6018" stroke-width="2"/>
+              <!-- swirl -->
+              <path d="M20 28 Q22 20 28 22 Q34 24 32 30 Q30 36 24 34 Q18 32 20 28Z" fill="#5CB040" stroke="#3A7828" stroke-width="1"/>
+              <circle cx="32" cy="30" r="4" fill="#70CC50" stroke="#4A9030" stroke-width="1"/>
+              <circle cx="22" cy="28" r="3" fill="#70CC50" stroke="#4A9030" stroke-width="1"/>
+              <!-- leaf -->
+              <path d="M28 10 Q22 4 18 8 Q14 12 18 16 Q24 12 28 10Z" fill="#2A8020" stroke="#1A5010" stroke-width="1.5"/>
+              <line x1="28" y1="10" x2="28" y2="26" stroke="#2A8020" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="fruit-rarity">ОБЫЧНЫЙ</div>
+          <div class="fruit-name">Фрукт Игры<br/>2 часа</div>
+          <div class="fruit-price">🪙 150</div>
+          <button class="fruit-btn" style="background:linear-gradient(135deg,#007030,#00A040);color:white;box-shadow:0 3px 8px rgba(0,160,60,.3);">СЪЕСТЬ</button>
+        </div>
+
+        <!-- Rare fruit -->
+        <div class="fruit rare">
+          <div class="fruit-ico">
+            <svg width="56" height="56" viewBox="0 0 56 56">
+              <circle cx="28" cy="32" r="22" fill="#1844B8" stroke="#0C2880" stroke-width="2"/>
+              <path d="M18 30 Q22 20 28 24 Q34 28 30 36 Q26 44 20 38 Q14 32 18 30Z" fill="#2468E0" stroke="#1040A0" stroke-width="1"/>
+              <circle cx="32" cy="28" r="5" fill="#4080FF" stroke="#1E50CC" stroke-width="1.5"/>
+              <circle cx="22" cy="34" r="3.5" fill="#4080FF" stroke="#1E50CC" stroke-width="1"/>
+              <path d="M28 10 Q20 2 15 8 Q10 14 16 18 Q22 12 28 10Z" fill="#0C3090" stroke="#081E60" stroke-width="1.5"/>
+              <line x1="28" y1="10" x2="28" y2="26" stroke="#0C3090" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="fruit-rarity">РЕДКИЙ</div>
+          <div class="fruit-name">Фрукт Кино<br/>поход</div>
+          <div class="fruit-price">🪙 400</div>
+          <button class="fruit-btn">МАЛО 🪙</button>
+        </div>
+
+        <!-- Legendary fruit -->
+        <div class="fruit legendary">
+          <div class="fruit-ico">
+            <svg width="56" height="56" viewBox="0 0 56 56">
+              <!-- glow -->
+              <circle cx="28" cy="32" r="26" fill="rgba(255,120,0,.15)"/>
+              <circle cx="28" cy="32" r="22" fill="#B84000" stroke="#804000" stroke-width="2"/>
+              <path d="M18 28 Q20 18 28 22 Q36 26 32 36 Q28 46 22 40 Q14 34 18 28Z" fill="#E05800" stroke="#A04000" stroke-width="1"/>
+              <circle cx="34" cy="26" r="5" fill="#FF8800" stroke="#CC5500" stroke-width="1.5"/>
+              <circle cx="22" cy="34" r="4" fill="#FF8800" stroke="#CC5500" stroke-width="1.5"/>
+              <circle cx="30" cy="38" r="3" fill="#FFAA00" stroke="#CC7700" stroke-width="1"/>
+              <path d="M28 8 Q18 0 14 8 Q10 16 18 18 Q24 10 28 8Z" fill="#804400" stroke="#603000" stroke-width="1.5"/>
+              <line x1="28" y1="8" x2="28" y2="26" stroke="#804400" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="fruit-rarity">ЛЕГЕНД.</div>
+          <div class="fruit-name">Фрукт<br/>LEGO ★</div>
+          <div class="fruit-price">🪙 600</div>
+          <button class="fruit-btn">МАЛО 🪙</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- end child -->
+
+<!-- ════════════ PARENT ════════════ -->
+<div class="col">
+  <div class="col-lbl">командир</div>
+
+  <div class="p-card">
+    <div class="p-av">
+      <svg width="36" height="42" viewBox="0 0 36 42" fill="none">
+        <!-- mini pirate hat -->
+        <path d="M6 16 Q6 8 18 7 Q30 8 30 16" fill="#1A1A30" stroke="#111128" stroke-width="1.5"/>
+        <ellipse cx="18" cy="16" rx="14" ry="4" fill="#252540" stroke="#111128" stroke-width="1.5"/>
+        <circle cx="18" cy="11" r="3" fill="white" stroke="#111" stroke-width="1"/>
+        <circle cx="17" cy="10" r="1" fill="#111"/><circle cx="19" cy="10" r="1" fill="#111"/>
+        <!-- face -->
+        <path d="M8 22 Q7 16 11 14 Q18 10 25 14 Q29 16 28 22 Q28 30 22 33 Q18 35 14 33 Q8 30 8 22" fill="#FFD3A8" stroke="#C4956A" stroke-width="1.5"/>
+        <!-- eyes -->
+        <ellipse cx="14" cy="22" rx="3.5" ry="4" fill="white" stroke="#1A1A1A" stroke-width="1"/>
+        <ellipse cx="22" cy="22" rx="3.5" ry="4" fill="white" stroke="#1A1A1A" stroke-width="1"/>
+        <circle cx="14.5" cy="23" r="2.5" fill="#1040A0"/>
+        <circle cx="22.5" cy="23" r="2.5" fill="#1040A0"/>
+        <circle cx="15.5" cy="22" r="1" fill="white"/>
+        <circle cx="23.5" cy="22" r="1" fill="white"/>
+        <!-- coat -->
+        <path d="M10 32 Q8 38 10 42 L26 42 Q28 38 26 32 Q22 28 18 30 Q14 28 10 32Z" fill="#1A3280" stroke="#0A1E60" stroke-width="1.5"/>
+        <path d="M18 30 L15 34 L18 36 L21 34 Z" fill="#142060" stroke="#0A1440" stroke-width="1"/>
+      </svg>
+    </div>
+    <div>
+      <div class="p-name">Максим, 10 лет</div>
+      <div class="p-sub">⚓ Lv.3 · Первое море · Серия 🔥×7</div>
+    </div>
+    <div class="p-bal">
+      <div class="p-bal-n">🪙 250</div>
+      <div class="p-bal-l">монет</div>
+      <div class="online">онлайн</div>
+    </div>
+  </div>
+
+  <div class="s4">
+    <div class="sb"><div class="sn" style="color:var(--boss);">2</div><div class="sl">на проверке</div></div>
+    <div class="sb"><div class="sn" style="color:var(--ocean);">1</div><div class="sl">запрос фрукта</div></div>
+    <div class="sb"><div class="sn" style="color:var(--green);">5</div><div class="sl">активных</div></div>
+    <div class="sb"><div class="sn" style="color:var(--gold);">380</div><div class="sl">заработано</div></div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>ПРОВЕРКА ЗАЯВОК <span class="nb">2</span></div>
+    <div class="cb">
+      <div class="sub">
+        <div class="sub-n">📚 Домашнее задание</div>
+        <div class="sub-m">Максим · сегодня 15:42 · EXP +50 · 🪙 +50</div>
+        <div class="sub-b"><button class="bok">✓ Одобрить</button><button class="bno">✗ Отклонить</button></div>
+      </div>
+      <div class="sub">
+        <div class="sub-n">🏠 Убрать комнату</div>
+        <div class="sub-m">Максим · сегодня 12:15 · EXP +30 · 🪙 +30</div>
+        <div class="sub-b"><button class="bok">✓ Одобрить</button><button class="bno">✗ Отклонить</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>КОМАНДНЫЕ ДЕЙСТВИЯ</div>
+    <div class="cb">
+      <div class="qa4">
+        <div class="qa"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ocean)" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Новый квест</div>
+        <div class="qa"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Добавить фрукт</div>
+        <div class="qa"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--boss)" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Желания <span class="nb" style="margin-left:0">1</span></div>
+        <div class="qa"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Начислить</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>ВСЕ КВЕСТЫ</div>
+    <div class="cb">
+      <div class="tr"><div class="td" style="background:var(--green);"></div><div class="tn">Домашнее задание</div><div class="tp">50</div></div>
+      <div class="tr"><div class="td" style="background:var(--green);"></div><div class="tn">Убрать комнату</div><div class="tp">30</div></div>
+      <div class="tr"><div class="td" style="background:var(--green);"></div><div class="tn">Тренировка 15 мин</div><div class="tp">40</div></div>
+      <div class="tr" style="opacity:.28;"><div class="td" style="background:var(--c3);"></div><div class="tn" style="text-decoration:line-through;opacity:.6;">Почитать книгу</div><div class="tp" style="opacity:.4;">25</div><button class="tr-r">↻</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ CONCEPT ════════════ -->
+<div class="col">
+  <div class="col-lbl">концепция</div>
+  <div style="text-align:center;margin-bottom:4px;">
+    <div style="display:inline-block;background:rgba(170,68,255,.15);border:1px solid rgba(170,68,255,.28);border-radius:20px;font-size:12px;font-weight:800;padding:4px 14px;color:#CC88FF;">🌊 будущие механики</div>
+  </div>
+
+  <div class="card">
+    <div class="ch">⚓ ПРОКАЧКА</div>
+    <div class="cb">
+      <div class="lv"><div class="lv-i">🌱</div><div><div class="lv-n">Новичок</div><div class="lv-r">0 — 200 XP</div></div><div class="lv-t d">✓</div></div>
+      <div class="lv"><div class="lv-i">🗺️</div><div><div class="lv-n">Искатель</div><div class="lv-r">200 — 1000 XP</div></div><div class="lv-t d">✓</div></div>
+      <div class="lv" style="background:rgba(255,200,0,.06);border-radius:10px;padding:8px;"><div class="lv-i">⚔️</div><div><div class="lv-n">Герой</div><div class="lv-r">1000 — 3000 XP</div></div><div class="lv-t n">СЕЙЧАС</div></div>
+      <div class="lv" style="opacity:.28;"><div class="lv-i">🐉</div><div><div class="lv-n">Легенда</div><div class="lv-r">3000+ XP</div></div><div class="lv-t l">🔒</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">🏆 АЧИВКИ</div>
+    <div class="cb">
+      <div class="ag">
+        <div class="ac"><div class="ac-i">🔥</div><div class="ac-l">7 дней</div></div>
+        <div class="ac"><div class="ac-i">📚</div><div class="ac-l">Учёба</div></div>
+        <div class="ac"><div class="ac-i">💪</div><div class="ac-l">Спорт</div></div>
+        <div class="ac off"><div class="ac-i">⭐</div><div class="ac-l">Легенда</div></div>
+        <div class="ac off"><div class="ac-i">🗺️</div><div class="ac-l">Острова</div></div>
+        <div class="ac off"><div class="ac-i">🐉</div><div class="ac-l">Босс</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ch">⚡ СКИЛЛЫ</div>
+    <div class="cb">
+      <div class="sk"><div class="sk-i">🔥</div><div><div class="sk-n">Бонус серии</div><div class="sk-fx">+10% за день подряд</div></div><div class="sk-t on">ВКЛ</div></div>
+      <div class="sk"><div class="sk-i">🛡️</div><div><div class="sk-n">Защита монет</div><div class="sk-fx">штрафы -25%</div></div><div class="sk-t on">ВКЛ</div></div>
+      <div class="sk" style="opacity:.3;"><div class="sk-i">⚡</div><div><div class="sk-n">Двойные монеты</div><div class="sk-fx">×2 по выходным</div></div><div class="sk-t off">🔒</div></div>
+      <div class="sk" style="opacity:.3;"><div class="sk-i">📈</div><div><div class="sk-n">Инвестор</div><div class="sk-fx">+5% к вкладам</div></div><div class="sk-t off">🔒</div></div>
+    </div>
+  </div>
+
+  <div class="card" style="background:linear-gradient(140deg,rgba(0,100,200,.2),rgba(0,200,200,.08));border:1px solid rgba(0,150,255,.2);">
+    <div class="cb">
+      <div style="font-size:12px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--teal); margin-bottom:12px;">🌊 ПОТОК ПРОКАЧКИ</div>
+      <div style="font-size:14px; line-height:2.2; color:var(--t2);">
+        квесты → <strong style="color:white;">EXP</strong><br>
+        EXP → <strong style="color:white;">уровень</strong><br>
+        уровень → <strong style="color:white;">ачивки</strong><br>
+        ачивки → <strong style="color:white;">скиллы</strong><br>
+        скиллы → <strong style="color:white;">новые правила</strong>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--t3);font-style:italic;">* to be designed</div>
+    </div>
+  </div>
+
+</div>
+
+</div><!-- cols -->
+</div><!-- page -->
+</body>
+</html>

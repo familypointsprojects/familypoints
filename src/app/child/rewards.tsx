@@ -13,6 +13,7 @@ import {
   EmptyState,
   FocusLiftCard,
   PointsBadge,
+  RocketProgressBar,
   SectionTitle,
   SegmentedControl,
   SegmentedControlOption,
@@ -25,7 +26,11 @@ import {
   moveFavoriteGoalsToFront,
 } from '@/shared/utils/favoriteGoals';
 import { getBalance, getProgressPercent } from '@/shared/utils/points';
-import { getDailyRewardLockReason, isDailyRewardAvailableToday } from '@/shared/utils/rewards';
+import {
+  getDailyRewardLockReason,
+  isDailyRewardAvailableToday,
+  isRewardAvailableForChild,
+} from '@/shared/utils/rewards';
 import { getVisibleWishes } from '@/shared/utils/wishes';
 
 type ChildRewardsTab = 'rewards' | 'wishes' | 'received';
@@ -90,7 +95,6 @@ const ChildRewardsScreen = () => {
   const [isWishModalVisible, setIsWishModalVisible] = useState(false);
   const [pendingFavoriteGoal, setPendingFavoriteGoal] = useState<PendingFavoriteGoal | null>(null);
   const [wishTitle, setWishTitle] = useState('');
-  const [wishPrice, setWishPrice] = useState('');
   const rewardVisibleOrder = useRef<string[]>([]);
   const wishVisibleOrder = useRef<string[]>([]);
   const celebrationProgress = useRef(new Animated.Value(0)).current;
@@ -107,12 +111,13 @@ const ChildRewardsScreen = () => {
   const availableRewards = rewards.filter(
     (reward) =>
       reward.isActive !== false &&
+      isRewardAvailableForChild(reward, activeChildId) &&
       !reward.isDailyReward &&
       !openRewardRequests.some((redemption) => redemption.rewardId === reward.id),
   );
   // Daily rewards: active + available today (regardless of lock state — shown with lock indicator)
   const dailyRewards = rewards.filter(
-    (reward) => reward.isDailyReward && isDailyRewardAvailableToday(reward),
+    (reward) => reward.isDailyReward && isDailyRewardAvailableToday(reward, activeChildId),
   );
   const visibleWishes = getVisibleWishes(wishes, rewards, rewardRedemptions);
   const childWishes = visibleWishes.filter(
@@ -226,16 +231,14 @@ const ChildRewardsScreen = () => {
 
     addWish({
       title: wishTitle.trim(),
-      price: Number(wishPrice) || 0,
+      price: 0,
     });
     setWishTitle('');
-    setWishPrice('');
     setIsWishModalVisible(false);
   };
 
   const handleCloseWishModal = () => {
     setWishTitle('');
-    setWishPrice('');
     setIsWishModalVisible(false);
   };
 
@@ -268,13 +271,6 @@ const ChildRewardsScreen = () => {
           />
         </Animated.View>
       )}
-
-      <AppCard>
-        <SectionTitle title={t('common.yourBalance')} />
-        <Text style={styles.balance}>
-          {balance} {t('common.pointsShort')}
-        </Text>
-      </AppCard>
 
       <SegmentedControl options={tabOptions} value={activeTab} onChange={setActiveTab} />
 
@@ -310,7 +306,7 @@ const ChildRewardsScreen = () => {
           {/* ── Daily Rewards ── */}
           {dailyRewards.length > 0 && (
             <>
-              <SectionTitle title="Ежедневные награды" />
+              <SectionTitle title={t('child.rewards.dailyTitle')} />
               {dailyRewards.map((reward) => {
                 const lockReason = getDailyRewardLockReason(
                   reward,
@@ -321,6 +317,7 @@ const ChildRewardsScreen = () => {
                 );
                 const rewardTitle = getRewardTitle(reward, t);
                 const isLocked = lockReason !== null;
+                const pendingRedemption = openRewardRequests.find((r) => r.rewardId === reward.id);
 
                 return (
                   <AppCard key={reward.id} style={styles.dailyRewardCard}>
@@ -335,29 +332,37 @@ const ChildRewardsScreen = () => {
                       <PointsBadge points={reward.price} />
                     </View>
 
-                    {lockReason === 'daily_quests_incomplete' && (
-                      <Text style={styles.lockNote}>
-                        🔒 Сначала выполни все сегодняшние квесты
-                      </Text>
+                    {pendingRedemption ? (
+                      <StatusBadge
+                        label={t(redemptionStatusLabelKeys[pendingRedemption.status])}
+                        tone={redemptionStatusTones[pendingRedemption.status]}
+                      />
+                    ) : (
+                      <>
+                        {lockReason === 'daily_quests_incomplete' && (
+                          <Text style={styles.lockNote}>
+                            {t('child.rewards.lockDailyQuests')}
+                          </Text>
+                        )}
+                        {lockReason === 'not_enough_points' && (
+                          <Text style={styles.lockNote}>
+                            {t('child.rewards.lockNotEnoughPoints')}
+                          </Text>
+                        )}
+                        <AppButton
+                          title={
+                            lockReason === 'daily_quests_incomplete'
+                              ? t('child.rewards.lockDailyQuestsButton')
+                              : lockReason === 'not_enough_points'
+                                ? t('common.notEnoughPoints')
+                                : t('common.redeem')
+                          }
+                          onPress={() => !isLocked && handleRedeem(reward.id, rewardTitle)}
+                          disabled={isLocked}
+                          variant={isLocked ? 'secondary' : 'primary'}
+                        />
+                      </>
                     )}
-                    {lockReason === 'not_enough_points' && (
-                      <Text style={styles.lockNote}>
-                        🔒 Недостаточно баллов
-                      </Text>
-                    )}
-
-                    <AppButton
-                      title={
-                        lockReason === 'daily_quests_incomplete'
-                          ? '🔒 Сначала выполни квесты'
-                          : lockReason === 'not_enough_points'
-                            ? t('common.notEnoughPoints')
-                            : t('common.redeem')
-                      }
-                      onPress={() => !isLocked && handleRedeem(reward.id, rewardTitle)}
-                      disabled={isLocked}
-                      variant={isLocked ? 'secondary' : 'primary'}
-                    />
                   </AppCard>
                 );
               })}
@@ -383,9 +388,7 @@ const ChildRewardsScreen = () => {
                   </View>
                   <PointsBadge points={reward.price} />
                 </View>
-                <View style={styles.progressTrack}>
-                  <View style={[styles.progressFill, { width: `${progress}%` }]} />
-                </View>
+                <RocketProgressBar progress={progress} />
                 <Text style={styles.meta}>
                   {t('child.rewards.progress', { balance, price: reward.price, progress })}
                 </Text>
@@ -472,9 +475,7 @@ const ChildRewardsScreen = () => {
                 {isApproved && wish.price > 0 && (
                   <>
                     <PointsBadge points={wish.price} prefix={t('common.goal')} />
-                    <View style={styles.progressTrack}>
-                      <View style={[styles.progressFill, { width: `${progress}%` }]} />
-                    </View>
+                    <RocketProgressBar progress={progress} />
                     <Text style={styles.meta}>
                       {t('child.wishes.progress', { progress, balance, price: wish.price })}
                     </Text>
@@ -508,13 +509,6 @@ const ChildRewardsScreen = () => {
                   value={wishTitle}
                   onChangeText={setWishTitle}
                   placeholder={t('child.wishes.titlePlaceholder')}
-                />
-                <AppTextInput
-                  label={t('child.wishes.priceLabel')}
-                  value={wishPrice}
-                  onChangeText={(value) => setWishPrice(value.replace(/[^\d]/g, ''))}
-                  placeholder={t('child.wishes.pricePlaceholder')}
-                  keyboardType="number-pad"
                 />
                 <View style={styles.modalActions}>
                   <AppButton

@@ -12,6 +12,7 @@ export type ProfileRow = {
   name: string;
   role: UserRole;
   avatar_color: string | null;
+  has_full_permissions?: boolean | null;
   created_at: string;
   updated_at: string;
 };
@@ -71,6 +72,7 @@ export type TaskSubmissionRow = {
 export type RewardRow = {
   id: string;
   family_id: string;
+  child_id: string | null;
   title: string;
   price: number;
   type: RewardType;

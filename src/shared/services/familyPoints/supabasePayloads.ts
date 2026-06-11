@@ -31,12 +31,12 @@ export type ReviewTaskSubmissionPayload = Pick<TaskSubmissionRow, 'status'> &
 
 export type CreateRewardPayload = Pick<
   RewardRow,
-  'family_id' | 'title' | 'price' | 'type' | 'created_by'
+  'family_id' | 'child_id' | 'title' | 'price' | 'type' | 'created_by'
 > &
   Partial<Pick<RewardRow, 'is_active' | 'is_daily_reward' | 'available_days' | 'requires_daily_quests_completed'>>;
 
 export type UpdateRewardPayload = Partial<
-  Pick<RewardRow, 'title' | 'price' | 'type' | 'is_active' | 'is_daily_reward' | 'available_days' | 'requires_daily_quests_completed'>
+  Pick<RewardRow, 'title' | 'price' | 'type' | 'child_id' | 'is_active' | 'is_daily_reward' | 'available_days' | 'requires_daily_quests_completed'>
 >;
 
 export type CreateWishPayload = Pick<WishRow, 'child_id' | 'title' | 'price'>;

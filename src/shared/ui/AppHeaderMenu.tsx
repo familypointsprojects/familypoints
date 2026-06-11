@@ -79,9 +79,9 @@ export const AppHeaderMenu = () => {
 const styles = StyleSheet.create({
   menuButton: {
     alignItems: 'center',
-    backgroundColor: FP.primaryLight,
+    backgroundColor: FP.white,
     borderColor: FP.primaryBorder,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     height: 46,
     justifyContent: 'center',
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
   menuOverlay: {
     alignItems: 'flex-end',
-    backgroundColor: 'rgba(18, 49, 74, 0.18)',
+    backgroundColor: 'rgba(16, 35, 63, 0.20)',
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 58,
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   menuCard: {
     backgroundColor: FP.white,
     borderColor: FP.border,
-    borderRadius: 18,
+    borderRadius: 22,
     borderWidth: 1,
     elevation: 8,
     gap: 12,
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   menuActionText: {
-    color: FP.primary,
+    color: FP.primaryDark,
     fontSize: 16,
     fontWeight: '800',
   },

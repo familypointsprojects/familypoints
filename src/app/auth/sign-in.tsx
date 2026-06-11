@@ -1,10 +1,17 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 import { useAuth } from '@/shared/auth';
 import { useLanguage } from '@/shared/i18n';
 import { isSupabaseConfigured } from '@/shared/services/supabase';
+import {
+  clearPendingParentInvite,
+  getPendingParentInvite,
+  validateParentInvite,
+} from '@/shared/services/supabase/parentInviteService';
+import { useFamilyPoints } from '@/shared/state';
 import { AppButton, AppCard, AppScreen, AppTextInput, BrandLogo, StatusBadge } from '@/shared/ui';
 import { FP } from '@/constants/theme';
 
@@ -12,7 +19,9 @@ type TabType = 'signin' | 'signup';
 
 const SignInScreen = () => {
   const { t } = useLanguage();
-  const { signIn, signUp } = useAuth();
+  const { parentInvite } = useLocalSearchParams<{ parentInvite?: string }>();
+  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { reloadState } = useFamilyPoints();
   const [tab, setTab] = useState<TabType>('signin');
   const [parentName, setParentName] = useState('');
   const [email, setEmail] = useState('');
@@ -28,6 +37,42 @@ const SignInScreen = () => {
     return Boolean(email.trim() && password.length >= (tab === 'signup' ? 6 : 1));
   };
 
+  const applyPendingParentInvite = async (): Promise<boolean> => {
+    const inviteToken = await getPendingParentInvite();
+
+    if (!inviteToken) {
+      return false;
+    }
+
+    await validateParentInvite(inviteToken);
+    await clearPendingParentInvite();
+    await reloadState();
+    router.replace('/parent/dashboard');
+
+    return true;
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const session = await signInWithGoogle();
+      if (await applyPendingParentInvite()) {
+        return;
+      }
+      router.replace(session.role === 'parent' ? '/parent/dashboard' : '/child/dashboard');
+    } catch (err: unknown) {
+      if (err instanceof Error && err.message === 'Google sign-in was cancelled') {
+        return;
+      }
+
+      setError(err instanceof Error ? err.message : 'Ошибка входа через Google');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleAuthSubmit = async () => {
     if (!validateForm()) {
       setError(t('common.checkForm'));
@@ -40,11 +85,17 @@ const SignInScreen = () => {
     try {
       if (tab === 'signup') {
         await signUp({ email: email.trim(), password, parentName: parentName.trim() });
+        if (await applyPendingParentInvite()) {
+          return;
+        }
         router.replace('/onboarding');
         return;
       }
 
       const session = await signIn({ email: email.trim(), password });
+      if (await applyPendingParentInvite()) {
+        return;
+      }
       router.replace(session.role === 'parent' ? '/parent/dashboard' : '/child/dashboard');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t('auth.signInError'));
@@ -58,8 +109,6 @@ const SignInScreen = () => {
       {/* Logo */}
       <View style={styles.logoBlock}>
         <BrandLogo height={224} width={520} />
-        <Text style={styles.logoTitle}>{t('common.appName')}</Text>
-        <Text style={styles.logoSub}>Войдите или создайте аккаунт</Text>
       </View>
 
       {/* Tab switcher */}
@@ -77,6 +126,14 @@ const SignInScreen = () => {
       </View>
 
       <AppCard>
+        {parentInvite === '1' && (
+          <View style={styles.inviteNotice}>
+            <StatusBadge label="Приглашение родителя" tone="success" />
+            <Text style={styles.inviteNoticeText}>
+              Войдите или зарегистрируйтесь, и мы подключим вас к семье.
+            </Text>
+          </View>
+        )}
         {tab === 'signup' && (
           <AppTextInput
             label={t('auth.parentName')}
@@ -114,6 +171,29 @@ const SignInScreen = () => {
             />
           ) : (
             <AppButton title={t('auth.realAuthLater')} onPress={() => {}} disabled variant="secondary" />
+          )}
+
+          {isSupabaseConfigured && (
+            <>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>или</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <Pressable
+                style={[styles.googleButton, isLoading && styles.googleButtonDisabled]}
+                onPress={handleGoogleSignIn}
+                disabled={isLoading}>
+                <Svg width={20} height={20} viewBox="0 0 48 48">
+                  <Path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                  <Path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                  <Path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                  <Path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                </Svg>
+                <Text style={styles.googleText}>Войти через Google</Text>
+              </Pressable>
+            </>
           )}
         </View>
 
@@ -203,6 +283,52 @@ const styles = StyleSheet.create({
     color: FP.red,
     fontSize: 14,
     lineHeight: 20,
+  },
+  inviteNotice: {
+    backgroundColor: FP.primaryLight,
+    borderColor: FP.primary,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+    padding: 12,
+  },
+  inviteNoticeText: {
+    color: FP.text,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: FP.muted,
+  },
+  dividerText: {
+    color: FP.textSub,
+    fontSize: 13,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    borderWidth: 1.5,
+    borderColor: FP.muted,
+    borderRadius: 14,
+    paddingVertical: 13,
+    backgroundColor: FP.white,
+  },
+  googleButtonDisabled: {
+    opacity: 0.5,
+  },
+  googleText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: FP.text,
   },
   childCard: {
     gap: 12,

@@ -20,6 +20,7 @@ import {
   mapTaskSubmissionRowToTaskSubmission,
   mapWishRowToWish,
 } from '@/shared/services/familyPoints/mappers';
+import { normalizeLevelingState } from '@/shared/utils/leveling';
 
 import { getSupabaseClient } from './client';
 
@@ -69,7 +70,7 @@ export const loadChildFamilyState = async (
   const rewardRedemptions = result.rewardRedemptions.map(mapRewardRedemptionRow);
   const favoriteGoalRows = result.favoriteGoals ?? [];
 
-  return {
+  return normalizeLevelingState({
     tasks: result.tasks.map(mapTaskRowToTask),
     taskSubmissions: result.taskSubmissions.map(mapTaskSubmissionRowToTaskSubmission),
     rewards: result.rewards.map(mapRewardRowToReward),
@@ -77,10 +78,14 @@ export const loadChildFamilyState = async (
     wishes: result.wishes.map(mapWishRowToWish),
     favoriteGoals: favoriteGoalRows.map(mapFavoriteGoalRowToFavoriteGoal),
     pointTransactions: result.pointTransactions.map(mapPointTransactionRowToPointTransaction),
+    childProgress: [],
+    childSkillUnlocks: [],
+    childAchievements: [],
     redeemedRewardIds: rewardRedemptions.map((redemption) => redemption.rewardId),
     children: [mapChildRowToChildProfile(result.child)],
+    parents: [],
     activeFamilyId: result.family.id,
     activeChildId: result.child.id,
     familyName: result.family.name,
-  };
+  });
 };

@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>easyQuest — mascot product concept</title>
+<style>
+:root {
+  --bg: #f6eedd;
+  --paper: #fbf6ea;
+  --card: #ffffff;
+  --ink: #12314a;
+  --muted: #6b7b86;
+  --line: #ece3cf;
+  --blue: #1647b7;
+  --blue2: #0f347f;
+  --screen: #20303d;
+  --teal: #1e9e86;
+  --teal2: #15786a;
+  --gold: #f5b225;
+  --gold2: #de940f;
+  --orange: #ef5a24;
+  --orange2: #c8431a;
+  --green: #2ba84a;
+  --red: #e2483b;
+  --shadow: 0 18px 50px rgba(18, 49, 74, .16);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(22, 71, 183, .12), transparent 34%),
+    radial-gradient(circle at 88% 12%, rgba(245, 178, 37, .18), transparent 30%),
+    linear-gradient(180deg, #fbf6ea 0%, var(--bg) 100%);
+  color: var(--ink);
+  font-family: Inter, ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  min-height: 100vh;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: 330px 390px 390px;
+  gap: 28px;
+  margin: 0 auto;
+  max-width: 1190px;
+  padding: 36px 28px 48px;
+}
+
+.panel {
+  background: rgba(255, 255, 255, .72);
+  border: 1px solid rgba(236, 227, 207, .92);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.brand-panel { padding: 24px; }
+
+.brand-top {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.app-icon {
+  align-items: center;
+  background: linear-gradient(160deg, var(--blue), var(--blue2));
+  border: 3px solid #09264f;
+  border-radius: 20px;
+  box-shadow: 0 12px 28px rgba(22, 71, 183, .28);
+  display: flex;
+  height: 74px;
+  justify-content: center;
+  position: relative;
+  width: 74px;
+}
+
+.icon-screen {
+  align-items: center;
+  background:
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(180deg, #263845, #1d2c38);
+  background-size: 100% 5px, 100% 100%;
+  border: 5px solid #fff6e8;
+  border-radius: 16px;
+  display: flex;
+  height: 42px;
+  justify-content: center;
+  position: relative;
+  width: 54px;
+}
+
+.icon-screen::before,
+.icon-screen::after {
+  background: #fff2a7;
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(255, 242, 167, .5);
+  content: "";
+  height: 13px;
+  position: absolute;
+  top: 12px;
+  width: 5px;
+}
+
+.icon-screen::before { left: 14px; }
+.icon-screen::after { right: 14px; }
+
+.icon-mouth {
+  border-bottom: 3px solid #fff2a7;
+  border-left: 3px solid #fff2a7;
+  border-radius: 0 0 5px 5px;
+  height: 7px;
+  margin-top: 16px;
+  width: 18px;
+}
+
+.icon-arrow {
+  background: var(--gold);
+  border: 3px solid #08254c;
+  clip-path: polygon(10% 35%, 84% 8%, 64% 86%, 45% 55%);
+  height: 26px;
+  position: absolute;
+  right: -5px;
+  top: -13px;
+  transform: rotate(10deg);
+  width: 28px;
+}
+
+.wordmark {
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: -.8px;
+  line-height: 1;
+}
+
+.wordmark span { color: var(--blue); }
+
+.tagline {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 5px;
+}
+
+.mascot-lockup {
+  align-items: end;
+  background:
+    linear-gradient(135deg, rgba(22, 71, 183, .1), rgba(245, 178, 37, .1)),
+    var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 14px;
+  margin-bottom: 20px;
+  min-height: 160px;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.mascot-lockup img {
+  align-self: end;
+  display: block;
+  margin-left: -10px;
+  width: 142px;
+}
+
+.rank-card {
+  background: var(--ink);
+  border-radius: 16px;
+  color: white;
+  padding: 16px;
+}
+
+.rank-title {
+  color: #c9d7e3;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.rank-name {
+  font-size: 20px;
+  font-weight: 900;
+  margin-top: 2px;
+}
+
+.rank-bar {
+  background: rgba(255,255,255,.14);
+  border-radius: 99px;
+  height: 9px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.rank-fill {
+  background: linear-gradient(90deg, var(--gold), var(--orange));
+  border-radius: inherit;
+  height: 100%;
+  width: 64%;
+}
+
+.tokens {
+  display: grid;
+  gap: 10px;
+}
+
+.token-row {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.swatch {
+  border: 2px solid rgba(18, 49, 74, .12);
+  border-radius: 11px;
+  height: 34px;
+  width: 46px;
+}
+
+.token-row strong {
+  display: block;
+  font-size: 13px;
+}
+
+.token-row small {
+  color: var(--muted);
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.phone {
+  background: #0b1924;
+  border-radius: 42px;
+  box-shadow: 0 24px 64px rgba(18, 49, 74, .24);
+  padding: 10px;
+}
+
+.screen {
+  background: var(--bg);
+  border-radius: 34px;
+  height: 752px;
+  overflow: hidden;
+  position: relative;
+}
+
+.status {
+  display: flex;
+  font-size: 12px;
+  font-weight: 900;
+  justify-content: space-between;
+  padding: 14px 22px 6px;
+}
+
+.screen-pad {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 16px 16px;
+}
+
+.topbar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.hello small {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.hello strong {
+  display: block;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -.3px;
+}
+
+.gear {
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: flex;
+  font-size: 19px;
+  height: 42px;
+  justify-content: center;
+  width: 42px;
+}
+
+.hero-card {
+  background: linear-gradient(145deg, #12314a, #0f2537);
+  border-radius: 20px;
+  color: white;
+  overflow: hidden;
+  padding: 16px;
+  position: relative;
+}
+
+.hero-card::after {
+  background: radial-gradient(circle, rgba(245, 178, 37, .28), transparent 68%);
+  content: "";
+  height: 160px;
+  position: absolute;
+  right: -70px;
+  top: -66px;
+  width: 160px;
+}
+
+.hero-main {
+  align-items: center;
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-avatar {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 18px;
+  height: 82px;
+  overflow: hidden;
+}
+
+.hero-avatar img {
+  display: block;
+  margin-left: -25px;
+  margin-top: -18px;
+  width: 132px;
+}
+
+.level-line {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.level-line strong {
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.level-pill {
+  background: var(--gold);
+  border-radius: 999px;
+  color: #7a4a00;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 4px 9px;
+}
+
+.xp-track {
+  background: rgba(255,255,255,.13);
+  border-radius: 99px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.xp-fill {
+  background: linear-gradient(90deg, var(--blue), var(--gold));
+  border-radius: inherit;
+  height: 100%;
+  width: 58%;
+}
+
+.hero-meta {
+  color: #b7cad8;
+  display: flex;
+  font-size: 12px;
+  font-weight: 800;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.stat {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 11px;
+}
+
+.stat .label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.stat .value {
+  align-items: center;
+  display: flex;
+  font-size: 21px;
+  font-weight: 900;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.coin {
+  background: radial-gradient(circle at 35% 28%, #ffe07a 0 15%, #f5b225 16% 55%, #de940f 56% 100%);
+  border: 2px solid #8a5a06;
+  border-radius: 50%;
+  display: inline-block;
+  height: 19px;
+  position: relative;
+  width: 19px;
+}
+
+.coin::after {
+  border: 2px solid #fff0a8;
+  border-left-color: transparent;
+  border-radius: 50%;
+  content: "";
+  height: 7px;
+  left: 4px;
+  position: absolute;
+  top: 4px;
+  transform: rotate(-35deg);
+  width: 7px;
+}
+
+.section-title {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.section-title h2 {
+  font-size: 16px;
+  font-weight: 900;
+  margin: 0;
+}
+
+.section-title span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.task {
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  gap: 11px;
+  padding: 12px;
+}
+
+.task.done {
+  background: #f0faf5;
+  border-color: #cbead7;
+}
+
+.task-icon {
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  display: flex;
+  font-size: 20px;
+  height: 42px;
+  justify-content: center;
+}
+
+.task h3 {
+  font-size: 14px;
+  font-weight: 900;
+  margin: 0 0 2px;
+}
+
+.task p {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.task-reward {
+  align-items: center;
+  color: #8a5a06;
+  display: flex;
+  font-size: 13px;
+  font-weight: 900;
+  gap: 5px;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, var(--blue), var(--teal));
+  border-radius: 14px;
+  color: white;
+  font-size: 13px;
+  font-weight: 900;
+  padding: 10px 13px;
+}
+
+.goal {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.goal-top {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.goal strong {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.goal small {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.pig {
+  align-items: center;
+  background: #ffd6dd;
+  border: 2px solid #cf6878;
+  border-radius: 999px;
+  color: #9f4150;
+  display: flex;
+  font-size: 22px;
+  height: 44px;
+  justify-content: center;
+  width: 54px;
+}
+
+.goal-track {
+  background: #e7d5ac;
+  border-radius: 999px;
+  height: 10px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.goal-fill {
+  background: linear-gradient(90deg, var(--gold), var(--orange));
+  height: 100%;
+  width: 71%;
+}
+
+.tabs {
+  background: rgba(251, 246, 234, .95);
+  border-top: 1px solid var(--line);
+  bottom: 0;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(4, 1fr);
+  left: 0;
+  padding: 9px 12px 12px;
+  position: absolute;
+  right: 0;
+}
+
+.tab {
+  align-items: center;
+  border-radius: 14px;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  font-size: 10px;
+  font-weight: 900;
+  gap: 3px;
+  padding: 7px 4px;
+}
+
+.tab.active {
+  background: #e8f2ff;
+  color: var(--blue);
+}
+
+.tab b {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.compact-screen .screen-pad {
+  padding-bottom: 86px;
+}
+
+.reward-card {
+  align-items: center;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 12px;
+  padding: 12px;
+}
+
+.reward-icon {
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  display: flex;
+  font-size: 22px;
+  height: 52px;
+  justify-content: center;
+}
+
+.reward-card h3 {
+  font-size: 14px;
+  font-weight: 900;
+  margin: 0 0 3px;
+}
+
+.reward-card p {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.price {
+  align-items: center;
+  background: var(--accent-light, #fbebc4);
+  border-radius: 999px;
+  color: #8a5a06;
+  display: flex;
+  font-size: 13px;
+  font-weight: 900;
+  gap: 5px;
+  padding: 7px 9px;
+}
+
+.mission-card {
+  background: linear-gradient(145deg, #fff, #f6fbfa);
+  border: 1px solid #cae9e2;
+  border-radius: 18px;
+  overflow: hidden;
+  padding: 14px;
+}
+
+.mission-top {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.mission-top h3 {
+  font-size: 15px;
+  font-weight: 900;
+  margin: 0;
+}
+
+.mission-pill {
+  background: #e3f3ee;
+  border-radius: 999px;
+  color: var(--teal2);
+  font-size: 11px;
+  font-weight: 900;
+  padding: 5px 8px;
+}
+
+.skill-row {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 12px;
+}
+
+.skill {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 11px;
+}
+
+.skill strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.skill small {
+  color: var(--muted);
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  margin-top: 3px;
+}
+
+.complete-effect {
+  align-items: center;
+  background: linear-gradient(135deg, #fff8e4, #fff);
+  border: 1px solid #f4d890;
+  border-radius: 18px;
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 12px;
+  padding: 13px;
+}
+
+.burst {
+  align-items: center;
+  background: var(--gold);
+  border: 2px solid #8a5a06;
+  border-radius: 18px;
+  color: #8a5a06;
+  display: flex;
+  font-size: 26px;
+  font-weight: 900;
+  height: 58px;
+  justify-content: center;
+}
+
+.complete-effect strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.complete-effect small {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+@media (max-width: 1180px) {
+  .board {
+    grid-template-columns: 1fr;
+    max-width: 430px;
+  }
+}
+</style>
+</head>
+<body>
+  <main class="board">
+    <section class="panel brand-panel">
+      <div class="brand-top">
+        <div class="app-icon" aria-label="easyQuest icon">
+          <div class="icon-arrow"></div>
+          <div class="icon-screen"><div class="icon-mouth"></div></div>
+        </div>
+        <div>
+          <div class="wordmark">easy<span>Quest</span></div>
+          <div class="tagline">задания, уровни, награды</div>
+        </div>
+      </div>
+
+      <div class="mascot-lockup">
+        <img src="assets/easyquest-mascot-fixed.png" alt="Персонаж easyQuest">
+        <div class="rank-card">
+          <div class="rank-title">Ранг</div>
+          <div class="rank-name">Навигатор</div>
+          <div class="rank-bar"><div class="rank-fill"></div></div>
+        </div>
+      </div>
+
+      <div class="tokens">
+        <div class="token-row">
+          <div class="swatch" style="background:#1647b7"></div>
+          <div><strong>Синий персонажа</strong><small>бренд, логотип, активные элементы</small></div>
+        </div>
+        <div class="token-row">
+          <div class="swatch" style="background:#1e9e86"></div>
+          <div><strong>Бирюзовый UI</strong><small>подтверждения, прогресс, успех</small></div>
+        </div>
+        <div class="token-row">
+          <div class="swatch" style="background:#f5b225"></div>
+          <div><strong>Золото наград</strong><small>монеты, XP, эффекты выполнения</small></div>
+        </div>
+        <div class="token-row">
+          <div class="swatch" style="background:#ef5a24"></div>
+          <div><strong>Оранжевый акцент</strong><small>рюкзак, стрик, важные CTA</small></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="phone">
+      <div class="screen compact-screen">
+        <div class="status"><span>9:41</span><span>●●●</span></div>
+        <div class="screen-pad">
+          <div class="topbar">
+            <div class="hello">
+              <small>Привет, Антон</small>
+              <strong>Сегодня</strong>
+            </div>
+            <div class="gear">⚙</div>
+          </div>
+
+          <div class="hero-card">
+            <div class="hero-main">
+              <div class="hero-avatar">
+                <img src="assets/easyquest-mascot-fixed.png" alt="Персонаж">
+              </div>
+              <div>
+                <div class="level-line">
+                  <strong>Следопыт</strong>
+                  <span class="level-pill">ур. 12</span>
+                </div>
+                <div class="xp-track"><div class="xp-fill"></div></div>
+                <div class="hero-meta"><span>650 / 900 XP</span><span>+3% к монетам</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="label">Баланс</div>
+              <div class="value"><i class="coin"></i>236</div>
+            </div>
+            <div class="stat">
+              <div class="label">Стрик</div>
+              <div class="value">🔥 6</div>
+            </div>
+            <div class="stat">
+              <div class="label">Задачи</div>
+              <div class="value">3/5</div>
+            </div>
+          </div>
+
+          <div class="section-title">
+            <h2>Задания на сегодня</h2>
+            <span>2 ждут проверки</span>
+          </div>
+
+          <div class="task-list">
+            <div class="task done">
+              <div class="task-icon">✓</div>
+              <div>
+                <h3>Заправить кровать</h3>
+                <p>Выполнено, ждет подтверждения</p>
+              </div>
+              <div class="task-reward"><i class="coin"></i>+10</div>
+            </div>
+            <div class="task">
+              <div class="task-icon">📘</div>
+              <div>
+                <h3>Домашнее чтение</h3>
+                <p>15 минут, можно с заметкой</p>
+              </div>
+              <div class="primary-btn">Открыть</div>
+            </div>
+            <div class="task">
+              <div class="task-icon">🪴</div>
+              <div>
+                <h3>Полить растения</h3>
+                <p>Доступно до 20:00</p>
+              </div>
+              <div class="task-reward"><i class="coin"></i>+15</div>
+            </div>
+          </div>
+
+          <div class="goal">
+            <div class="goal-top">
+              <div>
+                <strong>Копилка: наушники</strong>
+                <small>236 из 330 монет</small>
+              </div>
+              <div class="pig">₽</div>
+            </div>
+            <div class="goal-track"><div class="goal-fill"></div></div>
+          </div>
+        </div>
+
+        <nav class="tabs">
+          <div class="tab active"><b>✓</b>Задания</div>
+          <div class="tab"><b>◈</b>Рост</div>
+          <div class="tab"><b>🎁</b>Награды</div>
+          <div class="tab"><b>🏆</b>История</div>
+        </nav>
+      </div>
+    </section>
+
+    <section class="phone">
+      <div class="screen compact-screen">
+        <div class="status"><span>9:41</span><span>●●●</span></div>
+        <div class="screen-pad">
+          <div class="topbar">
+            <div class="hello">
+              <small>easyQuest</small>
+              <strong>Рост и награды</strong>
+            </div>
+            <div class="gear">↗</div>
+          </div>
+
+          <div class="mission-card">
+            <div class="mission-top">
+              <h3>Навык уровня</h3>
+              <span class="mission-pill">ур. 12</span>
+            </div>
+            <div class="skill-row">
+              <div class="skill">
+                <strong>Монеты +3%</strong>
+                <small>максимум +10%</small>
+              </div>
+              <div class="skill">
+                <strong>Копилка -2%</strong>
+                <small>ускорение прибыли</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="complete-effect">
+            <div class="burst">◉</div>
+            <div>
+              <strong>Задание выполнено</strong>
+              <small>+15 монет, +25 XP, стрик сохранен</small>
+            </div>
+          </div>
+
+          <div class="section-title">
+            <h2>Награды</h2>
+            <span>доступно 3</span>
+          </div>
+
+          <div class="task-list">
+            <div class="reward-card">
+              <div class="reward-icon">🎮</div>
+              <div>
+                <h3>30 минут игры</h3>
+                <p>Можно купить сегодня</p>
+              </div>
+              <div class="price"><i class="coin"></i>120</div>
+            </div>
+            <div class="reward-card">
+              <div class="reward-icon">🍕</div>
+              <div>
+                <h3>Пицца в выходные</h3>
+                <p>Нужно еще 64 монеты</p>
+              </div>
+              <div class="price"><i class="coin"></i>300</div>
+            </div>
+            <div class="reward-card">
+              <div class="reward-icon">🎧</div>
+              <div>
+                <h3>Новые наушники</h3>
+                <p>Цель в копилке</p>
+              </div>
+              <div class="price"><i class="coin"></i>330</div>
+            </div>
+          </div>
+
+          <div class="section-title">
+            <h2>Ачивки</h2>
+            <span>12 из 28</span>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="label">Ритм</div>
+              <div class="value">🔥 7</div>
+            </div>
+            <div class="stat">
+              <div class="label">Порядок</div>
+              <div class="value">★ 4</div>
+            </div>
+            <div class="stat">
+              <div class="label">Фокус</div>
+              <div class="value">◆ 2</div>
+            </div>
+          </div>
+        </div>
+
+        <nav class="tabs">
+          <div class="tab"><b>✓</b>Задания</div>
+          <div class="tab active"><b>◈</b>Рост</div>
+          <div class="tab"><b>🎁</b>Награды</div>
+          <div class="tab"><b>🏆</b>История</div>
+        </nav>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

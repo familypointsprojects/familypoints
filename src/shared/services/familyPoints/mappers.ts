@@ -31,10 +31,12 @@ import type {
   CreateWishPayload,
 } from './supabasePayloads';
 
-export const mapProfileRowToParentProfile = (row: ProfileRow): ParentProfile => ({
+export const mapProfileRowToParentProfile = (row: ProfileRow, ownerId?: string): ParentProfile => ({
   id: row.id,
   name: row.name,
   role: 'parent',
+  isOwner: ownerId ? row.id === ownerId : false,
+  hasFullPermissions: row.has_full_permissions ?? false,
 });
 
 export const mapChildRowToChildProfile = (row: ChildRow): ChildProfile => ({
@@ -47,21 +49,24 @@ export const mapChildRowToChildProfile = (row: ChildRow): ChildProfile => ({
 export const mapFamilyRowToFamily = (
   row: FamilyRow,
   childIds: string[],
+  parentIds: string[] = [],
 ): Family => ({
   id: row.id,
   nameKey: 'family.parkers',
-  parentId: row.created_by,
+  parentIds: parentIds.length > 0 ? parentIds : [row.created_by],
   childIds,
 });
 
 export const mapTaskRowToTask = (row: TaskRow): Task => ({
   id: row.id,
+  childId: row.child_id ?? undefined,
   title: row.title,
   description: row.description,
   points: row.points,
   status: row.status,
   isDaily: row.is_daily ?? false,
   availableDays: (row.available_days ?? []) as DayOfWeek[],
+  createdBy: row.created_by,
 });
 
 export const mapTaskToCreateTaskPayload = (
@@ -99,6 +104,7 @@ export const mapTaskSubmissionToCreatePayload = (
 
 export const mapRewardRowToReward = (row: RewardRow): Reward => ({
   id: row.id,
+  childId: row.child_id ?? undefined,
   title: row.title,
   price: row.price,
   type: row.type,
@@ -106,6 +112,7 @@ export const mapRewardRowToReward = (row: RewardRow): Reward => ({
   isDailyReward: row.is_daily_reward ?? false,
   availableDays: (row.available_days ?? []) as DayOfWeek[],
   requiresDailyQuestsCompleted: row.requires_daily_quests_completed ?? false,
+  createdBy: row.created_by,
 });
 
 export const mapRewardToCreatePayload = (
@@ -114,6 +121,7 @@ export const mapRewardToCreatePayload = (
   createdBy: string,
 ): CreateRewardPayload => ({
   family_id: familyId,
+  child_id: reward.childId ?? null,
   title: reward.title ?? '',
   price: reward.price,
   type: reward.type,

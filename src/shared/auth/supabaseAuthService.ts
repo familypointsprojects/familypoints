@@ -1,4 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Linking from 'expo-linking';
+import { Platform } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 
 import { getSupabaseClient } from '@/shared/services/supabase';
 import { validateChildInvite } from '@/shared/services/supabase/inviteService';
@@ -130,6 +133,83 @@ export const supabaseAuthService: AuthService = {
     return session;
   },
 
+  signInWithGoogle: async () => {
+    await AsyncStorage.removeItem(CHILD_SESSION_KEY);
+
+    const supabase = getSupabaseClient();
+
+    if (Platform.OS === 'web') {
+      // На вебе — редирект в той же вкладке, сессия подхватится через callback-страницу
+      const redirectTo = `${window.location.origin}/auth/callback`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo },
+      });
+      if (error) throw new Error(error.message);
+      // Браузер сам редиректит, управление сюда не вернётся
+      return new Promise<never>(() => {});
+    }
+
+    // Native — открываем через in-app browser
+    const redirectTo = Linking.createURL('auth/callback');
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo, skipBrowserRedirect: true },
+    });
+
+    if (error || !data.url) {
+      throw new Error(error?.message ?? 'Google sign-in failed');
+    }
+
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
+    if (result.type !== 'success') {
+      throw new Error('Google sign-in was cancelled');
+    }
+
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(result.url);
+
+    if (exchangeError) {
+      throw new Error(exchangeError.message);
+    }
+
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !userData.user) {
+      throw new Error('Failed to get user after Google sign-in');
+    }
+
+    // Проверяем или создаём профиль
+    let { data: profile } = await supabase
+      .from('profiles')
+      .select('id, name, role')
+      .eq('id', userData.user.id)
+      .single();
+
+    if (!profile) {
+      const name =
+        userData.user.user_metadata?.full_name ??
+        userData.user.user_metadata?.name ??
+        userData.user.email?.split('@')[0] ??
+        'Parent';
+
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert({ id: userData.user.id, name, role: 'parent' })
+        .select('id, name, role')
+        .single();
+
+      if (insertError || !newProfile) {
+        throw new Error(`Failed to create profile: ${insertError?.message}`);
+      }
+
+      profile = newProfile;
+    }
+
+    return buildSession(profile.id as string, profile.name as string, profile.role as string);
+  },
+
   signInDemoRole: async () => {
     throw new Error('Demo role sign-in is local only. Use Supabase auth forms.');
   },
@@ -146,11 +226,29 @@ export const supabaseAuthService: AuthService = {
     }
   },
 
+  deleteAccount: async () => {
+    await AsyncStorage.removeItem(CHILD_SESSION_KEY);
+
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.rpc('delete_current_user');
+
+    if (error) {
+      throw new Error(`Failed to delete account: ${error.message}`);
+    }
+
+    await supabase.auth.signOut();
+  },
+
   subscribeToAuthChanges: (callback) => {
     const supabase = getSupabaseClient();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Игнорируем события обновления токена — они не меняют сессию пользователя
+      if (event === 'TOKEN_REFRESHED' || event === 'MFA_CHALLENGE_VERIFIED') {
+        return;
+      }
+
       const childSession = await getStoredChildSession();
 
       if (childSession) {
@@ -158,7 +256,6 @@ export const supabaseAuthService: AuthService = {
         return;
       }
 
-      // Если нет Supabase-сессии — проверяем child-сессию в AsyncStorage
       if (!session) {
         callback(null);
         return;

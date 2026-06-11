@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AuthProvider, useAuth } from '@/shared/auth';
+import { FP } from '@/constants/theme';
 import { LanguageProvider } from '@/shared/i18n';
 import { FamilyPointsProvider } from '@/shared/state';
 import { GrowthMissionsProvider } from '@/shared/state/GrowthMissionsProvider';
@@ -16,7 +17,7 @@ const getDashboardRoute = (role: 'parent' | 'child') =>
   role === 'parent' ? '/parent/dashboard' : '/child/dashboard';
 
 const isGuestOnlyRoute = (pathname: string): boolean =>
-  pathname === '/' || pathname.startsWith('/auth');
+  pathname === '/' || (pathname.startsWith('/auth') && pathname !== '/auth/scan-invite');
 
 const isRoleMismatchRoute = (pathname: string, role: 'parent' | 'child'): boolean =>
   (role === 'parent' && pathname.startsWith('/child')) ||
@@ -54,19 +55,20 @@ const DeepLinkHandler = () => {
 
   useEffect(() => {
     const handleUrl = (url: string) => {
-      const match = url.match(/invite\/([a-f0-9-]{36})/);
+      const parentMatch = url.match(/invite\/parent\/([a-f0-9-]{36})/);
+      const childMatch = parentMatch ? null : url.match(/invite\/([a-f0-9-]{36})/);
 
-      if (!match) {
-        return;
-      }
+      if (!parentMatch && !childMatch) return;
 
-      if (session) {
-        router.replace(getDashboardRoute(session.role));
-        return;
-      }
+      const match = parentMatch || childMatch;
+      const token = match?.[1];
 
-      // familypoints://invite/<token>
-      router.push({ pathname: '/auth/scan-invite', params: { token: match[1] } });
+      if (!token) return;
+
+      const inviteType = parentMatch ? 'parent' : 'child';
+
+      // familypoints://invite/parent/<token> или familypoints://invite/<token>
+      router.push({ pathname: '/auth/scan-invite', params: { token, inviteType } });
     };
 
     // Ссылка при холодном старте
@@ -92,10 +94,10 @@ const RootNavigation = () => {
       <Stack
         screenOptions={{
           headerShown: false,
-          headerStyle: { backgroundColor: '#F6EEDD' },
-          headerTintColor: '#12314A',
+          headerStyle: { backgroundColor: FP.bg },
+          headerTintColor: FP.text,
           headerShadowVisible: false,
-          contentStyle: { backgroundColor: '#F6EEDD' },
+          contentStyle: { backgroundColor: FP.bg },
         }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="auth/sign-in" />
@@ -113,6 +115,10 @@ const RootNavigation = () => {
         <Stack.Screen name="parent/invite-child" />
         <Stack.Screen name="parent/wish-requests" />
         <Stack.Screen name="parent/create-child" />
+        <Stack.Screen name="parent/add-member" />
+        <Stack.Screen name="parent/create-parent" />
+        <Stack.Screen name="parent/invite-parent" />
+        <Stack.Screen name="parent/edit-parent" />
         <Stack.Screen name="child/dashboard" />
         <Stack.Screen name="child/tasks" />
         <Stack.Screen name="child/task-details" />

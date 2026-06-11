@@ -49,6 +49,7 @@ begin
       select json_agg(rewards order by rewards.created_at desc)
       from rewards
       where rewards.family_id = v_child.family_id
+        and (rewards.child_id is null or rewards.child_id = v_child.id)
     ), '[]'::json),
     'wishes', coalesce((
       select json_agg(wishes order by wishes.created_at desc)

@@ -5,25 +5,26 @@ import {
   Dimensions,
   Modal,
   PanResponder,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  ViewStyle,
 } from 'react-native';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 import { FP } from '@/constants/theme';
 import { useLanguage } from '@/shared/i18n';
-import { Task } from '@/shared/types/family';
+import { Task, TaskSubmission } from '@/shared/types/family';
 import { useActiveChild, useFamilyPoints } from '@/shared/state';
 import {
   AppButton,
-  AppCard,
   AppScreen,
   AppTextInput,
   EmptyState,
   PointsBadge,
-  SectionTitle,
   SegmentedControl,
   StatusBadge,
 } from '@/shared/ui';
@@ -41,12 +42,234 @@ const CLOSE_THRESHOLD = 80;
 
 type Tab = 'available' | 'pending';
 
+// ─── Accent palette for task icons ──────────────────────────────────────────
+const ICON_PALETTES = [
+  { bg: '#E5EFFF', border: '#BFD7F5', fg: FP.primary },
+  { bg: '#DDF8FF', border: '#A0E8F8', fg: '#0B6F8A' },
+  { bg: FP.mintLight, border: '#A6EFCC', fg: '#15786A' },
+  { bg: FP.accentLight, border: '#F1D28A', fg: FP.accentDark },
+  { bg: FP.orangeLight, border: '#FFCBB0', fg: FP.orangeDark },
+  { bg: '#EDE9FF', border: '#C5B8FF', fg: '#5040C4' },
+] as const;
+
+// ─── Small SVG icons used in task cards ──────────────────────────────────────
+const IconCheck = () => (
+  <Svg width={26} height={26} viewBox="0 0 32 32">
+    <Path
+      d="M8 16.5l5.2 5.2L24.5 9.5"
+      fill="none"
+      stroke={FP.green}
+      strokeWidth={4}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const IconStar = () => (
+  <Svg width={26} height={26} viewBox="0 0 32 32">
+    <Path
+      d="M16 4l3 9 9 3-9 3-3 11-3-11-9-3 9-3z"
+      fill={FP.accent}
+      stroke={FP.accentDark}
+      strokeWidth={1.8}
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const IconBolt = () => (
+  <Svg width={26} height={26} viewBox="0 0 32 32">
+    <Path
+      d="M18 4L10 18h8l-4 10 12-14h-8z"
+      fill={FP.orange}
+      stroke={FP.orangeDark}
+      strokeWidth={1.8}
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+const IconBook = () => (
+  <Svg width={26} height={26} viewBox="0 0 32 32">
+    <Path
+      d="M9 6h12a4 4 0 014 4v16H11a4 4 0 01-4-4V8a2 2 0 012-2z"
+      fill={FP.primary}
+      stroke={FP.primaryDark}
+      strokeWidth={1.8}
+    />
+    <Path d="M12 10h9M12 15h8" stroke={FP.lime} strokeWidth={2} strokeLinecap="round" />
+  </Svg>
+);
+
+const IconLeaf = () => (
+  <Svg width={26} height={26} viewBox="0 0 32 32">
+    <Path
+      d="M16 27V15"
+      stroke="#15786a"
+      strokeWidth={2.5}
+      strokeLinecap="round"
+    />
+    <Path
+      d="M16 16c-6-1-9-5-8-10 6 0 9 4 8 10z"
+      fill={FP.mint}
+      stroke="#15786a"
+      strokeWidth={1.8}
+    />
+    <Path
+      d="M17 18c6-2 9-6 7-11-6 1-8 5-7 11z"
+      fill={FP.lime}
+      stroke="#7da100"
+      strokeWidth={1.8}
+    />
+  </Svg>
+);
+
+const TASK_ICONS = [IconStar, IconBolt, IconBook, IconLeaf, IconStar, IconBolt] as const;
+
+// ─── Quest action button ─────────────────────────────────────────────────────
+//  "Взять!"  — active quest (blue)
+//  "Заново"  — rejected quest (orange)
+const QuestButton = ({ tone = 'blue' }: { tone?: 'blue' | 'orange' }) => {
+  const isOrange = tone === 'orange';
+  return (
+    <View style={[questBtnStyles.pill, isOrange ? questBtnStyles.pillOrange : questBtnStyles.pillBlue]}>
+      <Text style={questBtnStyles.label}>{isOrange ? 'Снова!' : 'Старт!'}</Text>
+    </View>
+  );
+};
+
+const questBtnStyles = StyleSheet.create({
+  pill: {
+    alignItems: 'center',
+    borderRadius: 99,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  pillBlue: {
+    backgroundColor: FP.primary,
+    ...(Platform.select({
+      ios: { shadowColor: FP.primaryDark, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.32, shadowRadius: 8 },
+      android: { elevation: 4 },
+      web: { boxShadow: '0 4px 12px rgba(22,71,183,0.32)' },
+    }) as ViewStyle),
+  },
+  pillOrange: {
+    backgroundColor: FP.orange,
+    ...(Platform.select({
+      ios: { shadowColor: FP.orangeDark, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.32, shadowRadius: 8 },
+      android: { elevation: 4 },
+      web: { boxShadow: '0 4px 12px rgba(255,100,45,0.32)' },
+    }) as ViewStyle),
+  },
+  label: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 0.2,
+  },
+});
+
+// ─── Task card ────────────────────────────────────────────────────────────────
+//
+//  Layout:
+//  ┌──────────────────────────────────────────────┐
+//  │ [COLOR BLOCK] │  Title (bold, large)          │
+//  │   64 wide     │  Description (2 lines)        │
+//  │   full height │  ───────────────────────────  │
+//  │               │  ● X бал.          [▶ button] │
+//  └──────────────────────────────────────────────┘
+//
+//  Color block = full-height solid bg matching the icon palette.
+//  Footer row = reward badge left, action button right.
+//  Whole card is Pressable (except done tasks).
+
+type TaskCardProps = {
+  task: Task;
+  index: number;
+  done?: boolean;
+  pending?: boolean;
+  rejected?: boolean;
+  onPress: () => void;
+};
+
+const TaskCard = ({ task, index, done, pending, rejected, onPress }: TaskCardProps) => {
+  const { t } = useLanguage();
+  const palette = ICON_PALETTES[index % ICON_PALETTES.length];
+  const Icon = done ? IconCheck : TASK_ICONS[index % TASK_ICONS.length];
+
+  // Pick icon block color
+  const iconBg   = done ? '#D4F5E5' : rejected ? '#FFE0E3' : pending ? '#FFF6D6' : palette.bg;
+  const iconFg   = done ? '#15786A' : rejected ? '#A8210A' : pending ? '#8B5904' : palette.fg;
+
+  const inner = (
+    <View style={[styles.taskCard, done && styles.taskCardDone]}>
+      {/* Full-height color block */}
+      <View style={[styles.taskColorBlock, { backgroundColor: iconBg }]}>
+        <Icon />
+      </View>
+
+      {/* Right: task info */}
+      <View style={styles.taskContent}>
+        {/* Title */}
+        <Text style={[styles.taskTitle, done && styles.taskTitleDone]} numberOfLines={2}>
+          {getTaskTitle(task, t)}
+        </Text>
+        {/* Description */}
+        <Text style={styles.taskDesc} numberOfLines={2}>
+          {getTaskDescription(task, t)}
+        </Text>
+
+        {/* Footer row: reward + action */}
+        <View style={styles.taskFooter}>
+          {done ? (
+            <View style={styles.donePill}>
+              <Text style={styles.donePillText}>Выполнено ✓</Text>
+            </View>
+          ) : (
+            <>
+              {/* Status chip or reward */}
+              {pending ? (
+                <View style={styles.statusChip}>
+                  <Text style={styles.statusChipWarn}>На проверке ⏳</Text>
+                </View>
+              ) : rejected ? (
+                <View style={[styles.statusChip, styles.statusChipDangerBg]}>
+                  <Text style={styles.statusChipDanger}>Попробуй ещё ↩</Text>
+                </View>
+              ) : (
+                <PointsBadge points={task.points} />
+              )}
+
+              {/* Action button */}
+              <QuestButton tone={rejected ? 'orange' : 'blue'} />
+            </>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+
+  if (done) return inner;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => pressed ? styles.cardPressed : undefined}>
+      {inner}
+    </Pressable>
+  );
+};
+
+// ─── Main screen ──────────────────────────────────────────────────────────────
+
 const ChildTasksScreen = () => {
   const { t } = useLanguage();
   const { activeChildId } = useActiveChild();
   const { submitTaskWithProof, taskSubmissions, tasks } = useFamilyPoints();
 
-  const dailyTasks = getDailyTasksForToday(tasks);
+  const dailyTasks = getDailyTasksForToday(tasks, activeChildId);
   const availableTasks = getAvailableTasksForChild(tasks, taskSubmissions, activeChildId);
   const pendingTasks = getPendingTasksForChild(tasks, taskSubmissions, activeChildId);
 
@@ -59,7 +282,6 @@ const ChildTasksScreen = () => {
   const backdropAnim = useRef(new Animated.Value(0)).current;
   const sheetAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const panY = useRef(new Animated.Value(0)).current;
-
   const combinedY = Animated.add(sheetAnim, panY);
 
   const closeSheet = (cb?: () => void) => {
@@ -150,117 +372,91 @@ const ChildTasksScreen = () => {
   ];
 
   return (
-    <AppScreen title={t('common.tasks')} subtitle={t('child.tasks.subtitle')}>
+    <AppScreen
+      title={t('common.tasks')}
+      subtitle={t('child.tasks.subtitle')}>
+
       {/* ── Daily Quests ── */}
       {dailyTasks.length > 0 && (
         <>
-          <SectionTitle title="Сегодняшние квесты" />
-          {dailyTasks.map((task) => {
-            const submission = getTodaySubmission(taskSubmissions, task.id, activeChildId);
-            const alreadySubmitted = hasSubmittedDailyTaskToday(taskSubmissions, task.id, activeChildId);
+          <View style={styles.sectionRow}>
+            <View style={styles.boltBadge}>
+              <Svg width={14} height={14} viewBox="0 0 32 32">
+                <Path d="M18 4L10 18h8l-4 10 12-14h-8z" fill={FP.orange} strokeWidth={0} />
+              </Svg>
+            </View>
+            <Text style={styles.sectionTitle}>{t('child.tasks.todayTitle')}</Text>
+          </View>
 
-            let statusBadge: ReturnType<typeof StatusBadge> | null = null;
-            if (submission?.status === 'approved') {
-              statusBadge = <StatusBadge label="Выполнено" tone="success" />;
-            } else if (submission?.status === 'pending') {
-              statusBadge = <StatusBadge label={t('common.waitingForApproval')} tone="warning" />;
-            } else if (submission?.status === 'rejected') {
-              statusBadge = <StatusBadge label="Отклонено — попробуй снова" tone="danger" />;
-            }
+          {dailyTasks.map((task, i) => {
+            const submission = getTodaySubmission(taskSubmissions, task.id, activeChildId);
+            const isDone = submission?.status === 'approved';
+            const isPending = submission?.status === 'pending';
+            const isRejected = submission?.status === 'rejected';
 
             return (
-              <AppCard key={task.id} style={styles.dailyCard}>
-                <View style={styles.dailyHeader}>
-                  <View style={styles.dailyBadge}>
-                    <Text style={styles.dailyBadgeText}>⚡</Text>
-                  </View>
-                  <View style={styles.flex1}>
-                    <Text style={styles.title}>{getTaskTitle(task, t)}</Text>
-                    <Text style={styles.description}>{getTaskDescription(task, t)}</Text>
-                  </View>
-                  <PointsBadge points={task.points} />
-                </View>
-                {statusBadge}
-                {/* Can re-submit after rejection, but not when pending/approved today */}
-                {!alreadySubmitted || submission?.status === 'rejected' ? (
-                  submission?.status !== 'rejected' ? (
-                    <AppButton
-                      title={t('common.openDetails')}
-                      variant="secondary"
-                      onPress={() => handleOpen(task)}
-                    />
-                  ) : (
-                    <AppButton
-                      title="Попробовать снова"
-                      variant="secondary"
-                      onPress={() => handleOpen(task)}
-                    />
-                  )
-                ) : null}
-              </AppCard>
+              <TaskCard
+                key={task.id}
+                task={task}
+                index={i}
+                done={isDone}
+                pending={isPending}
+                rejected={isRejected}
+                onPress={() => handleOpen(task)}
+              />
             );
           })}
         </>
       )}
 
+      {/* ── Available / Pending tabs ── */}
       <SegmentedControl options={tabOptions} value={tab} onChange={setTab} />
 
       {tab === 'available' && (
         <>
-          <SectionTitle title={t('common.availableTasks')} />
-          {availableTasks.length === 0 && (
-            <EmptyState
-              title={t('common.availableTasks')}
-              message="Все задания выполнены или выданы на проверку."
-            />
-          )}
-          {availableTasks.map((task) => (
-            <AppCard key={task.id}>
-              <View style={styles.header}>
-                <Text style={styles.title}>{getTaskTitle(task, t)}</Text>
-                <PointsBadge points={task.points} />
-              </View>
-              <Text style={styles.description}>{getTaskDescription(task, t)}</Text>
-              <AppButton
-                title={t('common.openDetails')}
-                variant="secondary"
+          <View style={styles.sectionRow}>
+            <Text style={styles.sectionTitle}>{t('common.availableTasks')}</Text>
+          </View>
+          {availableTasks.length === 0 ? (
+            <EmptyState title={t('common.availableTasks')} message={t('child.tasks.allDone')} />
+          ) : (
+            availableTasks.map((task, i) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                index={i}
                 onPress={() => handleOpen(task)}
               />
-            </AppCard>
-          ))}
+            ))
+          )}
         </>
       )}
 
       {tab === 'pending' && (
         <>
-          <SectionTitle title={t('child.tasks.tabPending')} />
+          <View style={styles.sectionRow}>
+            <Text style={styles.sectionTitle}>{t('child.tasks.tabPending')}</Text>
+          </View>
           {pendingTasks.length === 0 ? (
             <EmptyState
               title={t('child.tasks.pendingEmptyTitle')}
               message={t('child.tasks.pendingEmptyMessage')}
             />
           ) : (
-            pendingTasks.map((task) => (
-              <AppCard key={task.id}>
-                <View style={styles.header}>
-                  <Text style={styles.title}>{getTaskTitle(task, t)}</Text>
-                  <PointsBadge points={task.points} />
-                </View>
-                <Text style={styles.description}>{getTaskDescription(task, t)}</Text>
-                <View style={styles.pendingRow}>
-                  <StatusBadge label={t('common.waitingForApproval')} tone="warning" />
-                  <AppButton
-                    title={t('common.openDetails')}
-                    variant="secondary"
-                    onPress={() => handleOpen(task)}
-                  />
-                </View>
-              </AppCard>
+            pendingTasks.map((task, i) => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                index={i}
+                pending
+                onPress={() => handleOpen(task)}
+              />
             ))
           )}
         </>
       )}
 
+      {/* ── Bottom Sheet Modal ── */}
       <Modal visible={modalVisible} transparent animationType="none" onRequestClose={handleClose}>
         <View style={styles.modalRoot}>
           <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, { opacity: backdropAnim }]}>
@@ -279,7 +475,7 @@ const ChildTasksScreen = () => {
                 <>
                   <Text style={styles.sheetTitle}>{getTaskTitle(selectedTask, t)}</Text>
                   <Text style={styles.sheetSubtitle}>{t('child.taskDetails.subtitle')}</Text>
-                  <AppCard>
+                  <View style={styles.sheetCard}>
                     <Text style={styles.detailDescription}>{getTaskDescription(selectedTask, t)}</Text>
                     <PointsBadge points={selectedTask.points} />
                     {isSubmitted ? (
@@ -300,7 +496,7 @@ const ChildTasksScreen = () => {
                         />
                       </>
                     )}
-                  </AppCard>
+                  </View>
                   <AppButton title={t('common.close')} variant="ghost" onPress={handleClose} />
                 </>
               )}
@@ -314,51 +510,192 @@ const ChildTasksScreen = () => {
 
 export default ChildTasksScreen;
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  dailyBadge: {
+  // Section headers
+  sectionRow: {
     alignItems: 'center',
-    backgroundColor: FP.accentLight,
-    borderRadius: 10,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
-  dailyBadgeText: {
-    fontSize: 18,
-  },
-  dailyCard: {
-    borderColor: FP.accent,
-    borderWidth: 1.5,
-  },
-  dailyHeader: {
-    alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
+    marginBottom: -4,
   },
-  flex1: {
+  boltBadge: {
+    alignItems: 'center',
+    backgroundColor: FP.orangeLight,
+    borderRadius: 8,
+    height: 26,
+    justifyContent: 'center',
+    width: 26,
+  },
+  sectionTitle: {
+    color: FP.ink,
+    fontSize: 17,
+    fontWeight: '900',
+    letterSpacing: -0.2,
+  },
+
+  // ── Task card ──────────────────────────────────────────────────────────────
+  cardPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.985 }],
+  },
+  taskCard: {
+    backgroundColor: FP.card,
+    borderColor: FP.border,
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: 'row',
+    overflow: 'hidden',
+    ...(Platform.select({
+      ios: { shadowColor: FP.primaryDark, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.10, shadowRadius: 20 },
+      android: { elevation: 3 },
+      web: { boxShadow: '0 8px 24px rgba(16,35,63,0.10)' },
+    }) as ViewStyle),
+  },
+  taskCardDone: {
+    borderColor: '#C2EEDD',
+    opacity: 0.72,
+  },
+  // Full-height color block on the left
+  taskColorBlock: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 68,
+    paddingVertical: 18,
+  },
+  // Right content area
+  taskContent: {
+    flex: 1,
+    gap: 4,
+    minWidth: 0,
+    padding: 14,
+    paddingLeft: 12,
+  },
+  taskTitle: {
+    color: FP.ink,
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+    lineHeight: 21,
+  },
+  taskTitleDone: {
+    color: FP.textSub,
+  },
+  taskDesc: {
+    color: FP.textSub,
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  // Footer row inside card: reward badge + action button
+  taskFooter: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  // Done pill (replaces reward + button)
+  donePill: {
+    backgroundColor: FP.greenLight,
+    borderRadius: 99,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  donePillText: {
+    color: FP.green,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  // Status chips inside footer
+  statusChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFFBEC',
+    borderRadius: 99,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  statusChipWarn: {
+    color: '#8B5904',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  statusChipDangerBg: {
+    backgroundColor: '#FFF0F0',
+  },
+  statusChipDanger: {
+    color: '#A8210A',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  // Streak widget
+  streak: {
+    backgroundColor: FP.graphite,
+    borderRadius: 22,
+    padding: 16,
+    gap: 12,
+    ...(Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.18, shadowRadius: 28 },
+      android: { elevation: 6 },
+      web: { boxShadow: '0 14px 32px rgba(0,0,0,0.18)' },
+    }) as ViewStyle),
+  },
+  streakHead: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  streakHeadLeft: {
     flex: 1,
     gap: 2,
   },
-  header: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-between',
-  },
-  title: {
-    color: FP.ink,
-    flex: 1,
-    fontSize: 18,
+  streakTitle: {
+    color: FP.white,
+    fontSize: 16,
     fontWeight: '900',
   },
-  description: {
-    color: FP.textSub,
+  streakSub: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  streakBadge: {
+    backgroundColor: FP.lime,
+    borderRadius: 99,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  streakBadgeText: {
+    color: '#264000',
     fontSize: 14,
-    lineHeight: 21,
+    fontWeight: '900',
   },
-  pendingRow: {
-    gap: 10,
+  streakDays: {
+    flexDirection: 'row',
+    gap: 6,
   },
+  dayCell: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 11,
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
+  dayCellHot: {
+    backgroundColor: FP.lime,
+  },
+  dayLetter: {
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  dayLetterHot: {
+    color: '#10233F',
+  },
+
+  // Bottom sheet
   modalRoot: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -399,6 +736,19 @@ const styles = StyleSheet.create({
     color: FP.textSub,
     fontSize: 14,
     marginTop: -4,
+  },
+  sheetCard: {
+    backgroundColor: FP.card,
+    borderColor: FP.border,
+    borderRadius: 22,
+    borderWidth: 1,
+    gap: 12,
+    padding: 16,
+    ...(Platform.select({
+      ios: { shadowColor: FP.primaryDark, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.10, shadowRadius: 24 },
+      android: { elevation: 3 },
+      web: { boxShadow: '0 12px 28px rgba(16,35,63,0.10)' },
+    }) as ViewStyle),
   },
   detailDescription: {
     color: FP.ink,

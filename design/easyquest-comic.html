@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>EasyQuest — Comic Design</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #111111;
+  --paper: #FFFEF0;
+  --yellow: #FFD600;
+  --red: #FF2D55;
+  --blue: #0055FF;
+  --green: #00C853;
+  --orange: #FF6D00;
+  --purple: #8B2BE2;
+  --sky: #00B4D8;
+  --b3: 3px solid #111111;
+  --b4: 4px solid #111111;
+  --sh: 5px 5px 0 #111111;
+  --sh3: 3px 3px 0 #111111;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #1a1a1a;
+  font-family: 'Nunito', 'Arial Black', Arial, sans-serif;
+  padding: 40px;
+  min-width: 1380px;
+}
+.page { max-width: 1380px; margin: 0 auto; }
+
+/* ─── HALFTONE ─── */
+.ht {
+  background-image: radial-gradient(circle, rgba(0,0,0,.12) 1.2px, transparent 1.2px);
+  background-size: 9px 9px;
+}
+
+/* ─── TITLE BANNER ─── */
+.title-banner {
+  background: var(--yellow);
+  border: var(--b4);
+  box-shadow: var(--sh);
+  padding: 20px 40px;
+  text-align: center;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+.title-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(0,0,0,.07) 1px, transparent 1px);
+  background-size: 10px 10px;
+}
+.app-name {
+  font-family: 'Bangers', cursive;
+  font-size: 88px;
+  color: var(--ink);
+  letter-spacing: 10px;
+  line-height: 1;
+  position: relative;
+  text-shadow: 4px 4px 0 rgba(0,0,0,.12);
+}
+.app-sub {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: rgba(0,0,0,.55);
+  margin-top: 6px;
+  position: relative;
+}
+/* lightning bolts */
+.bolt {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  opacity: .5;
+}
+.bolt-l { left: 32px; }
+.bolt-r { right: 32px; }
+
+/* ─── COLUMNS ─── */
+.cols {
+  display: grid;
+  grid-template-columns: 390px 390px 280px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ─── COL HEADER ─── */
+.col-hdr {
+  font-family: 'Bangers', cursive;
+  font-size: 22px;
+  letter-spacing: 4px;
+  text-align: center;
+  padding: 10px 20px;
+  border: var(--b4);
+  box-shadow: var(--sh);
+  margin-bottom: 16px;
+}
+.col-hdr.child { background: var(--yellow); color: var(--ink); }
+.col-hdr.parent { background: var(--blue); color: white; }
+.col-hdr.concept { background: var(--purple); color: white; }
+
+/* ─── PANEL ─── */
+.panel {
+  background: var(--paper);
+  border: var(--b4);
+  box-shadow: var(--sh);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.ph {
+  font-family: 'Bangers', cursive;
+  font-size: 17px;
+  letter-spacing: 2px;
+  padding: 9px 14px;
+  border-bottom: var(--b4);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  line-height: 1;
+}
+.ph svg { flex-shrink: 0; }
+
+/* ─── HERO AREA ─── */
+.hero-area {
+  display: flex;
+  gap: 14px;
+  padding: 18px;
+  background: var(--paper);
+  position: relative;
+  overflow: hidden;
+}
+.hero-area::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 130px; height: 120px;
+  background-image: radial-gradient(circle, rgba(0,0,0,.1) 1px, transparent 1px);
+  background-size: 8px 8px;
+  pointer-events: none;
+}
+.portrait {
+  width: 88px; height: 96px;
+  border: var(--b4);
+  background: var(--yellow);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.hero-info { flex: 1; }
+.hero-name {
+  font-family: 'Bangers', cursive;
+  font-size: 26px;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+.lv-tag {
+  display: inline-block;
+  background: var(--red);
+  color: white;
+  font-family: 'Bangers', cursive;
+  font-size: 13px;
+  letter-spacing: 1px;
+  padding: 2px 10px;
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  margin: 6px 0 8px;
+  transform: rotate(-2deg);
+}
+.xp-lbl { font-size: 11px; font-weight: 900; color: #666; margin-bottom: 3px; }
+.xp-track {
+  height: 18px; border: 3px solid var(--ink);
+  background: white; overflow: hidden; position: relative;
+}
+.xp-fill {
+  height: 100%; width: 62%;
+  background: repeating-linear-gradient(-45deg,
+    var(--blue), var(--blue) 6px, #3366FF 6px, #3366FF 12px);
+}
+.xp-val {
+  position: absolute; right: 5px; top: 0; bottom: 0;
+  display: flex; align-items: center;
+  font-size: 10px; font-weight: 900;
+}
+.coins {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 10px;
+  background: var(--yellow); border: 3px solid var(--ink);
+  box-shadow: var(--sh3); padding: 5px 12px;
+  font-family: 'Bangers', cursive; font-size: 20px; letter-spacing: 1px;
+}
+.streak-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 14px; border-top: var(--b3);
+  background: white; font-size: 12px; font-weight: 900;
+}
+.streak-num {
+  margin-left: auto;
+  font-family: 'Bangers', cursive; font-size: 14px;
+  background: var(--orange); color: white;
+  padding: 1px 10px; border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+/* ─── BUBBLE ─── */
+.bubble {
+  margin: 0 14px 14px;
+  background: white;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-size: 13px; font-weight: 700; line-height: 1.45;
+  position: relative;
+  box-shadow: var(--sh3);
+}
+.bubble::before {
+  content: '💡 СОВЕТ:';
+  display: block;
+  font-family: 'Bangers', cursive; font-size: 12px;
+  letter-spacing: 1px; color: var(--orange); margin-bottom: 4px;
+}
+.bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -16px; left: 22px;
+  border-top: 16px solid var(--ink);
+  border-left: 12px solid transparent;
+  border-right: 4px solid transparent;
+}
+
+/* ─── QUEST GRID ─── */
+.quest-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border-top: var(--b4);
+}
+.qc {
+  border-right: 3px solid var(--ink);
+  border-bottom: 3px solid var(--ink);
+  padding: 12px 12px 10px;
+  background: var(--paper);
+  position: relative;
+  overflow: hidden;
+}
+.qc:nth-child(2n) { border-right: none; }
+.qc:nth-last-child(-n+2) { border-bottom: none; }
+.qc-bar { height: 4px; margin: -12px -12px 10px; }
+.qc-cat {
+  font-family: 'Bangers', cursive; font-size: 11px;
+  letter-spacing: 1px; padding: 1px 8px;
+  border: 2px solid var(--ink); display: inline-block;
+  margin-bottom: 5px; transform: rotate(-1.5deg);
+}
+.qc-cat.study { background: var(--blue); color: white; }
+.qc-cat.home { background: var(--green); color: white; }
+.qc-cat.sport { background: var(--orange); color: white; }
+.qc-cat.special { background: var(--purple); color: white; }
+.qc-title { font-weight: 900; font-size: 13px; line-height: 1.2; margin-bottom: 6px; }
+.qc-pts { font-family: 'Bangers', cursive; font-size: 16px; }
+.qc-pts em {
+  background: var(--yellow); padding: 0 7px;
+  border: 2px solid var(--ink); font-style: normal;
+}
+.qc-btn {
+  display: block; width: 100%; margin-top: 8px;
+  padding: 5px; text-align: center;
+  font-family: 'Bangers', cursive; font-size: 13px; letter-spacing: 1px;
+  border: 2px solid var(--ink); box-shadow: 2px 2px 0 var(--ink);
+  cursor: pointer; transition: transform .08s, box-shadow .08s;
+}
+.qc-btn:active { transform: translate(2px,2px); box-shadow: none; }
+.qc-btn.go { background: var(--green); color: white; }
+.qc-btn.wait { background: #e0e0e0; color: #888; }
+.qc-btn.prog { background: var(--orange); color: white; }
+
+/* ─── REWARDS ─── */
+.ri {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; border-bottom: 3px solid var(--ink);
+  background: var(--paper);
+}
+.ri:last-child { border-bottom: none; }
+.ri-icon {
+  width: 44px; height: 44px; border: 3px solid var(--ink);
+  background: white; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ri-name { font-weight: 900; font-size: 13px; line-height: 1.2; }
+.ri-desc { font-size: 11px; color: #777; font-weight: 700; margin-top: 2px; }
+.ri-price {
+  margin-left: auto;
+  font-family: 'Bangers', cursive; font-size: 18px;
+  background: var(--yellow); padding: 2px 10px;
+  border: 2px solid var(--ink); box-shadow: 2px 2px 0 var(--ink);
+  flex-shrink: 0;
+}
+.ri-btn {
+  font-family: 'Bangers', cursive; font-size: 13px;
+  letter-spacing: 1px; padding: 5px 12px;
+  border: 2px solid var(--ink); box-shadow: 2px 2px 0 var(--ink);
+  cursor: pointer; flex-shrink: 0;
+  transition: transform .08s, box-shadow .08s;
+}
+.ri-btn:active { transform: translate(2px,2px); box-shadow: none; }
+.ri-btn.get { background: var(--red); color: white; }
+.ri-btn.off { background: #d0d0d0; color: #999; }
+
+/* ─── PARENT: CHILD ROW ─── */
+.p-child {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px; background: var(--paper);
+}
+.p-av {
+  width: 56px; height: 56px; border: var(--b4);
+  background: var(--sky); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.p-cname { font-family: 'Bangers', cursive; font-size: 22px; letter-spacing: 1px; }
+.p-cbal { font-size: 12px; font-weight: 900; color: #555; }
+.p-cbal strong {
+  font-family: 'Bangers', cursive; font-size: 20px; color: var(--ink);
+}
+.p-online {
+  margin-left: auto;
+  font-family: 'Bangers', cursive; font-size: 12px;
+  background: var(--green); color: white;
+  padding: 2px 10px; border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+/* ─── STATS GRID ─── */
+.sg {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border-top: var(--b4);
+}
+.sc {
+  padding: 14px; text-align: center;
+  border-right: 3px solid var(--ink);
+  border-bottom: 3px solid var(--ink);
+  background: var(--paper);
+}
+.sc:nth-child(2n) { border-right: none; }
+.sc:nth-last-child(-n+2) { border-bottom: none; }
+.sn { font-family: 'Bangers', cursive; font-size: 40px; line-height: 1; letter-spacing: 1px; }
+.sn.r { color: var(--red); }
+.sn.b { color: var(--blue); }
+.sn.g { color: var(--green); }
+.sn.y { color: var(--yellow); -webkit-text-stroke: 1.5px var(--ink); }
+.sl { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-top: 2px; }
+
+/* ─── SUBMISSION CARDS ─── */
+.sub {
+  padding: 14px; border-bottom: 3px solid var(--ink);
+  background: var(--paper);
+}
+.sub:last-child { border-bottom: none; }
+.sub-top {
+  display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px;
+}
+.sub-av {
+  width: 32px; height: 32px; border: 2px solid var(--ink);
+  background: #e0f4ff; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.sub-task { font-weight: 900; font-size: 13px; }
+.sub-who { font-size: 11px; color: #888; font-weight: 700; }
+.sub-pts {
+  margin-left: auto;
+  font-family: 'Bangers', cursive; font-size: 16px;
+  background: var(--yellow); border: 2px solid var(--ink); padding: 0 8px;
+}
+.sub-btns { display: flex; gap: 8px; }
+.btn-ok, .btn-no {
+  flex: 1; padding: 8px; text-align: center;
+  border: 3px solid var(--ink); box-shadow: 3px 3px 0 var(--ink);
+  font-family: 'Bangers', cursive; font-size: 15px; letter-spacing: 2px;
+  cursor: pointer; transition: transform .08s, box-shadow .08s;
+}
+.btn-ok:active, .btn-no:active { transform: translate(3px,3px); box-shadow: none; }
+.btn-ok { background: var(--green); color: white; }
+.btn-no { background: var(--red); color: white; }
+
+/* ─── QUICK ACTIONS ─── */
+.qa {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border-top: var(--b4);
+}
+.qa-item {
+  padding: 12px 10px; border-right: 3px solid var(--ink);
+  border-bottom: 3px solid var(--ink);
+  background: var(--paper); cursor: pointer;
+  font-family: 'Bangers', cursive; font-size: 13px;
+  letter-spacing: 1px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  transition: background .1s;
+}
+.qa-item:nth-child(2n) { border-right: none; }
+.qa-item:nth-last-child(-n+2) { border-bottom: none; }
+.qa-item:hover { background: var(--yellow); }
+.qa-ico {
+  width: 32px; height: 32px; border: 2px solid var(--ink);
+  background: white; display: flex; align-items: center; justify-content: center;
+}
+
+/* ─── TASK LIST (parent) ─── */
+.pt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 2px solid var(--ink);
+  background: var(--paper);
+}
+.pt:last-child { border-bottom: none; }
+.dot-on { width: 10px; height: 10px; border: 2px solid var(--ink); background: var(--green); border-radius: 50%; flex-shrink: 0; }
+.dot-off { width: 10px; height: 10px; border: 2px solid var(--ink); background: #ccc; border-radius: 50%; flex-shrink: 0; }
+.pt-name { flex: 1; font-weight: 700; font-size: 12px; }
+.pt-name.off { color: #aaa; text-decoration: line-through; }
+.pt-pts { font-family: 'Bangers', cursive; font-size: 14px; background: var(--yellow); padding: 1px 7px; border: 2px solid var(--ink); }
+.pt-pts.off { background: #eee; color: #aaa; }
+.pt-rep { font-size: 11px; font-weight: 900; color: var(--blue); padding: 3px 8px; border: 2px solid var(--blue); background: none; cursor: pointer; }
+
+/* ─── BADGE ─── */
+.nb {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; background: var(--red);
+  border: 2px solid var(--ink); color: white;
+  font-size: 10px; font-weight: 900; border-radius: 50%;
+  margin-left: 6px;
+}
+
+/* ─── CONCEPT ─── */
+.concept-lbl {
+  text-align: center; margin-bottom: 14px;
+}
+.concept-tag {
+  display: inline-block;
+  font-family: 'Bangers', cursive; font-size: 12px; letter-spacing: 2px;
+  padding: 3px 12px; border: 2px solid var(--ink);
+  background: var(--purple); color: white;
+  transform: rotate(1deg); box-shadow: var(--sh3);
+}
+.concept-note {
+  font-size: 10px; font-weight: 900; color: #999;
+  letter-spacing: 1px; margin-top: 5px;
+}
+
+/* ─── LEVEL NODES ─── */
+.lv {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 2px solid var(--ink);
+  background: var(--paper);
+}
+.lv:last-child { border-bottom: none; }
+.lv.now { background: var(--yellow); }
+.lv.lock { opacity: .38; }
+.lv-ico {
+  width: 36px; height: 36px; border: 3px solid var(--ink);
+  background: white; display: flex; align-items: center;
+  justify-content: center; font-size: 18px; flex-shrink: 0;
+}
+.lv-name { font-family: 'Bangers', cursive; font-size: 18px; letter-spacing: 1px; }
+.lv-req { font-size: 11px; color: #666; font-weight: 700; }
+.lv-badge {
+  margin-left: auto; font-family: 'Bangers', cursive; font-size: 11px;
+  padding: 1px 8px; border: 2px solid var(--ink);
+}
+.lv-badge.done { background: var(--green); color: white; }
+.lv-badge.now { background: var(--orange); color: white; }
+.lv-badge.lock { background: #ccc; color: #888; }
+
+/* ─── ACHIEVEMENTS ─── */
+.ach {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  border-top: var(--b4);
+}
+.ac {
+  padding: 8px 6px; text-align: center;
+  border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
+  background: var(--paper);
+}
+.ac:nth-child(4n) { border-right: none; }
+.ac:nth-last-child(-n+4) { border-bottom: none; }
+.ac.off { opacity: .28; }
+.ac-ico {
+  width: 32px; height: 32px; border: 2px solid var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 4px; font-size: 16px;
+}
+.ac-name { font-size: 9px; font-weight: 900; line-height: 1.2; }
+
+/* ─── SKILLS ─── */
+.sk {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 2px solid var(--ink);
+  background: var(--paper);
+}
+.sk:last-child { border-bottom: none; }
+.sk.off { opacity: .38; }
+.sk-ico {
+  width: 36px; height: 36px; border: 3px solid var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.sk-name { font-weight: 900; font-size: 12px; line-height: 1.2; }
+.sk-fx { font-size: 11px; color: var(--purple); font-weight: 700; margin-top: 2px; }
+.sk-tag {
+  margin-left: auto;
+  font-family: 'Bangers', cursive; font-size: 13px;
+  padding: 1px 8px; border: 2px solid var(--ink);
+  white-space: nowrap; flex-shrink: 0;
+}
+.sk-tag.on { background: var(--green); color: white; }
+.sk-tag.off { background: #ddd; color: #aaa; }
+
+/* ─── ACTION SPLASH ─── */
+.splash {
+  display: inline-block;
+  font-family: 'Bangers', cursive;
+  letter-spacing: 3px; font-size: 20px;
+  padding: 5px 16px;
+  border: 3px solid var(--ink);
+  box-shadow: var(--sh3);
+  transform: rotate(-3deg);
+}
+
+/* wish panel */
+.wish-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 2px solid var(--ink);
+  background: var(--paper);
+}
+.wish-item:last-child { border-bottom: none; }
+.wish-name { flex: 1; font-weight: 900; font-size: 12px; }
+.wish-price { font-family:'Bangers',cursive; font-size:14px; background:#f3e5f5; padding:1px 8px; border:2px solid var(--ink); }
+.wish-status {
+  font-family:'Bangers',cursive; font-size:11px; letter-spacing:1px;
+  padding:1px 8px; border:2px solid var(--ink);
+}
+.wish-status.pend { background:var(--orange); color:white; }
+.wish-status.ok { background:var(--green); color:white; }
+.wish-approve {
+  font-family:'Bangers',cursive; font-size:12px; letter-spacing:1px;
+  padding:3px 10px; border:2px solid var(--ink); box-shadow:2px 2px 0 var(--ink);
+  background:var(--blue); color:white; cursor:pointer;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ═══ TITLE BANNER ═══ -->
+<div class="title-banner">
+  <svg class="bolt bolt-l" width="48" height="48" viewBox="0 0 24 24" fill="#111" opacity=".3"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+  <svg class="bolt bolt-r" width="48" height="48" viewBox="0 0 24 24" fill="#111" opacity=".3"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+  <div class="app-name">EasyQuest</div>
+  <div class="app-sub">Семейный трекер заданий и наград — комикс-дизайн</div>
+</div>
+
+<div class="cols">
+
+<!-- ═══════════════════ CHILD COLUMN ═══════════════════ -->
+<div>
+  <div class="col-hdr child">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="square" style="vertical-align:middle;margin-right:6px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    РЕБЁНОК — ГЕРОЙ
+  </div>
+
+  <!-- HERO PANEL -->
+  <div class="panel">
+    <div class="ph">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="square"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      СТАТУС ГЕРОЯ
+    </div>
+    <div class="hero-area">
+      <!-- SVG Comic Hero Character -->
+      <div class="portrait">
+        <svg width="76" height="88" viewBox="0 0 76 88" xmlns="http://www.w3.org/2000/svg">
+          <!-- cape -->
+          <path d="M22 56 Q12 78 17 84 L38 74 L59 84 Q64 78 54 56 Z" fill="#FF2D55" stroke="#111" stroke-width="2.5"/>
+          <!-- cape star -->
+          <text x="30" y="74" font-size="10" fill="#FFD600" font-weight="bold">★</text>
+          <!-- body / suit -->
+          <rect x="24" y="47" width="28" height="20" rx="2" fill="#0055FF" stroke="#111" stroke-width="2.5"/>
+          <!-- chest emblem -->
+          <polygon points="38,51 41,57 38,55 35,57" fill="#FFD600" stroke="#111" stroke-width="1"/>
+          <!-- head -->
+          <circle cx="38" cy="32" r="18" fill="#FFD3A8" stroke="#111" stroke-width="2.5"/>
+          <!-- hair -->
+          <path d="M20 26 Q22 12 38 14 Q54 12 56 26 Q51 18 38 20 Q25 18 20 26 Z" fill="#4A2C17" stroke="#111" stroke-width="1.5"/>
+          <!-- cowl/mask top -->
+          <path d="M22 26 Q20 30 22 34 Q20 28 22 26 Z" fill="#0055FF" stroke="#111" stroke-width="1"/>
+          <path d="M54 26 Q56 30 54 34 Q56 28 54 26 Z" fill="#0055FF" stroke="#111" stroke-width="1"/>
+          <!-- eyes (big manga eyes) -->
+          <ellipse cx="31" cy="31" rx="5" ry="5.5" fill="white" stroke="#111" stroke-width="2"/>
+          <ellipse cx="45" cy="31" rx="5" ry="5.5" fill="white" stroke="#111" stroke-width="2"/>
+          <circle cx="32" cy="32" r="3.5" fill="#111"/>
+          <circle cx="46" cy="32" r="3.5" fill="#111"/>
+          <circle cx="33" cy="30.5" r="1.2" fill="white"/>
+          <circle cx="47" cy="30.5" r="1.2" fill="white"/>
+          <!-- eyebrows -->
+          <path d="M26 25 Q31 22 35 25" stroke="#4A2C17" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M41 25 Q45 22 50 25" stroke="#4A2C17" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <!-- smile -->
+          <path d="M31 39 Q38 45 45 39" stroke="#111" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- cheeks -->
+          <circle cx="25" cy="37" r="5" fill="#FFB4A2" opacity=".45"/>
+          <circle cx="51" cy="37" r="5" fill="#FFB4A2" opacity=".45"/>
+          <!-- action stars -->
+          <text x="5" y="18" font-size="12" fill="#FFD600" stroke="#111" stroke-width=".5">★</text>
+          <text x="60" y="14" font-size="9" fill="#FF2D55">✦</text>
+          <text x="2" y="42" font-size="7" fill="#0055FF">✦</text>
+        </svg>
+      </div>
+
+      <div class="hero-info">
+        <div class="hero-name">Максим</div>
+        <div class="lv-tag">УРОВЕНЬ 3 — ИСКАТЕЛЬ</div>
+        <div class="xp-lbl">ОПЫТ: 620 / 1000</div>
+        <div class="xp-track">
+          <div class="xp-fill"></div>
+          <div class="xp-val">62%</div>
+        </div>
+        <div class="coins">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#B8860B" stroke="#111" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v12" stroke="white" stroke-width="2"/><path d="M9 9h4a1.5 1.5 0 010 3H9v3h5a1.5 1.5 0 000-3" stroke="white" stroke-width="1.5" fill="none"/></svg>
+          250 МОНЕТ
+        </div>
+      </div>
+    </div>
+    <div class="streak-bar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--orange)" stroke="var(--orange)" stroke-width="1"><path d="M13 2s-6 6-6 12a6 6 0 0012 0c0-4-2-8-6-12zm0 0c0 3 3 5 3 8"/></svg>
+      Серия: <strong>7 дней подряд!</strong>
+      <div class="streak-num">+10% БОНУС</div>
+    </div>
+  </div>
+
+  <!-- SPEECH BUBBLE -->
+  <div class="bubble">
+    Сделай «Уборку комнаты» сегодня — получишь монеты с бонусом серии ×1.1!
+  </div>
+  <div style="height:14px"></div>
+
+  <!-- QUEST BOARD -->
+  <div class="panel">
+    <div class="ph">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="square"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      ДОСКА КВЕСТОВ
+      <span class="nb">4</span>
+    </div>
+    <div class="quest-grid">
+      <div class="qc">
+        <div class="qc-bar" style="background:var(--blue)"></div>
+        <div class="qc-cat study">УЧЁБА</div>
+        <div class="qc-title">Сделать домашнее задание</div>
+        <div class="qc-pts"><em>+50</em> монет</div>
+        <button class="qc-btn go">✓ Я СДЕЛАЛ!</button>
+      </div>
+      <div class="qc">
+        <div class="qc-bar" style="background:var(--green)"></div>
+        <div class="qc-cat home">ДОМ</div>
+        <div class="qc-title">Убрать свою комнату</div>
+        <div class="qc-pts"><em>+30</em> монет</div>
+        <button class="qc-btn wait">⏳ НА ПРОВЕРКЕ</button>
+      </div>
+      <div class="qc">
+        <div class="qc-bar" style="background:var(--orange)"></div>
+        <div class="qc-cat sport">СПОРТ</div>
+        <div class="qc-title">Зарядка 15 минут</div>
+        <div class="qc-pts"><em>+40</em> монет</div>
+        <button class="qc-btn go">✓ Я СДЕЛАЛ!</button>
+      </div>
+      <div class="qc">
+        <div class="qc-bar" style="background:var(--purple)"></div>
+        <div class="qc-cat special">ОСОБЫЙ</div>
+        <div class="qc-title">Помочь с посудой 3 раза</div>
+        <div class="qc-pts"><em>+80</em> монет</div>
+        <div style="font-size:10px;color:#888;font-weight:900;margin-top:4px;">Прогресс: 2 / 3</div>
+        <button class="qc-btn prog">В ПРОЦЕССЕ...</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TREASURY -->
+  <div class="panel">
+    <div class="ph">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="square"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+      СОКРОВИЩНИЦА
+    </div>
+    <div class="ri">
+      <div class="ri-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <div>
+        <div class="ri-name">2 часа видеоигр</div>
+        <div class="ri-desc">Дополнительное игровое время</div>
+      </div>
+      <div class="ri-price">150</div>
+      <button class="ri-btn get">ВЗЯТЬ!</button>
+    </div>
+    <div class="ri">
+      <div class="ri-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div>
+        <div class="ri-name">Выбрать кино вечером</div>
+        <div class="ri-desc">Любой фильм на выбор</div>
+      </div>
+      <div class="ri-price">200</div>
+      <button class="ri-btn get">ВЗЯТЬ!</button>
+    </div>
+    <div class="ri">
+      <div class="ri-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      </div>
+      <div>
+        <div class="ri-name">LEGO набор</div>
+        <div class="ri-desc">Желание Максима ★</div>
+      </div>
+      <div class="ri-price">600</div>
+      <button class="ri-btn off">НЕ ХВАТАЕТ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PARENT COLUMN ═══════════════════ -->
+<div>
+  <div class="col-hdr parent">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="square" style="vertical-align:middle;margin-right:6px"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+    РОДИТЕЛЬ — ШТАБ
+  </div>
+
+  <!-- CHILD OVERVIEW -->
+  <div class="panel">
+    <div class="ph">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="square"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      РЕБЁНОК
+    </div>
+    <div class="p-child">
+      <!-- mini avatar -->
+      <div class="p-av">
+        <svg width="36" height="40" viewBox="0 0 36 40" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="18" cy="16" r="13" fill="#FFD3A8" stroke="#111" stroke-width="2"/>
+          <path d="M7 12 Q9 2 18 4 Q27 2 29 12 Q25 6 18 8 Q11 6 7 12Z" fill="#4A2C17" stroke="#111" stroke-width="1.5"/>
+          <ellipse cx="13" cy="16" rx="3" ry="3.5" fill="white" stroke="#111" stroke-width="1.5"/>
+          <ellipse cx="23" cy="16" rx="3" ry="3.5" fill="white" stroke="#111" stroke-width="1.5"/>
+          <circle cx="13.5" cy="17" r="2" fill="#111"/>
+          <circle cx="23.5" cy="17" r="2" fill="#111"/>
+          <path d="M14 22 Q18 26 22 22" stroke="#111" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <rect x="10" y="29" width="16" height="11" rx="2" fill="#0055FF" stroke="#111" stroke-width="2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="p-cname">Максим, 10 лет</div>
+        <div class="p-cbal">Баланс: <strong>250</strong> монет</div>
+        <div style="font-size:11px;color:#888;font-weight:700;margin-top:2px;">Уровень 3 — Искатель · Серия 7 дней</div>
+      </div>
+      <div class="p-online">ОНЛАЙН</div>
+    </div>
+
+    <!-- STATS -->
+    <div class="sg">
+      <div class="sc">
+        <div class="sn r">2</div>
+        <div class="sl">На проверке</div>
+      </div>
+      <div class="sc">
+        <div class="sn b">1</div>
+        <div class="sl">Запрос награды</div>
+      </div>
+      <div class="sc">
+        <div class="sn g">5</div>
+        <div class="sl">Активных квестов</div>
+      </div>
+      <div class="sc">
+        <div class="sn y">380</div>
+        <div class="sl">Заработано всего</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMISSION REVIEW -->
+  <div class="panel">
+    <div class="ph">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="square"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      ПРОВЕРКА ЗАЯВОК
+      <span class="nb">2</span>
+    </div>
+    <div class="sub">
+      <div class="sub-top">
+        <div class="sub-av">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0055FF" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+        </div>
+        <div>
+          <div class="sub-task">Сделать домашнее задание</div>
+          <div class="sub-who">Максим · сегодня 15:42</div>
+        </div>
+        <div class="sub-pts">+50</div>
+      </div>
+      <div class="sub-btns">
+        <div class="btn-ok">✓ ОДОБРИТЬ</div>
+        <div class="btn-no">✗ ОТКЛОНИТЬ</div>
+      </div>
+    </div>
+    <div class="sub">
+      <div class="sub-top">
+        <div class="sub-av">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00C853" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div>
+          <div class="sub-task">Убрать свою комнату</div>
+          <div class="sub-who">Максим · сегодня 12:15</div>
+        </div>
+        <div class="sub-pts">+30</div>
+      </div>
+      <div class="sub-btns">
+        <div class="btn-ok">✓ ОДОБРИТЬ</div>
+        <div class="btn-no">✗ ОТКЛОНИТЬ</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUICK ACTIONS -->
+  <div class="panel">
+    <div class="ph">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="square"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      БЫСТРЫЕ ДЕЙСТВИЯ
+    </div>
+    <div class="qa">
+      <div class="qa-item">
+        <div class="qa-ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        ДОБАВИТЬ КВЕСТ
+      </div>
+      <div class="qa-item">
+        <div class="qa-ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+        </div>
+        НАГРАДЫ
+      </div>
+      <div class="qa-item">
+        <div class="qa-ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        </div>
+        ЖЕЛАНИЯ
+        <span class="nb" style="margin-left:0">1</span>
+      </div>
+      <div class="qa-item">
+        <div class="qa-ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+        НАЧИСЛИТЬ
+      </div>
+    </div>
+  </div>
+
+  <!-- WISH REQUESTS -->
+  <div class="panel">
+    <div class="ph">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="square"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      ЗАПРОСЫ ЖЕЛАНИЙ
+      <span class="nb">1</span>
+    </div>
+    <div class="wish-item">
+      <div>
+        <div class="wish-name">LEGO Technic набор</div>
+        <div style="font-size:11px;color:#888;font-weight:700;">Предложил: 600 монет</div>
+      </div>
+      <div class="wish-status pend">ЖДЁТ</div>
+      <button class="wish-approve">ОДОБРИТЬ</button>
+    </div>
+
+    <!-- ALL TASKS -->
+    <div class="ph" style="border-top:var(--b4); border-bottom:var(--b3);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="square"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      ВСЕ КВЕСТЫ
+    </div>
+    <div class="pt">
+      <div class="dot-on"></div>
+      <div class="pt-name">Домашнее задание</div>
+      <div class="pt-pts">50</div>
+    </div>
+    <div class="pt">
+      <div class="dot-on"></div>
+      <div class="pt-name">Убрать комнату</div>
+      <div class="pt-pts">30</div>
+    </div>
+    <div class="pt">
+      <div class="dot-on"></div>
+      <div class="pt-name">Зарядка 15 минут</div>
+      <div class="pt-pts">40</div>
+    </div>
+    <div class="pt">
+      <div class="dot-off"></div>
+      <div class="pt-name off">Почитать книгу</div>
+      <div class="pt-pts off">25</div>
+      <button class="pt-rep">↻ ПОВТОРИТЬ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CONCEPT COLUMN ═══════════════════ -->
+<div>
+  <div class="col-hdr concept">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="square" style="vertical-align:middle;margin-right:6px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    КОНЦЕПЦИЯ
+  </div>
+
+  <div class="concept-lbl">
+    <div class="concept-tag">БУДУЩИЕ МЕХАНИКИ</div>
+    <div class="concept-note">не реализовано в MVP</div>
+  </div>
+
+  <!-- LEVELS -->
+  <div class="panel">
+    <div class="ph" style="background:#f0e6ff;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="square"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      УРОВНИ ГЕРОЯ
+    </div>
+    <div class="lv">
+      <div class="lv-ico">🌱</div>
+      <div>
+        <div class="lv-name">НОВИЧОК</div>
+        <div class="lv-req">0 — 200 опыта</div>
+      </div>
+      <div class="lv-badge done">✓</div>
+    </div>
+    <div class="lv">
+      <div class="lv-ico">🗺️</div>
+      <div>
+        <div class="lv-name">ИСКАТЕЛЬ</div>
+        <div class="lv-req">200 — 1000 опыта</div>
+      </div>
+      <div class="lv-badge done">✓</div>
+    </div>
+    <div class="lv now">
+      <div class="lv-ico">⚔️</div>
+      <div>
+        <div class="lv-name">ГЕРОЙ</div>
+        <div class="lv-req">1000 — 3000 опыта</div>
+      </div>
+      <div class="lv-badge now">СЕЙЧАС</div>
+    </div>
+    <div class="lv lock">
+      <div class="lv-ico">🐉</div>
+      <div>
+        <div class="lv-name">ЛЕГЕНДА</div>
+        <div class="lv-req">3000+ опыта</div>
+      </div>
+      <div class="lv-badge lock">🔒</div>
+    </div>
+  </div>
+
+  <!-- ACHIEVEMENTS -->
+  <div class="panel">
+    <div class="ph" style="background:#f0e6ff;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="square"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+      АЧИВКИ
+    </div>
+    <div class="ach">
+      <div class="ac">
+        <div class="ac-ico" style="background:#fff9c4;">🔥</div>
+        <div class="ac-name">7 дней подряд</div>
+      </div>
+      <div class="ac">
+        <div class="ac-ico" style="background:#e3f2fd;">📚</div>
+        <div class="ac-name">10 уроков</div>
+      </div>
+      <div class="ac">
+        <div class="ac-ico" style="background:#e8f5e9;">💪</div>
+        <div class="ac-name">Спортсмен</div>
+      </div>
+      <div class="ac off">
+        <div class="ac-ico">⭐</div>
+        <div class="ac-name">Легенда</div>
+      </div>
+      <div class="ac off">
+        <div class="ac-ico">💰</div>
+        <div class="ac-name">1000 монет</div>
+      </div>
+      <div class="ac off">
+        <div class="ac-ico">🤝</div>
+        <div class="ac-name">Помощник</div>
+      </div>
+      <div class="ac off">
+        <div class="ac-ico">🎯</div>
+        <div class="ac-name">100 квестов</div>
+      </div>
+      <div class="ac off">
+        <div class="ac-ico">🏆</div>
+        <div class="ac-name">Чемпион</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SKILLS -->
+  <div class="panel">
+    <div class="ph" style="background:#f0e6ff;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="3" stroke-linecap="square"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      СКИЛЛЫ
+    </div>
+    <div class="sk">
+      <div class="sk-ico" style="background:#fff9c4;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><path d="M13 2s-6 6-6 12a6 6 0 0012 0c0-4-2-8-6-12z"/></svg>
+      </div>
+      <div>
+        <div class="sk-name">Бонус серии</div>
+        <div class="sk-fx">+10% за каждый день подряд</div>
+      </div>
+      <div class="sk-tag on">ВКЛ</div>
+    </div>
+    <div class="sk">
+      <div class="sk-ico" style="background:#e8f5e9;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div>
+        <div class="sk-name">Защита монет</div>
+        <div class="sk-fx">Штрафы -25%</div>
+      </div>
+      <div class="sk-tag on">ВКЛ</div>
+    </div>
+    <div class="sk off">
+      <div class="sk-ico" style="background:#f3e5f5;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <div>
+        <div class="sk-name">Двойные монеты</div>
+        <div class="sk-fx">×2 в выходные (Легенда)</div>
+      </div>
+      <div class="sk-tag off">🔒</div>
+    </div>
+    <div class="sk off">
+      <div class="sk-ico" style="background:#e3f2fd;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+      </div>
+      <div>
+        <div class="sk-name">Инвестор</div>
+        <div class="sk-fx">+5% к вкладам (Легенда)</div>
+      </div>
+      <div class="sk-tag off">🔒</div>
+    </div>
+  </div>
+
+  <!-- TEASER NOTE -->
+  <div style="background:#1a1a1a; border:var(--b4); box-shadow:var(--sh); padding:16px; color:#aaa; font-size:12px; font-weight:700; line-height:1.6;">
+    <div style="font-family:'Bangers',cursive; font-size:18px; letter-spacing:2px; color:var(--yellow); margin-bottom:8px;">ИДЕЯ ПРОКАЧКИ</div>
+    Выполняй квесты → зарабатывай Опыт → повышай уровень → разблокируй Ачивки → получай постоянные Скиллы, которые меняют игровую механику: бонусы к монетам, защита от штрафов, ×2 по выходным и многое другое.
+    <div style="margin-top:10px;">
+      <div class="splash" style="background:var(--purple); color:white; border-color:var(--yellow);">COMING SOON!</div>
+    </div>
+  </div>
+
+</div>
+<!-- end concept col -->
+
+</div><!-- end cols -->
+</div><!-- end page -->
+</body>
+</html>

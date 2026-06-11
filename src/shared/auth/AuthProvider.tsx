@@ -21,9 +21,11 @@ type AuthContextValue = {
   hasHydrated: boolean;
   signIn: (input: SignInInput) => Promise<AuthSession>;
   signUp: (input: SignUpInput) => Promise<AuthSession>;
+  signInWithGoogle: () => Promise<AuthSession>;
   signInDemoRole: (input: SignInDemoRoleInput) => Promise<AuthSession>;
   signInAsChild: (input: SignInAsChildInput) => Promise<AuthSession>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -85,6 +87,11 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         setSession(nextSession);
         return nextSession;
       },
+      signInWithGoogle: async () => {
+        const nextSession = await authService.signInWithGoogle();
+        setSession(nextSession);
+        return nextSession;
+      },
       signInDemoRole: async (input) => {
         const nextSession = await authService.signInDemoRole(input);
         setSession(nextSession);
@@ -97,6 +104,10 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       },
       signOut: async () => {
         await authService.signOut();
+        setSession(null);
+      },
+      deleteAccount: async () => {
+        await authService.deleteAccount();
         setSession(null);
       },
     }),

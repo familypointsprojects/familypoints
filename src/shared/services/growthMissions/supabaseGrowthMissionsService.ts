@@ -160,11 +160,25 @@ export const supabaseGrowthMissionsService: GrowthMissionsService = {
 
   async deposit(input: DepositInput) {
     const supabase = getSupabaseClient();
+    const skillBonusPercent = Math.max(0, input.skillBonusPercent ?? 0);
     const { data, error } = await supabase.rpc('create_investment', {
       p_project_id: input.projectId,
       p_child_id:   input.childId,
       p_amount:     input.amount,
+      p_skill_bonus_percent: skillBonusPercent,
     });
+
+    if (error && error.message.toLowerCase().includes('function')) {
+      const fallback = await supabase.rpc('create_investment', {
+        p_project_id: input.projectId,
+        p_child_id:   input.childId,
+        p_amount:     input.amount,
+      });
+
+      if (fallback.error) throw new Error(fallback.error.message);
+      return fallback.data as string;
+    }
+
     if (error) throw new Error(error.message);
     return data as string;
   },

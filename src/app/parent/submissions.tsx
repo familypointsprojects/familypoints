@@ -1,20 +1,27 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useLanguage } from '@/shared/i18n';
 import { useActiveChild, useFamilyPoints } from '@/shared/state';
 import { TaskSubmission } from '@/shared/types/family';
-import { AppButton, AppCard, AppScreen, EmptyState, SectionTitle, StatusBadge } from '@/shared/ui';
+import { AppButton, AppCard, AppScreen, EmptyState, ParentChildFilter, SectionTitle, StatusBadge } from '@/shared/ui';
 import { getTaskTitle } from '@/shared/utils/content';
+import { canApproveSubmission } from '@/shared/utils/permissions';
 import { findTask } from '@/shared/utils/tasks';
 
 const ParentSubmissionsScreen = () => {
   const { t } = useLanguage();
   const { getChildName } = useActiveChild();
-  const { approveSubmission, rejectSubmission, setTaskStatus, taskSubmissions, tasks } =
+  const { activeParentId, approveSubmission, children, parents, rejectSubmission, setTaskStatus, taskSubmissions, tasks } =
     useFamilyPoints();
+  const currentParent = parents?.find((p) => p.id === activeParentId);
+  const [selectedChildId, setSelectedChildId] = useState<string | undefined>();
 
-  const pendingSubmissions = taskSubmissions.filter((submission) => submission.status === 'pending');
-  const reviewedSubmissions = taskSubmissions.filter((submission) => submission.status !== 'pending');
+  const childFilteredSubmissions = selectedChildId
+    ? taskSubmissions.filter((submission) => submission.childId === selectedChildId)
+    : taskSubmissions;
+  const pendingSubmissions = childFilteredSubmissions.filter((submission) => submission.status === 'pending');
+  const reviewedSubmissions = childFilteredSubmissions.filter((submission) => submission.status !== 'pending');
 
   const handleReview = (submissionId: string, status: TaskSubmission['status']) => {
     if (status === 'approved') {
@@ -27,6 +34,12 @@ const ParentSubmissionsScreen = () => {
 
   return (
     <AppScreen title={t('parent.submissions.title')} subtitle={t('parent.submissions.subtitle')}>
+      <ParentChildFilter
+        childrenList={children}
+        selectedChildId={selectedChildId}
+        onChange={setSelectedChildId}
+      />
+
       <SectionTitle title={t('common.pending')} />
       {pendingSubmissions.length === 0 && (
         <EmptyState title={t('common.allCaughtUp')} message={t('parent.submissions.empty')} />
@@ -35,6 +48,8 @@ const ParentSubmissionsScreen = () => {
       {pendingSubmissions.map((submission) => {
         const task = findTask(tasks, submission.taskId);
         const taskTitle = task ? getTaskTitle(task, t) : t('child.taskDetails.notFoundTitle');
+
+        const canReview = canApproveSubmission(currentParent, task?.createdBy);
 
         return (
           <AppCard key={submission.id}>
@@ -51,19 +66,21 @@ const ParentSubmissionsScreen = () => {
                 <StatusBadge label={t('common.pendingStatus')} tone="warning" />
               </View>
             </View>
-            <View style={styles.actions}>
-              <AppButton
-                title={t('common.approve')}
-                onPress={() => handleReview(submission.id, 'approved')}
-                style={styles.actionButton}
-              />
-              <AppButton
-                title={t('common.reject')}
-                variant="danger"
-                onPress={() => handleReview(submission.id, 'rejected')}
-                style={styles.actionButton}
-              />
-            </View>
+            {canReview && (
+              <View style={styles.actions}>
+                <AppButton
+                  title={t('common.approve')}
+                  onPress={() => handleReview(submission.id, 'approved')}
+                  style={styles.actionButton}
+                />
+                <AppButton
+                  title={t('common.reject')}
+                  variant="danger"
+                  onPress={() => handleReview(submission.id, 'rejected')}
+                  style={styles.actionButton}
+                />
+              </View>
+            )}
           </AppCard>
         );
       })}

@@ -18,9 +18,12 @@ import {
   setRewardActiveInState,
   setTaskStatusInState,
   submitTaskInState,
+  unlockSkillInState,
+  updateRewardInState,
   updateTaskInState,
 } from '@/shared/state/domainActions';
 import type { FamilyPointsState } from '@/shared/state/types';
+import { normalizeLevelingState } from '@/shared/utils/leveling';
 
 import type { FamilyPointsService } from './types';
 
@@ -42,14 +45,18 @@ const isFamilyPointsState = (value: unknown): value is FamilyPointsState => {
     Array.isArray(value.wishes) &&
     (value.favoriteGoals === undefined || Array.isArray(value.favoriteGoals)) &&
     Array.isArray(value.pointTransactions) &&
+    (value.childProgress === undefined || Array.isArray(value.childProgress)) &&
+    (value.childSkillUnlocks === undefined || Array.isArray(value.childSkillUnlocks)) &&
+    (value.childAchievements === undefined || Array.isArray(value.childAchievements)) &&
     Array.isArray(value.redeemedRewardIds)
   );
 };
 
 const persistState = async (state: FamilyPointsState): Promise<FamilyPointsState> => {
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  const normalizedState = normalizeLevelingState(state);
+  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedState));
 
-  return state;
+  return normalizedState;
 };
 
 export const localFamilyPointsService: FamilyPointsService = {
@@ -63,11 +70,14 @@ export const localFamilyPointsService: FamilyPointsService = {
     const parsedState: unknown = JSON.parse(storedState);
 
     return isFamilyPointsState(parsedState)
-      ? {
+      ? normalizeLevelingState({
           ...parsedState,
           favoriteGoals: parsedState.favoriteGoals ?? [],
           rewardRedemptions: parsedState.rewardRedemptions ?? [],
-        }
+          childProgress: parsedState.childProgress ?? [],
+          childSkillUnlocks: parsedState.childSkillUnlocks ?? [],
+          childAchievements: parsedState.childAchievements ?? [],
+        })
       : null;
   },
   saveState: async (state) => {
@@ -86,6 +96,8 @@ export const localFamilyPointsService: FamilyPointsService = {
     persistState(deleteTaskInState(context.state, input)),
   createReward: async (input, context) =>
     persistState(createRewardInState(context.state, input)),
+  updateReward: async (input, context) =>
+    persistState(updateRewardInState(context.state, input)),
   setRewardActive: async (input, context) =>
     persistState(setRewardActiveInState(context.state, input)),
   submitTask: async (input, context) =>
@@ -106,6 +118,8 @@ export const localFamilyPointsService: FamilyPointsService = {
     persistState(setFavoriteGoalInState(context.state, input)),
   clearFavoriteGoal: async (input, context) =>
     persistState(clearFavoriteGoalInState(context.state, input)),
+  unlockSkill: async (input, context) =>
+    persistState(unlockSkillInState(context.state, input)),
   approveRewardRedemption: async (input, context) =>
     persistState(approveRewardRedemptionInState(context.state, input)),
   rejectRewardRedemption: async (input, context) =>
@@ -127,6 +141,39 @@ export const localFamilyPointsService: FamilyPointsService = {
     };
     await persistState(nextState);
     return { state: nextState, childId: newChild.id };
+  },
+  createParent: async (input, context) => {
+    const newParent = {
+      id: `parent-${Date.now()}`,
+      name: input.name,
+      role: 'parent' as const,
+      isOwner: false,
+      hasFullPermissions: input.hasFullPermissions,
+    };
+    const nextState = {
+      ...context.state,
+      parents: [...(context.state.parents ?? []), newParent],
+    };
+    await persistState(nextState);
+    return { state: nextState, parentId: newParent.id };
+  },
+  deleteParent: async (input, context) => {
+    const nextState = {
+      ...context.state,
+      parents: (context.state.parents ?? []).filter((p) => p.id !== input.parentId),
+    };
+    return persistState(nextState);
+  },
+  updateParent: async (input, context) => {
+    const nextState = {
+      ...context.state,
+      parents: (context.state.parents ?? []).map((p) =>
+        p.id === input.parentId
+          ? { ...p, name: input.name.trim(), hasFullPermissions: input.hasFullPermissions }
+          : p,
+      ),
+    };
+    return persistState(nextState);
   },
   deleteChild: async (input, context) => {
     const nextState = {

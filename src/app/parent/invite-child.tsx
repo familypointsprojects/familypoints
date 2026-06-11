@@ -10,8 +10,28 @@ import { AppButton, AppCard, AppScreen, SectionTitle, StatusBadge } from '@/shar
 
 const APP_SCHEME = 'familypoints';
 const APP_NAME = 'easyQuest';
+const INVITE_TIMEOUT_MS = 15_000;
 
 const buildInviteUrl = (token: string) => `${APP_SCHEME}://invite/${token}`;
+
+const withTimeout = async <TValue,>(
+  promise: Promise<TValue>,
+  timeoutMessage: string,
+): Promise<TValue> => {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), INVITE_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+};
 
 const InviteChildScreen = () => {
   const { session } = useAuth();
@@ -28,7 +48,10 @@ const InviteChildScreen = () => {
     setError('');
 
     try {
-      const newInvite = await createChildInvite(childId, session.profileId);
+      const newInvite = await withTimeout(
+        createChildInvite(childId, session.profileId),
+        'Не удалось создать инвайт: сервер не ответил вовремя',
+      );
       setInvite(newInvite);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unknown error');

@@ -24,6 +24,7 @@ export type DepositInput = {
   projectId: string;
   childId: string; // children.id
   amount: number;
+  skillBonusPercent?: number;
 };
 
 export type ClaimInput = {

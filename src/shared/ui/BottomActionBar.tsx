@@ -3,14 +3,17 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
+  IconAlert,
   IconChest,
   IconCoin,
   IconCompass,
   IconFamily,
   IconMap,
   IconMissions,
+  IconSettings,
   IconShield,
 } from '@/shared/ui/QuestIcons';
+import { FP } from '@/constants/theme';
 
 export type BottomActionIcon =
   | 'children'
@@ -21,10 +24,12 @@ export type BottomActionIcon =
   | 'requests'
   | 'review'
   | 'rewards'
+  | 'settings'
   | 'tasks'
   | 'wishes';
 
 export type BottomActionItem = {
+  attention?: boolean;
   badgeCount?: number;
   icon: BottomActionIcon;
   isActive?: boolean;
@@ -46,6 +51,7 @@ const iconByType = {
   requests: IconFamily,
   review: IconCoin,
   rewards: IconChest,
+  settings: IconSettings,
   tasks: IconMap,
   wishes: IconShield,
 } satisfies Record<BottomActionIcon, ComponentType<{ size?: number }>>;
@@ -70,6 +76,11 @@ export const BottomActionBar = ({ items }: BottomActionBarProps) => {
                 {Boolean(item.badgeCount) && (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>{item.badgeCount}</Text>
+                  </View>
+                )}
+                {item.attention && (
+                  <View style={item.badgeCount ? styles.attentionBadgeWithCount : styles.attentionBadge}>
+                    <IconAlert size={20} />
                   </View>
                 )}
               </View>
@@ -97,7 +108,7 @@ const styles = StyleSheet.create({
   },
   badge: {
     alignItems: 'center',
-    backgroundColor: '#F26A3D',
+    backgroundColor: FP.orange,
     borderColor: '#FFFFFF',
     borderRadius: 10,
     borderWidth: 2,
@@ -115,9 +126,19 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     lineHeight: 12,
   },
+  attentionBadge: {
+    position: 'absolute',
+    right: -7,
+    top: -7,
+  },
+  attentionBadgeWithCount: {
+    left: -7,
+    position: 'absolute',
+    top: -7,
+  },
   bar: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#EFE6D6',
+    backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    borderColor: FP.border,
     borderTopLeftRadius: 34,
     borderTopRightRadius: 34,
     borderTopWidth: 1,
@@ -125,12 +146,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 2,
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingTop: 14,
-    shadowColor: '#17314A',
+    shadowColor: FP.primaryDark,
     shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.12,
-    shadowRadius: 22,
+    shadowOpacity: 0.14,
+    shadowRadius: 24,
     width: '100%',
   },
   iconWrap: {
@@ -153,7 +174,7 @@ const styles = StyleSheet.create({
     transform: [{ translateY: 1 }],
   },
   label: {
-    color: '#A7B0B8',
+    color: '#8B9CAF',
     fontSize: 11,
     fontWeight: '900',
     lineHeight: 13,
@@ -161,6 +182,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   labelActive: {
-    color: '#0F8C78',
+    color: FP.primary,
   },
 });

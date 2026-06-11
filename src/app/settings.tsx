@@ -1,25 +1,57 @@
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
-import { useState } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
+import { useState, useEffect } from 'react';
 
 import { useAuth } from '@/shared/auth';
 import { useLanguage } from '@/shared/i18n';
 import { familyPointsDataSource, isFamilyPointsBackendConfigured } from '@/shared/services/familyPoints';
-import { isSupabaseConfigured } from '@/shared/services/supabase';
+import { isSupabaseConfigured, getSupabaseClient } from '@/shared/services/supabase';
 import { useFamilyPoints } from '@/shared/state';
-import { AppButton, AppCard, AppScreen, AppTextInput, SectionTitle, StatusBadge } from '@/shared/ui';
+import { AppButton, AppCard, AppScreen, AppTextInput, LanguageToggle, SectionTitle, StatusBadge } from '@/shared/ui';
 
 const SettingsScreen = () => {
   const { t } = useLanguage();
-  const { session, signOut } = useAuth();
+  const { session, signOut, deleteAccount } = useAuth();
   const { familyName, updateFamilyName, activeFamilyId } = useFamilyPoints();
 
   const [isEditingFamily, setIsEditingFamily] = useState(false);
   const [editedFamilyName, setEditedFamilyName] = useState('');
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !session) return;
+
+    getSupabaseClient().auth.getSession().then(({ data: sessionData }) => {
+      const email = sessionData.session?.user?.email ?? null;
+      if (email) { setUserEmail(email); return; }
+      // Фолбэк через getUser
+      getSupabaseClient().auth.getUser().then(({ data }) => {
+        setUserEmail(data.user?.email ?? null);
+      });
+    });
+  }, [session]);
 
   const handleSignOut = async () => {
     await signOut();
     router.replace('/');
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = Platform.OS === 'web'
+      ? window.confirm('Это действие необратимо. Ваш аккаунт и все данные будут удалены навсегда. Продолжить?')
+      : true; // на native покажем Alert ниже
+
+    if (!confirmed) return;
+
+    try {
+      await deleteAccount();
+      router.replace('/');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Не удалось удалить аккаунт';
+      if (Platform.OS === 'web') {
+        window.alert(msg);
+      }
+    }
   };
 
   const handleStartEditFamily = () => {
@@ -36,6 +68,11 @@ const SettingsScreen = () => {
 
   return (
     <AppScreen title={t('settings.title')} subtitle={t('settings.subtitle')}>
+      {/* Language */}
+      <AppCard>
+        <SectionTitle title={t('common.language')} />
+        <LanguageToggle />
+      </AppCard>
       {activeFamilyId && (
         <AppCard>
           <SectionTitle title="Семья" />
@@ -80,6 +117,12 @@ const SettingsScreen = () => {
         {session ? (
           <View style={styles.stack}>
             <StatusBadge label={t('auth.signedInAs', { name: session.name })} tone="success" />
+            {userEmail && (
+              <View style={styles.emailRow}>
+                <Text style={styles.emailLabel}>📧</Text>
+                <Text style={styles.emailText}>{userEmail}</Text>
+              </View>
+            )}
             <Text style={styles.meta}>
               {session.role === 'parent' ? t('auth.roleParent') : t('auth.roleChild')}
             </Text>
@@ -121,6 +164,12 @@ const SettingsScreen = () => {
             onPress={handleSignOut}
             disabled={!session}
           />
+          <AppButton
+            title="Удалить аккаунт"
+            variant="ghost"
+            onPress={handleDeleteAccount}
+            disabled={!session}
+          />
         </View>
       </AppCard>
     </AppScreen>
@@ -158,5 +207,18 @@ const styles = StyleSheet.create({
     color: '#6B7B86',
     fontSize: 14,
     lineHeight: 20,
+  },
+  emailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  emailLabel: {
+    fontSize: 14,
+  },
+  emailText: {
+    color: '#12314A',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

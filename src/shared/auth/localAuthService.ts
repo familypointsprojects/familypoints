@@ -51,6 +51,9 @@ export const localAuthService: AuthService = {
   signUp: async () => {
     throw new Error('Email sign-up is not available in local mode. Use demo login.');
   },
+  signInWithGoogle: async () => {
+    throw new Error('Google sign-in is not available in local mode. Use demo login.');
+  },
   signInDemoRole: async (input) => {
     const session = createDemoSession(input);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(session));
@@ -73,5 +76,8 @@ export const localAuthService: AuthService = {
   },
   signOut: async () => {
     await AsyncStorage.removeItem(STORAGE_KEY);
+  },
+  deleteAccount: async () => {
+    throw new Error('Delete account is not available in local mode.');
   },
 };

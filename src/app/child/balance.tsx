@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { Fragment, useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { FP } from '@/constants/theme';
@@ -11,6 +12,7 @@ import {
   AppScreen,
   EmptyState,
   PointsBadge,
+  RocketProgressBar,
   SectionTitle,
   SegmentedControl,
   SegmentedControlOption,
@@ -18,14 +20,24 @@ import {
 } from '@/shared/ui';
 import { getRewardTitle, getTaskTitle, getTransactionTitle, getWishTitle } from '@/shared/utils/content';
 import { getFavoriteGoalForChild } from '@/shared/utils/favoriteGoals';
+import { getMissionCountdown } from '@/shared/utils/growthMissions';
 import { getBalance, getPotentialPoints, getProgressPercent } from '@/shared/utils/points';
+import { isRewardAvailableForChild } from '@/shared/utils/rewards';
 import { findTask, getAvailableTasksForChild, getDailyTasksForToday, hasSubmittedDailyTaskToday } from '@/shared/utils/tasks';
 import { getVisibleWishes } from '@/shared/utils/wishes';
 
 type ChildBalanceTab = 'balance' | 'taskHistory';
+type InvestmentSummaryTone = 'invested' | 'expected' | 'profit';
+
+type InvestmentSummaryItem = {
+  label: string;
+  tone: InvestmentSummaryTone;
+  value: string;
+};
 
 const transactionLabelKeys: Record<PointTransactionType, TranslationKey> = {
   earn: 'transactionType.earn',
+  skill_bonus: 'transactionType.skill_bonus',
   spend: 'transactionType.spend',
   penalty: 'transactionType.penalty',
   manual_adjustment: 'transactionType.manual_adjustment',
@@ -37,12 +49,28 @@ const transactionLabelKeys: Record<PointTransactionType, TranslationKey> = {
 const formatDate = (dateValue: string, locale: string): string =>
   new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(dateValue));
 
+const getInvestmentSummaryToneStyle = (
+  tone: InvestmentSummaryTone,
+): 'statInvested' | 'statExpected' | 'statProfit' => {
+  if (tone === 'invested') {
+    return 'statInvested';
+  }
+
+  if (tone === 'expected') {
+    return 'statExpected';
+  }
+
+  return 'statProfit';
+};
+
 const ChildBalanceScreen = () => {
   const { language, t } = useLanguage();
   const { activeChildId } = useActiveChild();
   const { pointTransactions, taskSubmissions, tasks, rewards, rewardRedemptions, wishes, favoriteGoals } = useFamilyPoints();
-  const { myInvestments } = useGrowthMissions();
+  const { myInvestments, reload } = useGrowthMissions();
   const [activeTab, setActiveTab] = useState<ChildBalanceTab>('balance');
+
+  useFocusEffect(useCallback(() => { reload(); }, [reload]));
 
   const childTransactions = pointTransactions.filter((tx) => tx.childId === activeChildId);
   const balance = getBalance(pointTransactions, activeChildId);
@@ -56,20 +84,51 @@ const ChildBalanceScreen = () => {
   const totalSpent = Math.abs(childTransactions
     .filter((tx) => tx.points < 0 && tx.type !== 'investment_deposit')
     .reduce((s, tx) => s + tx.points, 0));
-  const totalInvested = Math.abs(childTransactions
-    .filter((tx) => tx.type === 'investment_deposit')
-    .reduce((s, tx) => s + tx.points, 0));
-  const totalPayoutReceived = childTransactions
-    .filter((tx) => tx.type === 'investment_payout')
-    .reduce((s, tx) => s + tx.points, 0);
   const activeInv = myInvestments.filter((inv) => !inv.claimedAt);
-  const expectedPayout = activeInv.reduce((s, inv) => s + inv.payoutAmount, 0);
+  const claimedInv = myInvestments.filter((inv) => inv.claimedAt);
+  const activeInvestmentAmount = activeInv.reduce((s, inv) => s + inv.amount, 0);
+  const activeExpectedPayout = activeInv.reduce((s, inv) => s + inv.payoutAmount, 0);
+  const activeExpectedProfit = activeInv.reduce(
+    (sum, inv) => sum + Math.max(inv.payoutAmount - inv.amount, 0),
+    0,
+  );
+  const pastInvestmentProfit = claimedInv.reduce(
+    (sum, inv) => sum + Math.max(inv.payoutAmount - inv.amount, 0),
+    0,
+  );
+  const investmentSummaryItems: InvestmentSummaryItem[] = [
+    ...(activeInvestmentAmount > 0
+      ? [{
+        label: t('missions.statInvested'),
+        tone: 'invested' as const,
+        value: `🔒 ${activeInvestmentAmount}`,
+      }]
+      : []),
+    ...(activeExpectedProfit > 0
+      ? [{
+        label: t('missions.statActiveProfit'),
+        tone: 'expected' as const,
+        value: `+${activeExpectedProfit}`,
+      }]
+      : []),
+    ...(pastInvestmentProfit > 0
+      ? [{
+        label: t('missions.statPastProfit'),
+        tone: 'profit' as const,
+        value: `+${pastInvestmentProfit}`,
+      }]
+      : []),
+  ];
 
   // Focus goal
   const visibleWishes = getVisibleWishes(wishes, rewards, rewardRedemptions);
   const favoriteGoal = getFavoriteGoalForChild(favoriteGoals, activeChildId);
   const focusReward = favoriteGoal?.type === 'reward'
-    ? rewards.find((r) => r.id === favoriteGoal.itemId && r.isActive !== false)
+    ? rewards.find((r) =>
+        r.id === favoriteGoal.itemId &&
+        r.isActive !== false &&
+        isRewardAvailableForChild(r, activeChildId),
+      )
     : undefined;
   const focusWish = favoriteGoal?.type === 'wish'
     ? visibleWishes.find((w) => w.id === favoriteGoal.itemId && (w.status ?? 'pending') === 'approved')
@@ -82,7 +141,7 @@ const ChildBalanceScreen = () => {
   const goalProgress = focusGoal ? getProgressPercent(balance, focusGoal.price) : 0;
   const goalRemaining = focusGoal ? Math.max(focusGoal.price - balance, 0) : 0;
   const availableTasks = getAvailableTasksForChild(tasks, taskSubmissions, activeChildId);
-  const pendingDailyTasks = getDailyTasksForToday(tasks).filter(
+  const pendingDailyTasks = getDailyTasksForToday(tasks, activeChildId).filter(
     (task) => !hasSubmittedDailyTaskToday(taskSubmissions, task.id, activeChildId),
   );
   const availableTasksPoints = [...availableTasks, ...pendingDailyTasks].reduce((s, task) => s + task.points, 0);
@@ -114,7 +173,7 @@ const ChildBalanceScreen = () => {
 
         {/* "Ждёт тебя" block — only when there's something incoming */}
         {(potentialPoints > 0 || activeInv.length > 0) && (() => {
-          const totalIncoming = potentialPoints + expectedPayout;
+          const totalIncoming = potentialPoints + activeExpectedPayout;
           return (
             <View style={styles.incomingBox}>
               <Text style={styles.incomingTitle}>{t('missions.incomingTitle')}</Text>
@@ -128,10 +187,7 @@ const ChildBalanceScreen = () => {
               )}
 
               {activeInv.map((inv) => {
-                const diffMs = new Date(inv.maturesAt).getTime() - Date.now();
-                const ready  = diffMs <= 0;
-                const days   = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                const hours  = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const { days, hours, minutes, ready } = getMissionCountdown(inv.maturesAt);
                 return (
                   <View key={inv.id} style={styles.incomingRow}>
                     <Text style={styles.incomingIcon}>{ready ? '🎉' : '🔒'}</Text>
@@ -140,7 +196,9 @@ const ChildBalanceScreen = () => {
                       <Text style={styles.incomingMeta}>
                         {ready
                           ? t('missions.dashboard.ready')
-                          : t('missions.dashboard.matureIn', { days: String(days), hours: String(hours) })}
+                          : days > 0 || hours > 0
+                            ? t('missions.dashboard.matureIn', { days: String(days), hours: String(hours) })
+                            : t('missions.dashboard.matureInMinutes', { minutes: String(minutes) })}
                       </Text>
                     </View>
                     <Text style={[styles.incomingAmount, ready && styles.incomingAmountReady]}>
@@ -183,28 +241,19 @@ const ChildBalanceScreen = () => {
         </View>
 
         {/* Stats row 2: investment stats (only if any investment activity) */}
-        {(totalInvested > 0 || totalPayoutReceived > 0) && (
+        {investmentSummaryItems.length > 0 && (
           <View style={[styles.statsRow, styles.statsRowInvest]}>
-            {totalInvested > 0 && (
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, styles.statInvested]}>🔒 {totalInvested}</Text>
-                <Text style={styles.statLabel}>{t('missions.statInvested')}</Text>
-              </View>
-            )}
-            {totalInvested > 0 && expectedPayout > 0 && <View style={styles.statDivider} />}
-            {expectedPayout > 0 && (
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, styles.statExpected]}>{expectedPayout}</Text>
-                <Text style={styles.statLabel}>{t('missions.statExpected')}</Text>
-              </View>
-            )}
-            {totalPayoutReceived > 0 && totalInvested > 0 && <View style={styles.statDivider} />}
-            {totalPayoutReceived > 0 && (
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, styles.statPayout]}>+{totalPayoutReceived}</Text>
-                <Text style={styles.statLabel}>{t('missions.statPayout')}</Text>
-              </View>
-            )}
+            {investmentSummaryItems.map((item, index) => (
+              <Fragment key={item.label}>
+                {index > 0 && <View style={styles.statDivider} />}
+                <View style={styles.statItem}>
+                  <Text style={[styles.statValue, styles[getInvestmentSummaryToneStyle(item.tone)]]}>
+                    {item.value}
+                  </Text>
+                  <Text style={styles.statLabel}>{item.label}</Text>
+                </View>
+              </Fragment>
+            ))}
           </View>
         )}
       </AppCard>
@@ -214,9 +263,7 @@ const ChildBalanceScreen = () => {
         <AppCard>
           <SectionTitle title={t('child.balance.goalProgress')} />
           <Text style={styles.goalTitle} numberOfLines={1}>{focusGoal.title}</Text>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${goalProgress}%` }]} />
-          </View>
+          <RocketProgressBar progress={goalProgress} />
           <View style={styles.goalMeta}>
             <Text style={styles.goalPercent}>{goalProgress}%</Text>
             {goalRemaining > 0 && (
@@ -285,13 +332,7 @@ const ChildBalanceScreen = () => {
               ? myInvestments.find((inv) => inv.depositTxId === transaction.id)
               : null;
             const matureCountdown = linkedInv && !linkedInv.claimedAt ? (() => {
-              const diffMs = new Date(linkedInv.maturesAt).getTime() - Date.now();
-              if (diffMs <= 0) return { ready: true, days: 0, hours: 0 };
-              return {
-                ready: false,
-                days: Math.floor(diffMs / (1000 * 60 * 60 * 24)),
-                hours: Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-              };
+              return getMissionCountdown(linkedInv.maturesAt);
             })() : null;
             return (
               <AppCard key={transaction.id} style={isDeposit ? styles.depositCard : isPayout ? styles.payoutCard : undefined}>
@@ -312,7 +353,16 @@ const ChildBalanceScreen = () => {
                           <Text style={[styles.typeBadgeText, matureCountdown.ready ? styles.typeBadgeTextPayout : styles.typeBadgeTextDeposit]}>
                             {matureCountdown.ready
                               ? `🎉 ${t('missions.payoutLabel', { payout: String(linkedInv.payoutAmount) })}`
-                              : `→ ${linkedInv.payoutAmount} ${t('common.pointsShort')} ${t('missions.dashboard.matureIn', { days: String(matureCountdown.days), hours: String(matureCountdown.hours) })}`}
+                              : `→ ${linkedInv.payoutAmount} ${t('common.pointsShort')} ${
+                                matureCountdown.days > 0 || matureCountdown.hours > 0
+                                  ? t('missions.dashboard.matureIn', {
+                                      days: String(matureCountdown.days),
+                                      hours: String(matureCountdown.hours),
+                                    })
+                                  : t('missions.dashboard.matureInMinutes', {
+                                      minutes: String(matureCountdown.minutes),
+                                    })
+                              }`}
                           </Text>
                         </View>
                       )}
@@ -559,6 +609,9 @@ const styles = StyleSheet.create({
   },
   statPayout: {
     color: FP.primary,
+  },
+  statProfit: {
+    color: FP.primaryDark,
   },
   // Goal progress
   goalTitle: {

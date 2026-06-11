@@ -31,8 +31,10 @@ export type AuthService = {
   getSession: () => Promise<AuthSession | null>;
   signIn: (input: SignInInput) => Promise<AuthSession>;
   signUp: (input: SignUpInput) => Promise<AuthSession>;
+  signInWithGoogle: () => Promise<AuthSession>;
   signInDemoRole: (input: SignInDemoRoleInput) => Promise<AuthSession>;
   signInAsChild: (input: SignInAsChildInput) => Promise<AuthSession>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   subscribeToAuthChanges?: (callback: (session: AuthSession | null) => void) => () => void;
 };

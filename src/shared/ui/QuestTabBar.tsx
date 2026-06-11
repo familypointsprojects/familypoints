@@ -12,6 +12,7 @@ import {
   IconFamily,
   IconMap,
   IconPlus,
+  IconSettings,
   IconShield,
 } from './QuestIcons';
 
@@ -26,10 +27,11 @@ type TabItem = {
 };
 
 const childItems: TabItem[] = [
-  { key: 'home', labelKey: 'common.home', route: '/child/dashboard', Icon: IconCompass },
-  { key: 'tasks', labelKey: 'common.tasks', route: '/child/tasks', Icon: IconMap },
-  { key: 'balance', labelKey: 'child.quick.points', route: '/child/balance', Icon: IconCoin },
-  { key: 'rewards', labelKey: 'common.rewards', route: '/child/rewards', Icon: IconChest },
+  { key: 'home',     labelKey: 'common.home',        route: '/child/dashboard', Icon: IconCompass },
+  { key: 'tasks',    labelKey: 'common.tasks',        route: '/child/tasks',     Icon: IconMap },
+  { key: 'balance',  labelKey: 'child.quick.points',  route: '/child/balance',   Icon: IconCoin },
+  { key: 'rewards',  labelKey: 'common.rewards',      route: '/child/rewards',   Icon: IconChest },
+  { key: 'settings', labelKey: 'common.settings',     route: '/settings',        Icon: IconSettings },
 ];
 
 const parentItems: TabItem[] = [

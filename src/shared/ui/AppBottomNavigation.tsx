@@ -1,9 +1,16 @@
 import { router, usePathname } from 'expo-router';
 
+import { useAuth } from '@/shared/auth';
 import { useLanguage } from '@/shared/i18n';
 import { useActiveChild, useFamilyPoints } from '@/shared/state';
 import { BottomActionBar, BottomActionItem } from '@/shared/ui/BottomActionBar';
 import { getBalance } from '@/shared/utils/points';
+import { getDailyRewardBalance, getDailyTaskBalance } from '@/shared/utils/pricingGuidance';
+import {
+  getDailyRewardLockReason,
+  isDailyRewardAvailableToday,
+  isRewardAvailableForChild,
+} from '@/shared/utils/rewards';
 import { getTotalAvailableTasksCount } from '@/shared/utils/tasks';
 
 const isActiveRoute = (pathname: string, route: string): boolean => pathname === route;
@@ -13,13 +20,13 @@ type BottomNavigationRoute =
   | '/parent/tasks'
   | '/parent/submissions'
   | '/parent/rewards'
-  | '/parent/redemptions'
   | '/parent/growth-missions'
   | '/child/dashboard'
   | '/child/tasks'
   | '/child/balance'
   | '/child/rewards'
-  | '/child/growth-missions';
+  | '/child/growth-missions'
+  | '/settings';
 
 const pushIfInactive = (pathname: string, route: BottomNavigationRoute) => {
   if (isActiveRoute(pathname, route)) {
@@ -32,15 +39,31 @@ const pushIfInactive = (pathname: string, route: BottomNavigationRoute) => {
 export const AppBottomNavigation = () => {
   const pathname = usePathname();
   const { t } = useLanguage();
+  const { session } = useAuth();
   const { activeChildId } = useActiveChild();
   const { pointTransactions, rewardRedemptions, rewards, taskSubmissions, tasks, wishes = [] } = useFamilyPoints();
 
-  if (pathname.startsWith('/parent')) {
+  const isSettings = pathname === '/settings';
+  const effectivePath = isSettings
+    ? session?.role === 'parent' ? '/parent' : '/child'
+    : pathname;
+
+  if (effectivePath.startsWith('/parent')) {
     const pendingSubmissionCount = taskSubmissions.filter((item) => item.status === 'pending').length;
     const pendingRewardCount = rewardRedemptions.filter(
       (item) => item.status === 'requested' || item.status === 'approved',
     ).length;
     const pendingWishCount = wishes.filter((item) => !item.status || item.status === 'pending').length;
+    const pendingRewardAreaCount = pendingRewardCount + pendingWishCount;
+    const hasTaskRecommendations = tasks.some(
+      (task) => task.isDaily && getDailyTaskBalance(task).status !== 'ok',
+    );
+    const hasRewardRecommendations = rewards.some(
+      (reward) =>
+        reward.isActive !== false &&
+        reward.isDailyReward &&
+        getDailyRewardBalance({ reward, rewards, tasks }).status !== 'ok',
+    );
     const parentItems: BottomActionItem[] = [
       {
         icon: 'children',
@@ -50,6 +73,7 @@ export const AppBottomNavigation = () => {
         onPress: () => pushIfInactive(pathname, '/parent/dashboard'),
       },
       {
+        attention: hasTaskRecommendations,
         icon: 'tasks',
         isActive: isActiveRoute(pathname, '/parent/tasks'),
         key: 'tasks',
@@ -65,20 +89,13 @@ export const AppBottomNavigation = () => {
         onPress: () => pushIfInactive(pathname, '/parent/submissions'),
       },
       {
-        badgeCount: pendingWishCount,
+        attention: hasRewardRecommendations,
+        badgeCount: pendingRewardAreaCount,
         icon: 'rewards',
         isActive: isActiveRoute(pathname, '/parent/rewards'),
         key: 'rewards',
         label: t('parent.quick.rewards'),
         onPress: () => pushIfInactive(pathname, '/parent/rewards'),
-      },
-      {
-        badgeCount: pendingRewardCount,
-        icon: 'requests',
-        isActive: isActiveRoute(pathname, '/parent/redemptions'),
-        key: 'requests',
-        label: t('parent.quick.requests'),
-        onPress: () => pushIfInactive(pathname, '/parent/redemptions'),
       },
       {
         icon: 'missions',
@@ -92,7 +109,7 @@ export const AppBottomNavigation = () => {
     return <BottomActionBar items={parentItems} />;
   }
 
-  if (pathname.startsWith('/child')) {
+  if (effectivePath.startsWith('/child')) {
     const balance = getBalance(pointTransactions, activeChildId);
     const availableTasksCount = getTotalAvailableTasksCount(tasks, taskSubmissions, activeChildId);
     const openRequestIds = new Set(
@@ -101,7 +118,18 @@ export const AppBottomNavigation = () => {
         .map((r) => r.rewardId),
     );
     const affordableRewardsCount = rewards.filter(
-      (r) => r.isActive !== false && !openRequestIds.has(r.id) && balance >= r.price,
+      (r) =>
+        r.isActive !== false &&
+        isRewardAvailableForChild(r, activeChildId) &&
+        !openRequestIds.has(r.id) &&
+        balance >= r.price &&
+        (
+          !r.isDailyReward ||
+          (
+            isDailyRewardAvailableToday(r, activeChildId) &&
+            !getDailyRewardLockReason(r, balance, tasks, taskSubmissions, activeChildId)
+          )
+        ),
     ).length;
 
     const childItems: BottomActionItem[] = [

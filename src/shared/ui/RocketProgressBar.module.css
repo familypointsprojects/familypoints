@@ -1,0 +1,62 @@
+.wrap {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  overflow: visible;
+  width: 100%;
+}
+
+.megaProgress {
+  --progress: 72%;
+  --orange: #ff642d;
+  --gold: #f7b721;
+  --lime: #d8ff3e;
+  --cyan: #10c7e8;
+  background: rgba(8, 20, 34, .42);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  height: 22px;
+  overflow: visible;
+  padding: 3px;
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.megaProgress::after {
+  background: radial-gradient(circle, rgba(216, 255, 62, .72) 0%, rgba(16, 199, 232, .34) 42%, transparent 72%);
+  border-radius: 50%;
+  content: "";
+  filter: blur(1px);
+  height: 36px;
+  left: calc(var(--progress) - 4px);
+  pointer-events: none;
+  position: absolute;
+  top: -7px;
+  width: 44px;
+  z-index: 2;
+}
+
+.megaFill {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.42), transparent 18%, rgba(255,255,255,.26) 38%, transparent 58%),
+    repeating-linear-gradient(18deg, rgba(255,255,255,.22) 0 7px, transparent 7px 15px),
+    linear-gradient(90deg, #ff3d24 0%, var(--orange) 32%, var(--gold) 68%, var(--lime) 100%);
+  background-size: 120px 100%, 48px 100%, 100% 100%;
+  border-radius: inherit;
+  box-shadow: 0 0 18px rgba(255, 100, 45, .42), 0 0 24px rgba(216, 255, 62, .34);
+  height: 100%;
+  position: relative;
+  width: var(--progress);
+}
+
+.rocketImg {
+  filter: drop-shadow(0 0 8px rgba(216, 255, 62, .58)) drop-shadow(0 0 12px rgba(16, 199, 232, .36));
+  left: calc(var(--progress) - 20px);
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56px;
+  z-index: 4;
+}

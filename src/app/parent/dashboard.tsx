@@ -19,6 +19,7 @@ const ParentDashboardScreen = () => {
   const { t } = useLanguage();
   const {
     children = [],
+    parents = [],
     favoriteGoals,
     hasHydrated,
     pointTransactions,
@@ -28,6 +29,8 @@ const ParentDashboardScreen = () => {
     tasks,
     wishes = [],
     deleteChild,
+    deleteParent,
+    activeParentId,
   } = useFamilyPoints();
 
   if (!hasHydrated) {
@@ -43,6 +46,17 @@ const ParentDashboardScreen = () => {
   const pendingCount = taskSubmissions.filter((s) => s.status === 'pending').length;
   const rewardRequestCount = rewardRedemptions.filter((r) => r.status === 'requested').length;
   const wishRequestCount = wishes.filter((w) => !w.status || w.status === 'pending').length;
+
+  const handleDeleteParent = (parentId: string, parentName: string) => {
+    Alert.alert(
+      `Удалить ${parentName}?`,
+      'Родитель будет удалён из семьи. Это действие нельзя отменить.',
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: 'Удалить', style: 'destructive', onPress: () => deleteParent({ parentId }) },
+      ],
+    );
+  };
 
   const handleDeleteChild = (childId: string, childName: string) => {
     Alert.alert(
@@ -62,6 +76,74 @@ const ParentDashboardScreen = () => {
 
       <AppCard>
         <SectionTitle title={t('parent.children.title')} />
+
+        {parents.length > 0 && (
+          <>
+            <SectionTitle title={t('parent.children.parents')} />
+            {parents.map((parent) => (
+              <View key={parent.id} style={styles.childRow}>
+                <View style={[styles.avatar, { backgroundColor: '#A0AEC0' }]}>
+                  <Text style={styles.avatarText}>{parent.name.slice(0, 1)}</Text>
+                </View>
+                <View style={styles.childInfo}>
+                  <Text style={styles.childName}>{parent.name}</Text>
+                  {parent.isOwner && <StatusBadge label="Создатель" tone="warning" />}
+                  {!parent.isOwner && (
+                    <StatusBadge
+                      label={
+                        parent.hasFullPermissions
+                          ? t('parent.children.fullPermissions')
+                          : t('parent.children.limitedPermissions')
+                      }
+                      tone={parent.hasFullPermissions ? 'success' : 'muted'}
+                    />
+                  )}
+                </View>
+                {!parent.isOwner && parent.id !== activeParentId && (
+                  <View style={styles.parentActions}>
+                    <AppButton
+                      title="Пригласить"
+                      variant="secondary"
+                      onPress={() =>
+                        router.push({
+                          pathname: '/parent/invite-parent',
+                          params: {
+                            hasFullPermissions: String(parent.hasFullPermissions ?? false),
+                          },
+                        })
+                      }
+                      style={styles.actionButton}
+                    />
+                    <View style={styles.childActions}>
+                      <AppButton
+                        title="Изменить"
+                        variant="secondary"
+                        onPress={() =>
+                          router.push({
+                            pathname: '/parent/edit-parent',
+                            params: {
+                              parentId: parent.id,
+                              parentName: parent.name,
+                              parentHasFullPermissions: String(parent.hasFullPermissions ?? false),
+                            },
+                          })
+                        }
+                        style={styles.actionButton}
+                      />
+                      <AppButton
+                        title={t('parent.children.delete')}
+                        variant="danger"
+                        onPress={() => handleDeleteParent(parent.id, parent.name)}
+                        style={styles.actionButton}
+                      />
+                    </View>
+                  </View>
+                )}
+              </View>
+            ))}
+          </>
+        )}
+
         {children.length === 0 ? (
           <Text style={styles.empty}>{t('parent.children.empty')}</Text>
         ) : (
@@ -148,7 +230,7 @@ const ParentDashboardScreen = () => {
         <AppButton
           title={t('parent.children.add')}
           variant="secondary"
-          onPress={() => router.push('/parent/create-child')}
+          onPress={() => router.push('/parent/add-member')}
           style={styles.addButton}
         />
       </AppCard>
@@ -245,6 +327,9 @@ const styles = StyleSheet.create({
     color: '#12314A',
     fontSize: 16,
     fontWeight: '900',
+  },
+  parentActions: {
+    gap: 8,
   },
   childActions: {
     flexDirection: 'row',
