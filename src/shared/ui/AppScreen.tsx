@@ -13,10 +13,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FP } from '@/constants/theme';
 import { useLanguage } from '@/shared/i18n';
+import { useActiveChild, useFamilyPoints } from '@/shared/state';
 import { AppHeaderMenu } from '@/shared/ui/AppHeaderMenu';
+import { BalancePill } from '@/shared/ui/BalancePill';
 import { BrandLogo } from '@/shared/ui/BrandLogo';
 import { LanguageToggle } from '@/shared/ui/LanguageToggle';
 import { shouldShowBottomNavigation } from '@/shared/ui/bottomNavigationRoutes';
+import { getBalance } from '@/shared/utils/points';
 
 type AppScreenProps = PropsWithChildren<{
   bottomBar?: ReactNode;
@@ -36,8 +39,12 @@ export const AppScreen = ({
 }: AppScreenProps) => {
   const pathname = usePathname();
   const { t } = useLanguage();
+  const { activeChildId } = useActiveChild();
+  const { pointTransactions } = useFamilyPoints();
   const isDashboard = pathname === '/parent/dashboard' || pathname === '/child/dashboard';
   const isWelcome = pathname === '/';
+  const shouldShowBalancePill = pathname.startsWith('/child') && pathname !== '/child/balance';
+  const childBalance = shouldShowBalancePill ? getBalance(pointTransactions, activeChildId) : 0;
   const hasBottomNavigationSpace =
     bottomBar !== undefined || shouldShowBottomNavigation(pathname);
   const shouldShowBackButton =
@@ -59,6 +66,8 @@ export const AppScreen = ({
 
   return (
     <View style={styles.screenRoot}>
+      {/* Subtle dot grid overlay at the top */}
+      <View style={styles.gridLayer} pointerEvents="none" />
       <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
         <ScrollView
           alwaysBounceHorizontal={false}
@@ -72,19 +81,28 @@ export const AppScreen = ({
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           scrollIndicatorInsets={hasBottomNavigationSpace ? styles.scrollIndicatorInsets : undefined}>
-          <View style={[styles.topBar, isWelcome && styles.topBarWelcome]}>
-            {shouldShowBackButton ? (
-              <Pressable
-                accessibilityRole="button"
-                onPress={handleBackPress}
-                style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
-                <Text style={styles.backText}>{t('common.back')}</Text>
-              </Pressable>
-            ) : (
-              !isWelcome && <BrandLogo height={44} style={styles.topLogo} />
-            )}
-            {isWelcome ? <LanguageToggle /> : <AppHeaderMenu />}
-          </View>
+          {!hasBottomNavigationSpace && (
+            <View style={[styles.topBar, isWelcome && styles.topBarWelcome]}>
+              {shouldShowBackButton ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={handleBackPress}
+                  style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
+                  <Text style={styles.backText}>{t('common.back')}</Text>
+                </Pressable>
+              ) : (
+                !isWelcome && <BrandLogo height={44} style={styles.topLogo} />
+              )}
+              {isWelcome ? (
+                <LanguageToggle />
+              ) : (
+                <View style={styles.topActions}>
+                  {shouldShowBalancePill && <BalancePill points={childBalance} />}
+                  <AppHeaderMenu />
+                </View>
+              )}
+            </View>
+          )}
 
           {Boolean(title || subtitle) && (
             <View style={styles.header}>
@@ -108,9 +126,19 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   safeArea: {
-    backgroundColor: FP.bg,
+    backgroundColor: 'transparent',
     flex: 1,
     minHeight: 0,
+  },
+  gridLayer: {
+    bottom: 0,
+    left: 0,
+    opacity: 0.55,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    borderColor: 'rgba(22, 71, 183, 0.055)',
+    borderWidth: 0,
   },
   scroll: {
     flex: 1,
@@ -119,10 +147,10 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 760,
     alignSelf: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    paddingTop: 12,
-    gap: 16,
+    paddingHorizontal: 18,
+    paddingBottom: 22,
+    paddingTop: 10,
+    gap: 14,
   },
   contentWithBottomBar: {
     paddingBottom: 148,
@@ -139,8 +167,8 @@ const styles = StyleSheet.create({
     bottom: 148,
   },
   header: {
-    gap: 6,
-    marginBottom: 4,
+    gap: 5,
+    marginBottom: 2,
   },
   topBar: {
     alignItems: 'center',
@@ -155,6 +183,14 @@ const styles = StyleSheet.create({
   topLogo: {
     flexShrink: 0,
   },
+  topActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexShrink: 1,
+    gap: 10,
+    justifyContent: 'flex-end',
+    minWidth: 0,
+  },
   backButton: {
     alignSelf: 'flex-start',
     borderRadius: 10,
@@ -162,7 +198,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   backText: {
-    color: FP.primary,
+    color: FP.primaryDark,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -171,8 +207,9 @@ const styles = StyleSheet.create({
   },
   title: {
     color: FP.text,
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 30,
+    fontWeight: '900',
+    letterSpacing: 0,
   },
   subtitle: {
     color: FP.textSub,

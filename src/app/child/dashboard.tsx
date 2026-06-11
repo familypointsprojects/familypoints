@@ -1,5 +1,8 @@
-import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { Image } from 'expo-image';
+import { Platform, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 import { FP } from '@/constants/theme';
 import { useLanguage } from '@/shared/i18n';
@@ -9,12 +12,18 @@ import {
   AppButton,
   AppCard,
   AppScreen,
+  LevelHeroCard,
+  RocketProgressBar,
   SectionTitle,
   StatusBadge,
+  StreakWidget,
 } from '@/shared/ui';
 import { getRewardTitle, getTaskTitle, getWishTitle } from '@/shared/utils/content';
 import { getFavoriteGoalForChild } from '@/shared/utils/favoriteGoals';
+import { getMissionCountdown } from '@/shared/utils/growthMissions';
+import { getChildLevelProgressFromXp, getChildProgress, getSkillRank } from '@/shared/utils/leveling';
 import { getBalance, getNearestWish, getPotentialPoints, getProgressPercent } from '@/shared/utils/points';
+import { isRewardAvailableForChild } from '@/shared/utils/rewards';
 import {
   getAvailableTasksForChild,
   getDailyTasksForToday,
@@ -23,29 +32,46 @@ import {
 } from '@/shared/utils/tasks';
 import { getVisibleWishes } from '@/shared/utils/wishes';
 
-const pluralQuest = (n: number) => {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod100 >= 11 && mod100 <= 14) return `${n} квестов`;
-  if (mod10 === 1) return `${n} квест`;
-  if (mod10 >= 2 && mod10 <= 4) return `${n} квеста`;
-  return `${n} квестов`;
-};
+// ─── Mini task icon palettes ──────────────────────────────────────────────────
+const MINI_PALETTES = [
+  { bg: '#E5EFFF', fg: FP.primary },
+  { bg: '#FFE9DC', fg: FP.orange },
+  { bg: FP.mintLight, fg: '#15786A' },
+  { bg: '#EDE9FF', fg: '#5040C4' },
+  { bg: FP.cyanLight, fg: '#0B6F8A' },
+] as const;
 
-const getCountdown = (maturesAt: string) => {
-  const diffMs = new Date(maturesAt).getTime() - Date.now();
-  if (diffMs <= 0) return { days: 0, hours: 0, ready: true };
-  const days  = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  return { days, hours, ready: false };
-};
+const MiniIconStar = ({ color }: { color: string }) => (
+  <Svg width={18} height={18} viewBox="0 0 32 32">
+    <Path d="M16 4l3 9 9 3-9 3-3 11-3-11-9-3 9-3z" fill={color} />
+  </Svg>
+);
+const MiniIconBolt = ({ color }: { color: string }) => (
+  <Svg width={18} height={18} viewBox="0 0 32 32">
+    <Path d="M18 4L10 18h8l-4 10 12-14h-8z" fill={color} />
+  </Svg>
+);
+const MiniIconBook = ({ color }: { color: string }) => (
+  <Svg width={18} height={18} viewBox="0 0 32 32">
+    <Path d="M9 6h12a4 4 0 014 4v16H11a4 4 0 01-4-4V8a2 2 0 012-2z" fill={color} />
+  </Svg>
+);
+const MiniIconLeaf = ({ color }: { color: string }) => (
+  <Svg width={18} height={18} viewBox="0 0 32 32">
+    <Path d="M16 16c-6-1-9-5-8-10 6 0 9 4 8 10z" fill={color} />
+    <Path d="M17 18c6-2 9-6 7-11-6 1-8 5-7 11z" fill={color} opacity={0.6} />
+  </Svg>
+);
+const MINI_ICONS = [MiniIconStar, MiniIconBolt, MiniIconBook, MiniIconLeaf, MiniIconStar] as const;
 
 const ChildDashboardScreen = () => {
   const { t } = useLanguage();
-  const { activeChildId, activeChildName } = useActiveChild();
-  const { myInvestments } = useGrowthMissions();
+  const { activeChild, activeChildId, activeChildName } = useActiveChild();
+  const { myInvestments, reload } = useGrowthMissions();
   const {
     hasHydrated,
+    childProgress: storedChildProgress,
+    childSkillUnlocks,
     favoriteGoals,
     pointTransactions,
     rewardRedemptions,
@@ -54,6 +80,8 @@ const ChildDashboardScreen = () => {
     tasks,
     wishes,
   } = useFamilyPoints();
+
+  useFocusEffect(useCallback(() => { reload(); }, [reload]));
 
   if (!hasHydrated) {
     return (
@@ -69,12 +97,22 @@ const ChildDashboardScreen = () => {
 
   const balance = getBalance(pointTransactions, activeChildId);
   const potentialPoints = getPotentialPoints(tasks, taskSubmissions, activeChildId);
+  const activeChildProgress = getChildProgress(
+    { childProgress: storedChildProgress, childSkillUnlocks, tasks, taskSubmissions },
+    activeChildId,
+  );
+  const levelProgress = getChildLevelProgressFromXp(activeChildProgress.xp);
+  const hasLegendBadge = getSkillRank(childSkillUnlocks, activeChildId, 'legend_badge') > 0;
   const visibleWishes = getVisibleWishes(wishes, rewards, rewardRedemptions);
   const nearestWish = getNearestWish(visibleWishes, balance);
   const favoriteGoal = getFavoriteGoalForChild(favoriteGoals, activeChildId);
   const favoriteReward =
     favoriteGoal?.type === 'reward'
-      ? rewards.find((reward) => reward.id === favoriteGoal.itemId && reward.isActive !== false)
+      ? rewards.find((reward) =>
+          reward.id === favoriteGoal.itemId &&
+          reward.isActive !== false &&
+          isRewardAvailableForChild(reward, activeChildId),
+        )
       : undefined;
   const favoriteWish =
     favoriteGoal?.type === 'wish'
@@ -107,10 +145,9 @@ const ChildDashboardScreen = () => {
           : undefined;
   const activeTasks = getAvailableTasksForChild(tasks, taskSubmissions, activeChildId);
   const totalTasksCount = getTotalAvailableTasksCount(tasks, taskSubmissions, activeChildId);
-  const pendingDailyTasks = getDailyTasksForToday(tasks).filter(
+  const pendingDailyTasks = getDailyTasksForToday(tasks, activeChildId).filter(
     (task) => !hasSubmittedDailyTaskToday(taskSubmissions, task.id, activeChildId),
   );
-  // Show daily quests until all done, then regular tasks
   const dashboardTasks = (pendingDailyTasks.length > 0 ? pendingDailyTasks : activeTasks).slice(0, 3);
   const progress = dashboardGoal ? getProgressPercent(balance, dashboardGoal.price) : 0;
   const activeInvestments = myInvestments.filter((inv) => !inv.claimedAt);
@@ -121,13 +158,8 @@ const ChildDashboardScreen = () => {
     <AppScreen
       title={t('child.dashboard.title', { name: activeChildName || t('common.child') })}
       subtitle={t('child.dashboard.subtitle')}>
-      <AppCard>
-        <SectionTitle title={t('common.balance')} />
-        <Text style={styles.balance}>
-          {balance} {t('common.pointsShort')}
-        </Text>
-
-        {totalIncoming > 0 && (
+      {totalIncoming > 0 && (
+        <AppCard>
           <View style={styles.incomingBox}>
             <Text style={styles.incomingTitle}>{t('missions.incomingTitle')}</Text>
 
@@ -140,7 +172,7 @@ const ChildDashboardScreen = () => {
             )}
 
             {activeInvestments.map((inv) => {
-              const { ready, days, hours } = getCountdown(inv.maturesAt);
+              const { ready, days, hours, minutes } = getMissionCountdown(inv.maturesAt);
               return (
                 <View key={inv.id} style={styles.incomingRow}>
                   <Text style={styles.incomingIcon}>{ready ? '🎉' : '🔒'}</Text>
@@ -149,7 +181,9 @@ const ChildDashboardScreen = () => {
                     <Text style={styles.incomingMeta}>
                       {ready
                         ? t('missions.dashboard.ready')
-                        : t('missions.dashboard.matureIn', { days: String(days), hours: String(hours) })}
+                        : days > 0 || hours > 0
+                          ? t('missions.dashboard.matureIn', { days: String(days), hours: String(hours) })
+                          : t('missions.dashboard.matureInMinutes', { minutes: String(minutes) })}
                     </Text>
                   </View>
                   <Text style={[styles.incomingAmount, ready && styles.incomingAmountReady]}>
@@ -164,8 +198,62 @@ const ChildDashboardScreen = () => {
               <Text style={styles.incomingTotalValue}>{balance + totalIncoming} {t('common.pointsShort')}</Text>
             </View>
           </View>
-        )}
-      </AppCard>
+        </AppCard>
+      )}
+
+      {/* ── Balance card ── */}
+      <Pressable
+        onPress={() => router.push('/child/balance')}
+        style={({ pressed }) => [styles.balanceCard, pressed && { opacity: 0.88 }]}>
+        {/* Layer 1 — glows, clipped inside card, zIndex 0 */}
+        <View style={[StyleSheet.absoluteFill, styles.balanceGlowLayer]} pointerEvents="none">
+          <View style={styles.balanceGlow1} />
+          <View style={styles.balanceGlow2} />
+        </View>
+
+        {/* Layer 2 — all content + mascot in ONE wrapper with zIndex 1
+            Wrapping together forces them above the absolute glow layer on iOS */}
+        <View style={styles.balanceContent}>
+          <View style={styles.balanceLeft}>
+            <Text style={styles.balanceLabel}>Мои баллы</Text>
+            <View style={styles.balanceRow}>
+              <View style={styles.balanceCoin}>
+                <View style={styles.balanceCoinShine} />
+              </View>
+              <Text style={styles.balanceAmount}>{balance}</Text>
+            </View>
+            {potentialPoints > 0 && (
+              <View style={styles.balancePending}>
+                <Text style={styles.balancePendingText}>+{potentialPoints} на проверке ⏳</Text>
+              </View>
+            )}
+          </View>
+
+          <Image
+            source={require('../../../design/assets/mascot/easyquest-mascot-celebrate.png')}
+            style={styles.balanceMascot}
+            contentFit="contain"
+            pointerEvents="none"
+          />
+        </View>
+      </Pressable>
+
+      <LevelHeroCard
+        avatarColor={activeChild?.avatarColor}
+        avatarLabel={activeChildName || t('common.child')}
+        levelLabel={t('child.level.levelShort', { level: levelProgress.level })}
+        onLevelPress={() => router.push('/child/achievements' as never)}
+        progress={levelProgress.progressPercent}
+        rankLabel={hasLegendBadge ? t('child.level.legendStatus') : levelProgress.rank}
+        skillLabel={t('child.level.skillPoints', { count: activeChildProgress.unspentSkillPoints })}
+        xpLabel={
+          levelProgress.isMaxLevel
+            ? t('child.level.maxXpSummary', { total: levelProgress.totalXp })
+            : `${levelProgress.currentLevelXp} / ${levelProgress.nextLevelXp} XP`
+        }
+      />
+
+      <StreakWidget taskSubmissions={taskSubmissions} childId={activeChildId} />
 
       {dashboardGoal && (
         <AppCard>
@@ -177,37 +265,51 @@ const ChildDashboardScreen = () => {
           <Text style={styles.meta}>
             {t('child.dashboard.progressSummary', { balance, price: dashboardGoal.price })}
           </Text>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progress}%` }]} />
-          </View>
+          <RocketProgressBar progress={progress} />
           <Text style={styles.meta}>{t('child.dashboard.progressPercent', { progress })}</Text>
         </AppCard>
       )}
 
       <AppCard>
         <SectionTitle
-          title={pendingDailyTasks.length > 0 ? '⚡ Квесты на сегодня' : t('common.availableTasks')}
-          action={totalTasksCount > 0 ? <StatusBadge label={pluralQuest(totalTasksCount)} tone="muted" /> : undefined}
+          title={pendingDailyTasks.length > 0 ? t('child.tasks.todayTitle') : t('common.availableTasks')}
+          action={
+            totalTasksCount > 0
+              ? <StatusBadge label={`${totalTasksCount} ${t('child.dashboard.openTasks')}`} tone="muted" />
+              : undefined
+          }
         />
-        {dashboardTasks.map((task) => (
-          <View key={task.id} style={styles.taskRow}>
-            <View style={styles.taskText}>
-              <Text style={styles.taskTitle}>
-                {task.isDaily ? '⚡ ' : ''}{getTaskTitle(task, t)}
-              </Text>
-              <Text style={styles.meta}>
-                {task.points} {t('common.pointsShort')}
-              </Text>
-            </View>
-            <AppButton
-              title={t('common.open')}
-              variant="secondary"
+        {dashboardTasks.map((task, i) => {
+          const palette = MINI_PALETTES[i % MINI_PALETTES.length];
+          const Icon = MINI_ICONS[i % MINI_ICONS.length];
+          return (
+            <Pressable
+              key={task.id}
               onPress={() => router.push('/child/tasks')}
-              style={styles.smallButton}
-            />
-          </View>
-        ))}
+              style={({ pressed }) => [
+                styles.taskRow,
+                i > 0 && styles.taskRowBorder,
+                pressed && styles.taskRowPressed,
+              ]}>
+              <View style={[styles.taskIconBox, { backgroundColor: palette.bg }]}>
+                <Icon color={palette.fg} />
+              </View>
+              <Text style={styles.taskTitle} numberOfLines={1}>
+                {getTaskTitle(task, t)}
+              </Text>
+              <View style={styles.taskPointsPill}>
+                <Text style={styles.taskPointsText}>+{task.points}</Text>
+              </View>
+            </Pressable>
+          );
+        })}
       </AppCard>
+
+      <Pressable
+        onPress={() => router.push('/settings')}
+        style={({ pressed }) => [styles.settingsLink, pressed && styles.settingsLinkPressed]}>
+        <Text style={styles.settingsLinkText}>⚙ {t('common.settings')}</Text>
+      </Pressable>
 
     </AppScreen>
   );
@@ -217,65 +319,197 @@ export default ChildDashboardScreen;
 
 const styles = StyleSheet.create({
   balance: {
-    color: '#12314A',
-    fontSize: 42,
+    color: FP.white,
+    fontSize: 46,
     fontWeight: '900',
+    lineHeight: 52,
+  },
+  // ── Balance card ──
+  balanceCard: {
+    backgroundColor: '#2A1068',
+    borderColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 24,
+    borderWidth: 1,
+    overflow: 'visible',
+    position: 'relative',
+    ...Platform.select({
+      ios: { shadowColor: '#1A0840', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.30, shadowRadius: 22 },
+      android: { elevation: 7 },
+      web: { boxShadow: '0 10px 28px rgba(26,8,64,0.30)' },
+    }) as ViewStyle,
+  },
+  // ── Balance glow ──
+  balanceGlowLayer: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    zIndex: 0,
+  },
+  balanceGlow1: {
+    backgroundColor: 'rgba(140, 60, 255, 0.55)',
+    borderRadius: 999,
+    height: 180,
+    position: 'absolute',
+    right: 10,
+    top: -60,
+    width: 180,
+    ...Platform.select({
+      web: { filter: 'blur(40px)' },
+    }) as ViewStyle,
+  },
+  balanceGlow2: {
+    backgroundColor: 'rgba(60, 120, 255, 0.35)',
+    borderRadius: 999,
+    bottom: -50,
+    height: 130,
+    left: 40,
+    position: 'absolute',
+    width: 130,
+    ...Platform.select({
+      web: { filter: 'blur(32px)' },
+    }) as ViewStyle,
+  },
+  // ── Balance content (text + mascot) above glow layer ──
+  balanceContent: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    zIndex: 1,
+  },
+  balanceLeft: {
+    gap: 2,
+    flex: 1,
+  },
+  balanceLabel: {
+    color: 'rgba(255,255,255,0.50)',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  balanceRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  balanceCoin: {
+    alignItems: 'center',
+    backgroundColor: FP.accent,
+    borderColor: '#8B5904',
+    borderRadius: 13,
+    borderWidth: 2,
+    height: 26,
+    justifyContent: 'center',
+    width: 26,
+  },
+  balanceCoinShine: {
+    borderColor: '#FFF1A6',
+    borderLeftColor: 'transparent',
+    borderRadius: 4,
+    borderWidth: 1.5,
+    height: 8,
+    transform: [{ rotate: '-35deg' }],
+    width: 8,
+  },
+  balanceAmount: {
+    color: FP.white,
+    fontSize: 36,
+    fontWeight: '900',
+    letterSpacing: -1.5,
+    lineHeight: 40,
+  },
+  balancePending: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderRadius: 99,
+    marginTop: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  balancePendingText: {
+    color: FP.lime,
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  balanceMascot: {
+    height: 130,
+    marginBottom: -16,
+    marginRight: -14,
+    marginTop: -38,
+    width: 130,
   },
   title: {
-    color: '#12314A',
+    color: FP.text,
     fontSize: 20,
     fontWeight: '900',
   },
   meta: {
-    color: '#6B7B86',
+    color: FP.textSub,
     fontSize: 14,
     lineHeight: 20,
   },
-  potential: {
-    color: '#1E9E86',
-    fontSize: 14,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  progressTrack: {
-    backgroundColor: '#E7D5AC',
-    borderRadius: 8,
-    height: 12,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    backgroundColor: '#1E9E86',
-    height: 12,
-  },
   taskRow: {
     alignItems: 'center',
-    borderTopColor: '#ECE3CF',
-    borderTopWidth: 1,
     flexDirection: 'row',
-    gap: 12,
-    paddingTop: 12,
+    gap: 11,
+    paddingVertical: 8,
   },
-  taskText: {
-    flex: 1,
-    gap: 3,
+  taskRowBorder: {
+    borderTopColor: FP.border,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  taskRowPressed: {
+    opacity: 0.55,
+  },
+  taskIconBox: {
+    alignItems: 'center',
+    borderRadius: 10,
+    flexShrink: 0,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
   },
   taskTitle: {
-    color: '#12314A',
-    fontSize: 16,
+    color: FP.text,
+    flex: 1,
+    fontSize: 15,
     fontWeight: '800',
   },
-  smallButton: {
-    minWidth: 96,
+  taskPointsPill: {
+    backgroundColor: FP.accentLight,
+    borderRadius: 99,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
   },
-  // Incoming block
+  taskPointsText: {
+    color: FP.accentText,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  settingsLink: {
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  settingsLinkPressed: {
+    opacity: 0.5,
+  },
+  settingsLinkText: {
+    color: FP.textSub,
+    fontSize: 13,
+    fontWeight: '700',
+  },
   incomingBox: {
-    backgroundColor: FP.primaryLight,
-    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 18,
+    borderWidth: 1,
     gap: 8,
     padding: 12,
   },
   incomingTitle: {
-    color: FP.primaryDark,
+    color: FP.lime,
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -296,26 +530,26 @@ const styles = StyleSheet.create({
     gap: 1,
   },
   incomingLabel: {
-    color: FP.text,
+    color: FP.white,
     flex: 1,
     fontSize: 14,
     fontWeight: '600',
   },
   incomingMeta: {
-    color: FP.textSub,
+    color: '#DDEBFF',
     fontSize: 12,
   },
   incomingAmount: {
-    color: FP.primaryDark,
+    color: FP.lime,
     fontSize: 15,
     fontWeight: '800',
   },
   incomingAmountReady: {
-    color: FP.primary,
+    color: FP.mint,
   },
   incomingTotal: {
     alignItems: 'center',
-    borderTopColor: FP.primaryBorder,
+    borderTopColor: 'rgba(255,255,255,0.18)',
     borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -323,58 +557,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   incomingTotalLabel: {
-    color: FP.primaryDark,
+    color: '#DDEBFF',
     fontSize: 13,
     fontWeight: '700',
   },
   incomingTotalValue: {
-    color: FP.primaryDark,
+    color: FP.white,
     fontSize: 18,
     fontWeight: '900',
-  },
-  // Investment rows (legacy, kept for ref)
-  investRow: {
-    alignItems: 'center',
-    borderTopColor: FP.border,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-between',
-    paddingTop: 12,
-  },
-  investInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  investTitle: {
-    color: FP.text,
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  investMeta: {
-    color: FP.textSub,
-    fontSize: 13,
-  },
-  countdownBadge: {
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  countdownWaiting: {
-    backgroundColor: FP.accentLight,
-  },
-  countdownReady: {
-    backgroundColor: FP.primaryLight,
-  },
-  countdownText: {
-    fontSize: 12,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  countdownTextWaiting: {
-    color: FP.accentText,
-  },
-  countdownTextReady: {
-    color: FP.primaryDark,
   },
 });
