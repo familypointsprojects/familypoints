@@ -6,6 +6,14 @@ import { getTaskStreakDays } from '@/shared/utils/leveling';
 
 const DAY_LABELS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
+/** Returns "YYYY-MM-DD" in the device's local timezone. */
+const toLocalDateKey = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
 export const getWeekActiveDays = (submissions: TaskSubmission[], childId: string): boolean[] => {
   const today = new Date();
   const dow = today.getDay();
@@ -17,9 +25,13 @@ export const getWeekActiveDays = (submissions: TaskSubmission[], childId: string
   return Array.from({ length: 7 }, (_, i) => {
     const day = new Date(monday);
     day.setDate(monday.getDate() + i);
-    const key = day.toISOString().split('T')[0];
+    const key = toLocalDateKey(day);
+    // Compare in local timezone on both sides to avoid UTC-shift false matches
     return submissions.some(
-      (s) => s.childId === childId && s.status === 'approved' && s.submittedAt.startsWith(key),
+      (s) =>
+        s.childId === childId &&
+        s.status === 'approved' &&
+        toLocalDateKey(new Date(s.submittedAt)) === key,
     );
   });
 };

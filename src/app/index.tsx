@@ -8,7 +8,7 @@ import { AppButton, AppCard, AppScreen, BrandLogo, SectionTitle, StatusBadge } f
 import { QuestFlowPill } from '@/shared/ui/QuestFlowPill';
 import { FP } from '@/constants/theme';
 
-const mascotSource = require('../../design/assets/mascot/easyquest-rocket-clean.png');
+const mascotSource = require('@/assets/images/flat-pirate-mascot.png');
 
 const WelcomeScreen = () => {
   const { t } = useLanguage();
@@ -26,7 +26,7 @@ const WelcomeScreen = () => {
             source={mascotSource}
             style={styles.heroMascot}
             contentFit="contain"
-            accessibilityLabel="easyQuest rocket"
+            accessibilityLabel="easyQuest pirate"
           />
         </View>
         <Text style={styles.heroTitle}>{t('welcome.heroTitle')}</Text>

@@ -16,8 +16,19 @@ const JS_DAY_TO_KEY: DayOfWeek[] = [
 /** Returns today's day-of-week key, e.g. 'monday' */
 export const getTodayDayKey = (): DayOfWeek => JS_DAY_TO_KEY[new Date().getDay()];
 
-/** Returns today's date string in 'YYYY-MM-DD' (UTC) */
-const getTodayDateString = (): string => new Date().toISOString().slice(0, 10);
+/** Returns today's date string in 'YYYY-MM-DD' (local timezone). */
+const getTodayDateString = (): string => toLocalDateKey(new Date());
+
+/** Converts any Date (or ISO timestamp string) to a local 'YYYY-MM-DD' key. */
+const toLocalDateKey = (d: Date): string => {
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+};
+
+/** Returns the local date key for a submittedAt ISO timestamp string. */
+const submissionLocalDate = (submittedAt: string): string =>
+  toLocalDateKey(new Date(submittedAt));
 
 // ─── Daily quest availability ─────────────────────────────────────────────────
 
@@ -52,7 +63,7 @@ export const hasSubmittedDailyTaskToday = (
       s.taskId === taskId &&
       s.childId === childId &&
       s.status !== 'rejected' &&
-      s.submittedAt.slice(0, 10) === today,
+      submissionLocalDate(s.submittedAt) === today,
   );
 };
 
@@ -69,7 +80,7 @@ export const getTodaySubmission = (
     (s) =>
       s.taskId === taskId &&
       s.childId === childId &&
-      s.submittedAt.slice(0, 10) === today,
+      submissionLocalDate(s.submittedAt) === today,
   );
 };
 
@@ -97,7 +108,7 @@ export const areDailyQuestsApprovedToday = (
         s.taskId === task.id &&
         s.childId === childId &&
         s.status === 'approved' &&
-        s.submittedAt.slice(0, 10) === today,
+        submissionLocalDate(s.submittedAt) === today,
     ),
   );
 };
@@ -125,7 +136,7 @@ export const getTotalAvailableTasksCount = (
       (s) =>
         s.taskId === task.id &&
         s.childId === childId &&
-        s.submittedAt.slice(0, 10) === today,
+        submissionLocalDate(s.submittedAt) === today,
     );
     // Available if no submission today, or if today's submission was rejected
     return !todaySubmission || todaySubmission.status === 'rejected';

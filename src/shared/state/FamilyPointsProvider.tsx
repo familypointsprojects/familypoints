@@ -418,9 +418,6 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
         .then((nextState) => {
           LayoutAnimation.configureNext(favoriteGoalLayoutAnimation);
           dispatch({ type: 'hydrate', payload: nextState });
-        })
-        .catch((error: unknown) => {
-          console.warn('Failed to update easyQuest state', error);
         }),
     [],
   );
@@ -529,7 +526,15 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
         dispatch({ type: 'hydrate', payload: optimisticState });
         familyPointsService
           .submitTask(submitInput, serviceContext)
-          .then((nextState) => dispatch({ type: 'hydrate', payload: mergeOptimisticState(nextState, session) }))
+          .then((nextState) => {
+            // Remove optimistic submission — server now owns the real record.
+            // Without this, mergeOptimisticState would keep overriding the
+            // server's 'approved'/'rejected' status with the stale 'pending'.
+            optimisticSubmissionsRef.current = optimisticSubmissionsRef.current.filter(
+              (s) => s.taskId !== submitInput.taskId || s.childId !== submitInput.childId,
+            );
+            dispatch({ type: 'hydrate', payload: mergeOptimisticState(nextState, session) });
+          })
           .catch((error: unknown) => {
             console.warn('Failed to sync easyQuest task submission', error);
           });
@@ -549,7 +554,13 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
         dispatch({ type: 'hydrate', payload: optimisticState });
         familyPointsService
           .submitTask(submitInput, serviceContext)
-          .then((nextState) => dispatch({ type: 'hydrate', payload: mergeOptimisticState(nextState, session) }))
+          .then((nextState) => {
+            // Same fix: clear optimistic submission once server confirms.
+            optimisticSubmissionsRef.current = optimisticSubmissionsRef.current.filter(
+              (s) => s.taskId !== submitInput.taskId || s.childId !== submitInput.childId,
+            );
+            dispatch({ type: 'hydrate', payload: mergeOptimisticState(nextState, session) });
+          })
           .catch((error: unknown) => {
             console.warn('Failed to sync easyQuest task submission', error);
           });

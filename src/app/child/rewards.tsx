@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { TranslationKey, useLanguage } from '@/shared/i18n';
 import { useActiveChild, useFamilyPoints } from '@/shared/state';
@@ -191,19 +191,24 @@ const ChildRewardsScreen = () => {
     redeemReward(rewardId);
   };
 
-  const handleChooseFavorite = (type: FavoriteGoalType, itemId: string) => {
-    if (isFavoriteGoal(favoriteGoal, type, itemId)) {
-      void clearFavoriteGoal({ childId: activeChildId });
-      return;
-    }
+  const handleChooseFavorite = async (type: FavoriteGoalType, itemId: string) => {
+    try {
+      if (isFavoriteGoal(favoriteGoal, type, itemId)) {
+        await clearFavoriteGoal({ childId: activeChildId });
+        return;
+      }
 
-    if (favoriteGoal) {
-      setPendingFavoriteGoal({ type, itemId });
-      setIsFocusModalVisible(true);
-      return;
-    }
+      if (favoriteGoal) {
+        setPendingFavoriteGoal({ type, itemId });
+        setIsFocusModalVisible(true);
+        return;
+      }
 
-    void setFavoriteGoal({ childId: activeChildId, type, itemId });
+      await setFavoriteGoal({ childId: activeChildId, type, itemId });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      Alert.alert('Ошибка', message);
+    }
   };
 
   const handleCloseFocusModal = () => {
@@ -211,17 +216,23 @@ const ChildRewardsScreen = () => {
     setIsFocusModalVisible(false);
   };
 
-  const handleReplaceFavorite = () => {
+  const handleReplaceFavorite = async () => {
     if (!pendingFavoriteGoal) {
       return;
     }
 
-    void setFavoriteGoal({
-      childId: activeChildId,
-      type: pendingFavoriteGoal.type,
-      itemId: pendingFavoriteGoal.itemId,
-    });
-    handleCloseFocusModal();
+    try {
+      await setFavoriteGoal({
+        childId: activeChildId,
+        type: pendingFavoriteGoal.type,
+        itemId: pendingFavoriteGoal.itemId,
+      });
+      handleCloseFocusModal();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      Alert.alert('Ошибка', message);
+      handleCloseFocusModal();
+    }
   };
 
   const handleAddWish = () => {
@@ -388,7 +399,7 @@ const ChildRewardsScreen = () => {
                   </View>
                   <PointsBadge points={reward.price} />
                 </View>
-                <RocketProgressBar progress={progress} />
+                <RocketProgressBar progress={progress} showRunner={false} showGlow={false} />
                 <Text style={styles.meta}>
                   {t('child.rewards.progress', { balance, price: reward.price, progress })}
                 </Text>
@@ -475,7 +486,7 @@ const ChildRewardsScreen = () => {
                 {isApproved && wish.price > 0 && (
                   <>
                     <PointsBadge points={wish.price} prefix={t('common.goal')} />
-                    <RocketProgressBar progress={progress} />
+                    <RocketProgressBar progress={progress} showRunner={false} showGlow={false} />
                     <Text style={styles.meta}>
                       {t('child.wishes.progress', { progress, balance, price: wish.price })}
                     </Text>

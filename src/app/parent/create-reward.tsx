@@ -6,10 +6,54 @@ import { FP } from '@/constants/theme';
 import { TranslationKey, useLanguage } from '@/shared/i18n';
 import { useFamilyPoints } from '@/shared/state';
 import type { DayOfWeek, RewardType } from '@/shared/types/family';
-import { AppButton, AppCard, AppScreen, AppTextInput, ParentChildFilter, SectionTitle } from '@/shared/ui';
+import { AppButton, AppCard, AppScreen, AppTextInput, ParentChildFilter, SectionTitle, SegmentedControl, StatusBadge } from '@/shared/ui';
 import { getRewardPriceSuggestions } from '@/shared/utils/pricingGuidance';
 
 const rewardTypes: RewardType[] = ['screen_time', 'experience', 'toy', 'treat', 'wish'];
+
+type RewardTemplateCategory = 'screen_time' | 'experience' | 'treat' | 'toy';
+
+type RewardTemplate = {
+  category: RewardTemplateCategory;
+  title: string;
+  price: number;
+  type: RewardType;
+  isDailyReward?: boolean;
+};
+
+const REWARD_TEMPLATE_CATEGORIES: { label: string; value: RewardTemplateCategory }[] = [
+  { label: 'Экран', value: 'screen_time' },
+  { label: 'Активность', value: 'experience' },
+  { label: 'Вкусняшки', value: 'treat' },
+  { label: 'Покупка', value: 'toy' },
+];
+
+const REWARD_TEMPLATES: RewardTemplate[] = [
+  { category: 'screen_time', title: 'YouTube — 30 минут', price: 10, type: 'screen_time', isDailyReward: true },
+  { category: 'screen_time', title: 'YouTube — 1 час', price: 20, type: 'screen_time', isDailyReward: true },
+  { category: 'screen_time', title: 'Видеоигры — 30 минут', price: 15, type: 'screen_time', isDailyReward: true },
+  { category: 'screen_time', title: 'Видеоигры — 1 час', price: 25, type: 'screen_time', isDailyReward: true },
+  { category: 'screen_time', title: 'Фильм или мультфильм', price: 30, type: 'screen_time' },
+  { category: 'screen_time', title: 'TikTok — 15 минут', price: 10, type: 'screen_time', isDailyReward: true },
+  { category: 'experience', title: 'Поход в кино', price: 120, type: 'experience' },
+  { category: 'experience', title: 'Кафе или ресторан', price: 100, type: 'experience' },
+  { category: 'experience', title: 'Боулинг', price: 150, type: 'experience' },
+  { category: 'experience', title: 'Парк развлечений', price: 200, type: 'experience' },
+  { category: 'experience', title: 'Поездка в аквапарк', price: 250, type: 'experience' },
+  { category: 'experience', title: 'Прогулка куда захочу', price: 80, type: 'experience' },
+  { category: 'treat', title: 'Мороженое', price: 20, type: 'treat' },
+  { category: 'treat', title: 'Пицца на выбор', price: 50, type: 'treat' },
+  { category: 'treat', title: 'Торт или пирожное', price: 40, type: 'treat' },
+  { category: 'treat', title: 'Чипсы или снеки', price: 15, type: 'treat' },
+  { category: 'treat', title: 'Сладости на выбор', price: 20, type: 'treat' },
+  { category: 'treat', title: 'Фастфуд', price: 60, type: 'treat' },
+  { category: 'toy', title: 'Набор LEGO', price: 300, type: 'toy' },
+  { category: 'toy', title: 'Новая книга', price: 80, type: 'toy' },
+  { category: 'toy', title: 'Настольная игра', price: 200, type: 'toy' },
+  { category: 'toy', title: 'Карточки (Pokémon и др.)', price: 100, type: 'toy' },
+  { category: 'toy', title: 'Игрушка на выбор', price: 150, type: 'toy' },
+  { category: 'toy', title: 'Канцелярия на выбор', price: 60, type: 'toy' },
+];
 
 const rewardTypeLabelKeys: Record<RewardType, TranslationKey> = {
   screen_time: 'rewardType.screen_time',
@@ -36,6 +80,7 @@ const CreateRewardScreen = () => {
   const [price, setPrice] = useState('');
   const [type, setType] = useState<RewardType>('experience');
   const [selectedChildId, setSelectedChildId] = useState<string | undefined>();
+  const [selectedTemplateCategory, setSelectedTemplateCategory] = useState<RewardTemplateCategory>('screen_time');
   const [isDailyReward, setIsDailyReward] = useState(false);
   const [availableDays, setAvailableDays] = useState<DayOfWeek[]>([]);
   const [requiresDailyQuests, setRequiresDailyQuests] = useState(false);
@@ -43,6 +88,16 @@ const CreateRewardScreen = () => {
 
   const priceValue = Number(price);
   const isValid = title.trim().length > 0 && priceValue > 0;
+  const visibleTemplates = REWARD_TEMPLATES.filter((tpl) => tpl.category === selectedTemplateCategory);
+
+  const applyTemplate = (template: RewardTemplate) => {
+    setTitle(template.title);
+    setPrice(String(template.price));
+    setType(template.type);
+    setIsDailyReward(template.isDailyReward ?? false);
+    setAvailableDays([]);
+    setRequiresDailyQuests(false);
+  };
   const priceSuggestions = getRewardPriceSuggestions({
     rewardType: type,
     isDailyReward,
@@ -85,6 +140,32 @@ const CreateRewardScreen = () => {
 
   return (
     <AppScreen title={t('parent.rewards.create')} subtitle={t('parent.rewards.createSubtitle')}>
+      <AppCard>
+        <Text style={styles.templatesTitle}>Заготовки наград</Text>
+        <SegmentedControl<RewardTemplateCategory>
+          options={REWARD_TEMPLATE_CATEGORIES}
+          value={selectedTemplateCategory}
+          onChange={setSelectedTemplateCategory}
+        />
+        <View style={styles.templateGrid}>
+          {visibleTemplates.map((template) => (
+            <Pressable
+              accessibilityRole="button"
+              key={template.title}
+              onPress={() => applyTemplate(template)}
+              style={({ pressed }) => [styles.templateCard, pressed && styles.templateCardPressed]}>
+              <View style={styles.templateTop}>
+                <Text style={styles.templateTitle}>{template.title}</Text>
+                <StatusBadge label={`${template.price} ${t('common.pointsShort')}`} tone="muted" />
+              </View>
+              {template.isDailyReward && (
+                <Text style={styles.templateMeta}>Ежедневная</Text>
+              )}
+            </Pressable>
+          ))}
+        </View>
+      </AppCard>
+
       <AppCard>
         <SectionTitle title={t('common.rewards')} />
         <AppTextInput
@@ -207,6 +288,46 @@ const CreateRewardScreen = () => {
 export default CreateRewardScreen;
 
 const styles = StyleSheet.create({
+  templateCard: {
+    backgroundColor: FP.primaryLight,
+    borderColor: FP.primaryBorder,
+    borderRadius: 10,
+    borderWidth: 1,
+    flexGrow: 1,
+    minWidth: 140,
+    padding: 10,
+    gap: 4,
+  },
+  templateCardPressed: {
+    opacity: 0.75,
+  },
+  templateGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  templateMeta: {
+    color: FP.textSub,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  templateTitle: {
+    color: FP.ink,
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  templateTop: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'space-between',
+  },
+  templatesTitle: {
+    color: FP.ink,
+    fontSize: 16,
+    fontWeight: '900',
+  },
   checkboxRow: {
     alignItems: 'flex-start',
     flexDirection: 'row',

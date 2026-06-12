@@ -1,6 +1,7 @@
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { FP } from '@/constants/theme';
+import { IconCoin } from '@/shared/ui/QuestIcons';
 
 type BalancePillProps = {
   compact?: boolean;
@@ -9,9 +10,7 @@ type BalancePillProps = {
 
 export const BalancePill = ({ compact = false, points }: BalancePillProps) => (
   <View style={[styles.pill, compact && styles.pillCompact]}>
-    <View style={[styles.coin, compact && styles.coinCompact]}>
-      <View style={styles.coinShine} />
-    </View>
+    <IconCoin size={compact ? 20 : 24} />
     <Text style={[styles.value, compact && styles.valueCompact]}>{points}</Text>
   </View>
 );
@@ -44,30 +43,6 @@ const styles = StyleSheet.create({
     minHeight: 34,
     paddingHorizontal: 10,
     paddingVertical: 6,
-  },
-  coin: {
-    alignItems: 'center',
-    backgroundColor: FP.accent,
-    borderColor: '#8B5904',
-    borderRadius: 11,
-    borderWidth: 2,
-    height: 22,
-    justifyContent: 'center',
-    width: 22,
-  },
-  coinCompact: {
-    borderRadius: 9,
-    height: 18,
-    width: 18,
-  },
-  coinShine: {
-    borderColor: '#FFF1A6',
-    borderLeftColor: 'transparent',
-    borderRadius: 5,
-    borderWidth: 2,
-    height: 10,
-    transform: [{ rotate: '-35deg' }],
-    width: 10,
   },
   value: {
     color: FP.accentText,

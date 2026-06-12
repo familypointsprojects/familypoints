@@ -18,12 +18,13 @@ import {
   StatusBadge,
   StreakWidget,
 } from '@/shared/ui';
+import { IconCoin } from '@/shared/ui/QuestIcons';
 import { getRewardTitle, getTaskTitle, getWishTitle } from '@/shared/utils/content';
 import { getFavoriteGoalForChild } from '@/shared/utils/favoriteGoals';
 import { getMissionCountdown } from '@/shared/utils/growthMissions';
 import { getChildLevelProgressFromXp, getChildProgress, getSkillRank } from '@/shared/utils/leveling';
 import { getBalance, getNearestWish, getPotentialPoints, getProgressPercent } from '@/shared/utils/points';
-import { isRewardAvailableForChild } from '@/shared/utils/rewards';
+import { getDailyRewardLockReason, isDailyRewardAvailableToday, isRewardAvailableForChild } from '@/shared/utils/rewards';
 import {
   getAvailableTasksForChild,
   getDailyTasksForToday,
@@ -154,51 +155,45 @@ const ChildDashboardScreen = () => {
   const expectedPayout = activeInvestments.reduce((s, inv) => s + inv.payoutAmount, 0);
   const totalIncoming = potentialPoints + expectedPayout;
 
+  const openRewardRequestIds = new Set(
+    rewardRedemptions
+      .filter(
+        (r) =>
+          r.childId === activeChildId &&
+          (r.status === 'requested' || r.status === 'approved'),
+      )
+      .map((r) => r.rewardId),
+  );
+  const unlockedDailyRewards = rewards.filter(
+    (reward) =>
+      isDailyRewardAvailableToday(reward, activeChildId) &&
+      !openRewardRequestIds.has(reward.id) &&
+      getDailyRewardLockReason(reward, balance, tasks, taskSubmissions, activeChildId) === null,
+  );
+
   return (
     <AppScreen
       title={t('child.dashboard.title', { name: activeChildName || t('common.child') })}
       subtitle={t('child.dashboard.subtitle')}>
-      {totalIncoming > 0 && (
-        <AppCard>
-          <View style={styles.incomingBox}>
-            <Text style={styles.incomingTitle}>{t('missions.incomingTitle')}</Text>
 
-            {potentialPoints > 0 && (
-              <View style={styles.incomingRow}>
-                <Text style={styles.incomingIcon}>⏳</Text>
-                <Text style={styles.incomingLabel}>{t('child.balance.onReview')}</Text>
-                <Text style={styles.incomingAmount}>+{potentialPoints} {t('common.pointsShort')}</Text>
-              </View>
-            )}
-
-            {activeInvestments.map((inv) => {
-              const { ready, days, hours, minutes } = getMissionCountdown(inv.maturesAt);
-              return (
-                <View key={inv.id} style={styles.incomingRow}>
-                  <Text style={styles.incomingIcon}>{ready ? '🎉' : '🔒'}</Text>
-                  <View style={styles.incomingLabelCol}>
-                    <Text style={styles.incomingLabel}>{inv.projectTitle}</Text>
-                    <Text style={styles.incomingMeta}>
-                      {ready
-                        ? t('missions.dashboard.ready')
-                        : days > 0 || hours > 0
-                          ? t('missions.dashboard.matureIn', { days: String(days), hours: String(hours) })
-                          : t('missions.dashboard.matureInMinutes', { minutes: String(minutes) })}
-                    </Text>
-                  </View>
-                  <Text style={[styles.incomingAmount, ready && styles.incomingAmountReady]}>
-                    +{inv.payoutAmount} {t('common.pointsShort')}
-                  </Text>
-                </View>
-              );
-            })}
-
-            <View style={styles.incomingTotal}>
-              <Text style={styles.incomingTotalLabel}>{t('missions.incomingTotal')}</Text>
-              <Text style={styles.incomingTotalValue}>{balance + totalIncoming} {t('common.pointsShort')}</Text>
-            </View>
+      {/* ── Daily reward unlock banner ── */}
+      {unlockedDailyRewards.length > 0 && (
+        <Pressable
+          onPress={() => router.push('/child/rewards')}
+          style={({ pressed }) => [styles.dailyBanner, pressed && { opacity: 0.88 }]}>
+          <Text style={styles.dailyBannerEmoji}>🎁</Text>
+          <View style={styles.dailyBannerText}>
+            <Text style={styles.dailyBannerTitle}>{t('child.dashboard.dailyRewardReady')}</Text>
+            <Text style={styles.dailyBannerSub}>
+              {unlockedDailyRewards.length === 1
+                ? unlockedDailyRewards[0].title || t('child.rewards.dailyTitle')
+                : t('child.dashboard.dailyRewardCount', { count: String(unlockedDailyRewards.length) })}
+            </Text>
           </View>
-        </AppCard>
+          <View style={styles.dailyBannerChevron}>
+            <Text style={styles.dailyBannerChevronText}>›</Text>
+          </View>
+        </Pressable>
       )}
 
       {/* ── Balance card ── */}
@@ -217,9 +212,7 @@ const ChildDashboardScreen = () => {
           <View style={styles.balanceLeft}>
             <Text style={styles.balanceLabel}>Мои баллы</Text>
             <View style={styles.balanceRow}>
-              <View style={styles.balanceCoin}>
-                <View style={styles.balanceCoinShine} />
-              </View>
+              <IconCoin size={38} />
               <Text style={styles.balanceAmount}>{balance}</Text>
             </View>
             {potentialPoints > 0 && (
@@ -230,7 +223,7 @@ const ChildDashboardScreen = () => {
           </View>
 
           <Image
-            source={require('../../../design/assets/mascot/easyquest-mascot-celebrate.png')}
+            source={require('@/assets/images/pirate-variants/flat-pirate-17-coin-rain.png')}
             style={styles.balanceMascot}
             contentFit="contain"
             pointerEvents="none"
@@ -298,6 +291,7 @@ const ChildDashboardScreen = () => {
                 {getTaskTitle(task, t)}
               </Text>
               <View style={styles.taskPointsPill}>
+                <IconCoin size={18} />
                 <Text style={styles.taskPointsText}>+{task.points}</Text>
               </View>
             </Pressable>
@@ -375,7 +369,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 2,
     zIndex: 1,
   },
   balanceLeft: {
@@ -393,25 +387,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 8,
-  },
-  balanceCoin: {
-    alignItems: 'center',
-    backgroundColor: FP.accent,
-    borderColor: '#8B5904',
-    borderRadius: 13,
-    borderWidth: 2,
-    height: 26,
-    justifyContent: 'center',
-    width: 26,
-  },
-  balanceCoinShine: {
-    borderColor: '#FFF1A6',
-    borderLeftColor: 'transparent',
-    borderRadius: 4,
-    borderWidth: 1.5,
-    height: 8,
-    transform: [{ rotate: '-35deg' }],
-    width: 8,
   },
   balanceAmount: {
     color: FP.white,
@@ -434,17 +409,67 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   balanceMascot: {
-    height: 130,
+    height: 162,
     marginBottom: -16,
     marginRight: -14,
-    marginTop: -38,
-    width: 130,
+    marginTop: -54,
+    width: 162,
   },
   title: {
     color: FP.text,
     fontSize: 20,
     fontWeight: '900',
   },
+  // ── Daily reward banner ──────────────────────────────────────────────────────
+  dailyBanner: {
+    alignItems: 'center',
+    backgroundColor: '#FFF7E0',
+    borderColor: FP.accent,
+    borderRadius: 18,
+    borderWidth: 2,
+    flexDirection: 'row',
+    gap: 12,
+    padding: 14,
+    ...(Platform.select({
+      ios: { shadowColor: FP.accentDark, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 14 },
+      android: { elevation: 3 },
+      web: { boxShadow: '0 6px 16px rgba(200,140,0,0.18)' },
+    }) as ViewStyle),
+  },
+  dailyBannerEmoji: {
+    fontSize: 30,
+  },
+  dailyBannerText: {
+    flex: 1,
+    gap: 2,
+  },
+  dailyBannerTitle: {
+    color: FP.accentDark,
+    fontSize: 15,
+    fontWeight: '900',
+    letterSpacing: -0.2,
+  },
+  dailyBannerSub: {
+    color: '#8B6200',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  dailyBannerChevron: {
+    alignItems: 'center',
+    backgroundColor: FP.accent,
+    borderRadius: 99,
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
+  },
+  dailyBannerChevronText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '900',
+    lineHeight: 26,
+    textAlign: 'center',
+  },
+  // ─────────────────────────────────────────────────────────────────────────────
   meta: {
     color: FP.textSub,
     fontSize: 14,
@@ -478,15 +503,23 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   taskPointsPill: {
-    backgroundColor: FP.accentLight,
+    alignItems: 'center',
+    backgroundColor: '#FFF7D7',
+    borderColor: '#F4D06F',
+    borderWidth: 1,
     borderRadius: 99,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
+    flexDirection: 'row',
+    flexShrink: 0,
+    gap: 5,
+    minWidth: 58,
+    paddingHorizontal: 7,
+    paddingVertical: 5,
   },
   taskPointsText: {
     color: FP.accentText,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '900',
+    lineHeight: 16,
   },
   settingsLink: {
     alignItems: 'center',

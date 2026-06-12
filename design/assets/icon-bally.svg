@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
 <title>Баллы</title>
-<circle cx="60" cy="64" r="50" fill="#A66A0B"/>
-<circle cx="60" cy="60" r="48" fill="#F6B72A" stroke="#A66A0B" stroke-width="3.5"/>
-<circle cx="60" cy="60" r="40" fill="none" stroke="#D9920F" stroke-width="2"/>
-<path d="M60 30 L69 50 L91 52 L74 66 L80 88 L60 76 L40 88 L46 66 L29 52 L51 50 Z" fill="#FCD063" stroke="#A66A0B" stroke-width="2.5" stroke-linejoin="round"/>
+<image href="icon-bally.png" width="120" height="120" preserveAspectRatio="xMidYMid meet"/>
 </svg>

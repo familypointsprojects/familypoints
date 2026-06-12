@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { FP } from '@/constants/theme';
 import { useLanguage } from '@/shared/i18n';
+import { IconCoin } from '@/shared/ui/QuestIcons';
 
 type PointsBadgeProps = {
   points: number;
@@ -13,9 +14,7 @@ export const PointsBadge = ({ points, prefix }: PointsBadgeProps) => {
 
   return (
     <View style={styles.badge}>
-      <View style={styles.coin}>
-        <View style={styles.coinShine} />
-      </View>
+      <IconCoin size={20} />
       <Text style={styles.text}>
         {prefix ? `${prefix} ` : ''}
         {points} {t('common.pointsShort')}
@@ -36,25 +35,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-  },
-  coin: {
-    alignItems: 'center',
-    backgroundColor: FP.accent,
-    borderColor: '#8B5904',
-    borderRadius: 9,
-    borderWidth: 1.5,
-    height: 18,
-    justifyContent: 'center',
-    width: 18,
-  },
-  coinShine: {
-    borderColor: '#FFF1A6',
-    borderLeftColor: 'transparent',
-    borderRadius: 4,
-    borderWidth: 1.5,
-    height: 8,
-    transform: [{ rotate: '-35deg' }],
-    width: 8,
   },
   text: {
     color: FP.accentText,
