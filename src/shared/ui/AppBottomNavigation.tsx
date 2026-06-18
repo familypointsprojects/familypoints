@@ -145,7 +145,7 @@ export const AppBottomNavigation = () => {
         icon: 'tasks',
         isActive: isActiveRoute(pathname, '/child/tasks'),
         key: 'tasks',
-        label: t('common.tasks'),
+        label: t('welcome.flowQuests'),
         onPress: () => pushIfInactive(pathname, '/child/tasks'),
       },
       {
@@ -167,7 +167,7 @@ export const AppBottomNavigation = () => {
         icon: 'missions',
         isActive: isActiveRoute(pathname, '/child/growth-missions'),
         key: 'missions',
-        label: t('missions.navLabel'),
+        label: t('child.quick.piggyBanks'),
         onPress: () => pushIfInactive(pathname, '/child/growth-missions'),
       },
     ];

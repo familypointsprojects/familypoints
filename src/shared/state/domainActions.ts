@@ -34,6 +34,7 @@ import {
   createTaskBonusTransactionTitle,
   getComboBonusPoints,
   getChildProgress,
+  getStreakRewardBonusPoints,
   getTaskXp,
   shouldAwardComboBonus,
   syncChildAchievements,
@@ -76,12 +77,13 @@ const createEarnTransaction = (
   submission: TaskSubmission,
   task: Task,
   createdAt = new Date().toISOString(),
+  bonusPoints = 0,
 ): PointTransaction => ({
   id: createLocalId('transaction'),
   childId: submission.childId,
   titleKey: task.titleKey,
   title: task.title,
-  points: task.points,
+  points: task.points + bonusPoints,
   type: 'earn',
   createdAt,
 });
@@ -309,7 +311,12 @@ export const approveSubmissionInState = (
     getChildProgress(state, submission.childId),
     getTaskXp(task),
   );
-  const earnTransaction = createEarnTransaction(submission, task, reviewedAt);
+  const streakBonusPoints = getStreakRewardBonusPoints(
+    approvedSubmissions,
+    submission.childId,
+    new Date(reviewedAt),
+  );
+  const earnTransaction = createEarnTransaction(submission, task, reviewedAt, streakBonusPoints);
   const taskBonus = calculateTaskSkillBonus({
     pointTransactions: state.pointTransactions,
     task,

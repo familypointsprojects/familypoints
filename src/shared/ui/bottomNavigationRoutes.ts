@@ -9,6 +9,7 @@ const bottomNavigationRoutes = new Set([
   '/child/balance',
   '/child/rewards',
   '/child/growth-missions',
+  '/child/achievements',
   '/settings',
 ]);
 

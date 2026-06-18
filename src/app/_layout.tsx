@@ -1,9 +1,13 @@
+import 'react-native-gesture-handler';
 import 'react-native-url-polyfill/auto';
 
 import { router, Stack, usePathname } from 'expo-router';
 import * as Linking from 'expo-linking';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '@/shared/auth';
 import { FP } from '@/constants/theme';
@@ -87,6 +91,7 @@ const DeepLinkHandler = () => {
 
 const RootNavigation = () => {
   const pathname = usePathname();
+  const insets = useSafeAreaInsets();
   const showBottomNavigation = shouldShowBottomNavigation(pathname);
 
   return (
@@ -126,12 +131,15 @@ const RootNavigation = () => {
         <Stack.Screen name="child/wishes" />
         <Stack.Screen name="child/rewards" />
         <Stack.Screen name="child/history" />
+        <Stack.Screen name="child/achievements" />
         <Stack.Screen name="parent/growth-missions" />
         <Stack.Screen name="parent/create-growth-mission" />
         <Stack.Screen name="child/growth-missions" />
       </Stack>
       {showBottomNavigation && (
-        <View pointerEvents="box-none" style={styles.bottomNavigation}>
+        <View
+          pointerEvents="box-none"
+          style={[styles.bottomNavigation, { bottom: Math.max(insets.bottom, 14) }]}>
           <AppBottomNavigation />
         </View>
       )}
@@ -140,23 +148,28 @@ const RootNavigation = () => {
 };
 
 const RootLayout = () => (
-  <LanguageProvider>
-    <AuthProvider>
-      <FamilyPointsProvider>
-        <GrowthMissionsProvider>
-          <AuthRouteGuard />
-          <DeepLinkHandler />
-          <RootNavigation />
-        </GrowthMissionsProvider>
-      </FamilyPointsProvider>
-    </AuthProvider>
-  </LanguageProvider>
+  <GestureHandlerRootView style={styles.gestureRoot}>
+    <BottomSheetModalProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <FamilyPointsProvider>
+            <GrowthMissionsProvider>
+              <AuthRouteGuard />
+              <DeepLinkHandler />
+              <RootNavigation />
+            </GrowthMissionsProvider>
+          </FamilyPointsProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </BottomSheetModalProvider>
+  </GestureHandlerRootView>
 );
 
 export default RootLayout;
 
 const styles = StyleSheet.create({
   bottomNavigation: {
+    backgroundColor: 'transparent',
     bottom: 0,
     elevation: 30,
     left: 0,
@@ -164,7 +177,12 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 30,
   },
+  gestureRoot: {
+    backgroundColor: FP.bg,
+    flex: 1,
+  },
   root: {
+    backgroundColor: FP.bg,
     flex: 1,
     position: 'relative',
   },

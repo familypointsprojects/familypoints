@@ -6,6 +6,10 @@
   width: 100%;
 }
 
+.compact {
+  height: 36px;
+}
+
 .megaProgress {
   --progress: 72%;
   --progress-fill-left-inset: 2px;
@@ -24,6 +28,10 @@
   position: relative;
   width: 100%;
   box-sizing: border-box;
+}
+
+.hideGlow::after {
+  display: none;
 }
 
 .megaProgress::after {

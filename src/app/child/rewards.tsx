@@ -1,5 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import {
+  Alert,
+  Animated,
+  InteractionManager,
+  LayoutChangeEvent,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { TranslationKey, useLanguage } from '@/shared/i18n';
 import { useActiveChild, useFamilyPoints } from '@/shared/state';
@@ -75,6 +87,10 @@ const wishStatusLabelKeys: Record<WishStatus, TranslationKey> = {
 
 const ChildRewardsScreen = () => {
   const { t } = useLanguage();
+  const {
+    rewardId: rewardIdParam,
+    scrollToReward: scrollToRewardParam,
+  } = useLocalSearchParams<{ rewardId?: string | string[]; scrollToReward?: string | string[] }>();
   const { activeChildId } = useActiveChild();
   const {
     addWish,
@@ -95,9 +111,22 @@ const ChildRewardsScreen = () => {
   const [isWishModalVisible, setIsWishModalVisible] = useState(false);
   const [pendingFavoriteGoal, setPendingFavoriteGoal] = useState<PendingFavoriteGoal | null>(null);
   const [wishTitle, setWishTitle] = useState('');
+  const scrollRef = useRef<ScrollView>(null);
+  const rewardAnchorY = useRef<Record<string, number>>({});
   const rewardVisibleOrder = useRef<string[]>([]);
   const wishVisibleOrder = useRef<string[]>([]);
+  const lastHandledScrollRequest = useRef<string | null>(null);
   const celebrationProgress = useRef(new Animated.Value(0)).current;
+  const [anchorVersion, setAnchorVersion] = useState(0);
+  const [contentSizeVersion, setContentSizeVersion] = useState(0);
+  const [scrollRequestVersion, setScrollRequestVersion] = useState(0);
+  const targetRewardId = Array.isArray(rewardIdParam) ? rewardIdParam[0] : rewardIdParam;
+  const scrollToRewardKey = Array.isArray(scrollToRewardParam)
+    ? scrollToRewardParam[0]
+    : scrollToRewardParam;
+  const scrollRequestKey = targetRewardId
+    ? `${targetRewardId}:${scrollToRewardKey ?? 'focus'}:${scrollRequestVersion}`
+    : null;
   const balance = getBalance(pointTransactions, activeChildId);
   const childRedemptions = rewardRedemptions.filter(
     (redemption) => redemption.childId === activeChildId,
@@ -173,6 +202,46 @@ const ChildRewardsScreen = () => {
 
     return () => clearTimeout(timeout);
   }, [celebrationProgress, celebrationTitle]);
+
+  useFocusEffect(useCallback(() => {
+    if (targetRewardId) {
+      setActiveTab('rewards');
+      setScrollRequestVersion((version) => version + 1);
+    }
+  }, [targetRewardId]));
+
+  useEffect(() => {
+    if (!targetRewardId || !scrollRequestKey || activeTab !== 'rewards') {
+      return undefined;
+    }
+
+    if (lastHandledScrollRequest.current === scrollRequestKey) {
+      return undefined;
+    }
+
+    const anchorY = rewardAnchorY.current[targetRewardId];
+
+    if (typeof anchorY !== 'number') {
+      return undefined;
+    }
+
+    const scrollY = Math.max(anchorY - 18, 0);
+    lastHandledScrollRequest.current = scrollRequestKey;
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    const interaction = InteractionManager.runAfterInteractions(() => {
+      [0, 80, 180, 360, 640].forEach((delay, index) => {
+        const timeout = setTimeout(() => {
+          scrollRef.current?.scrollTo({ y: scrollY, animated: index > 0 });
+        }, delay);
+        timeouts.push(timeout);
+      });
+    });
+
+    return () => {
+      interaction.cancel();
+      timeouts.forEach(clearTimeout);
+    };
+  }, [activeTab, anchorVersion, contentSizeVersion, scrollRequestKey, targetRewardId]);
 
   useEffect(() => {
     rewardVisibleOrder.current = rewardOrderKey ? rewardOrderKey.split('|') : [];
@@ -253,8 +322,20 @@ const ChildRewardsScreen = () => {
     setIsWishModalVisible(false);
   };
 
+  const handleRewardAnchorLayout = useCallback(
+    (rewardId: string) => (event: LayoutChangeEvent) => {
+      rewardAnchorY.current[rewardId] = event.nativeEvent.layout.y;
+      setAnchorVersion((version) => version + 1);
+    },
+    [],
+  );
+
   return (
-    <AppScreen title={t('child.rewardsAndWishes.title')} subtitle={t('child.rewardsAndWishes.subtitle')}>
+    <AppScreen
+      onContentSizeChange={() => setContentSizeVersion((version) => version + 1)}
+      scrollRef={scrollRef}
+      title={t('child.rewardsAndWishes.title')}
+      subtitle={t('child.rewardsAndWishes.subtitle')}>
       {Boolean(celebrationTitle) && (
         <Animated.View
           style={[
@@ -331,50 +412,52 @@ const ChildRewardsScreen = () => {
                 const pendingRedemption = openRewardRequests.find((r) => r.rewardId === reward.id);
 
                 return (
-                  <AppCard key={reward.id} style={styles.dailyRewardCard}>
-                    <View style={styles.header}>
-                      <View style={styles.titleGroup}>
-                        <View style={styles.dailyRewardTitleRow}>
-                          <Text style={styles.dailyRewardEmoji}>🌅</Text>
-                          <Text style={styles.title}>{rewardTitle}</Text>
+                  <View key={reward.id} onLayout={handleRewardAnchorLayout(reward.id)}>
+                    <AppCard style={styles.dailyRewardCard}>
+                      <View style={styles.header}>
+                        <View style={styles.titleGroup}>
+                          <View style={styles.dailyRewardTitleRow}>
+                            <Text style={styles.dailyRewardEmoji}>🌅</Text>
+                            <Text style={styles.title}>{rewardTitle}</Text>
+                          </View>
+                          <StatusBadge label={t(rewardTypeLabelKeys[reward.type])} />
                         </View>
-                        <StatusBadge label={t(rewardTypeLabelKeys[reward.type])} />
+                        <PointsBadge points={reward.price} />
                       </View>
-                      <PointsBadge points={reward.price} />
-                    </View>
 
-                    {pendingRedemption ? (
-                      <StatusBadge
-                        label={t(redemptionStatusLabelKeys[pendingRedemption.status])}
-                        tone={redemptionStatusTones[pendingRedemption.status]}
-                      />
-                    ) : (
-                      <>
-                        {lockReason === 'daily_quests_incomplete' && (
-                          <Text style={styles.lockNote}>
-                            {t('child.rewards.lockDailyQuests')}
-                          </Text>
-                        )}
-                        {lockReason === 'not_enough_points' && (
-                          <Text style={styles.lockNote}>
-                            {t('child.rewards.lockNotEnoughPoints')}
-                          </Text>
-                        )}
-                        <AppButton
-                          title={
-                            lockReason === 'daily_quests_incomplete'
-                              ? t('child.rewards.lockDailyQuestsButton')
-                              : lockReason === 'not_enough_points'
-                                ? t('common.notEnoughPoints')
-                                : t('common.redeem')
-                          }
-                          onPress={() => !isLocked && handleRedeem(reward.id, rewardTitle)}
-                          disabled={isLocked}
-                          variant={isLocked ? 'secondary' : 'primary'}
+                      {pendingRedemption ? (
+                        <StatusBadge
+                          label={t(redemptionStatusLabelKeys[pendingRedemption.status])}
+                          tone={redemptionStatusTones[pendingRedemption.status]}
                         />
-                      </>
-                    )}
-                  </AppCard>
+                      ) : (
+                        <>
+                          {lockReason === 'daily_quests_incomplete' && (
+                            <Text style={styles.lockNote}>
+                              {t('child.rewards.lockDailyQuests')}
+                            </Text>
+                          )}
+                          {lockReason === 'not_enough_points' && (
+                            <Text style={styles.lockNote}>
+                              {t('child.rewards.lockNotEnoughPoints')}
+                            </Text>
+                          )}
+                          <AppButton
+                            title={
+                              lockReason === 'daily_quests_incomplete'
+                                ? t('child.rewards.lockDailyQuestsButton')
+                                : lockReason === 'not_enough_points'
+                                  ? t('common.notEnoughPoints')
+                                  : t('common.redeem')
+                            }
+                            onPress={() => !isLocked && handleRedeem(reward.id, rewardTitle)}
+                            disabled={isLocked}
+                            variant={isLocked ? 'secondary' : 'primary'}
+                          />
+                        </>
+                      )}
+                    </AppCard>
+                  </View>
                 );
               })}
             </>
@@ -388,33 +471,34 @@ const ChildRewardsScreen = () => {
             const isFavorite = isFavoriteGoal(favoriteGoal, 'reward', reward.id);
 
             return (
-              <FocusLiftCard
-                key={reward.id}
-                cardStyle={isFavorite ? styles.favoriteCard : undefined}
-                isFocused={isFavorite}>
-                <View style={styles.header}>
-                  <View style={styles.titleGroup}>
-                    <Text style={styles.title}>{rewardTitle}</Text>
-                    <StatusBadge label={t(rewardTypeLabelKeys[reward.type])} />
+              <View key={reward.id} onLayout={handleRewardAnchorLayout(reward.id)}>
+                <FocusLiftCard
+                  cardStyle={isFavorite ? styles.favoriteCard : undefined}
+                  isFocused={isFavorite}>
+                  <View style={styles.header}>
+                    <View style={styles.titleGroup}>
+                      <Text style={styles.title}>{rewardTitle}</Text>
+                      <StatusBadge label={t(rewardTypeLabelKeys[reward.type])} />
+                    </View>
+                    <PointsBadge points={reward.price} />
                   </View>
-                  <PointsBadge points={reward.price} />
-                </View>
-                <RocketProgressBar progress={progress} showRunner={false} showGlow={false} />
-                <Text style={styles.meta}>
-                  {t('child.rewards.progress', { balance, price: reward.price, progress })}
-                </Text>
-                <AppButton
-                  title={isFavorite ? t('child.favorite.clear') : t('child.favorite.choose')}
-                  onPress={() => handleChooseFavorite('reward', reward.id)}
-                  variant={isFavorite ? 'primary' : 'secondary'}
-                />
-                <AppButton
-                  title={canRedeem ? t('common.redeem') : t('common.notEnoughPoints')}
-                  onPress={() => handleRedeem(reward.id, rewardTitle)}
-                  disabled={!canRedeem}
-                  variant={canRedeem ? 'primary' : 'secondary'}
-                />
-              </FocusLiftCard>
+                  <RocketProgressBar progress={progress} showRunner={false} showGlow={false} />
+                  <Text style={styles.meta}>
+                    {t('child.rewards.progress', { balance, price: reward.price, progress })}
+                  </Text>
+                  <AppButton
+                    title={isFavorite ? t('child.favorite.clear') : t('child.favorite.choose')}
+                    onPress={() => handleChooseFavorite('reward', reward.id)}
+                    variant={isFavorite ? 'primary' : 'secondary'}
+                  />
+                  <AppButton
+                    title={canRedeem ? t('common.redeem') : t('common.notEnoughPoints')}
+                    onPress={() => handleRedeem(reward.id, rewardTitle)}
+                    disabled={!canRedeem}
+                    variant={canRedeem ? 'primary' : 'secondary'}
+                  />
+                </FocusLiftCard>
+              </View>
             );
           })}
 
@@ -426,19 +510,21 @@ const ChildRewardsScreen = () => {
                 const rewardTitle = reward ? getRewardTitle(reward, t) : t('common.rewards');
 
                 return (
-                  <AppCard key={redemption.id}>
-                    <View style={styles.header}>
-                      <View style={styles.titleGroup}>
-                        <Text style={styles.title}>{rewardTitle}</Text>
-                        {reward && <StatusBadge label={t(rewardTypeLabelKeys[reward.type])} />}
+                  <View key={redemption.id} onLayout={handleRewardAnchorLayout(redemption.rewardId)}>
+                    <AppCard>
+                      <View style={styles.header}>
+                        <View style={styles.titleGroup}>
+                          <Text style={styles.title}>{rewardTitle}</Text>
+                          {reward && <StatusBadge label={t(rewardTypeLabelKeys[reward.type])} />}
+                        </View>
+                        <PointsBadge points={redemption.pointsSpent} />
                       </View>
-                      <PointsBadge points={redemption.pointsSpent} />
-                    </View>
-                    <StatusBadge
-                      label={t(redemptionStatusLabelKeys[redemption.status])}
-                      tone={redemptionStatusTones[redemption.status]}
-                    />
-                  </AppCard>
+                      <StatusBadge
+                        label={t(redemptionStatusLabelKeys[redemption.status])}
+                        tone={redemptionStatusTones[redemption.status]}
+                      />
+                    </AppCard>
+                  </View>
                 );
               })}
             </>

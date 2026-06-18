@@ -5,7 +5,7 @@ import { approveWishInState } from '@/shared/state/domainActions';
 import { getSupabaseClient, loadChildFamilyState } from '@/shared/services/supabase';
 import type { AuthSession } from '@/shared/auth/types';
 import { getBalance } from '@/shared/utils/points';
-import { normalizeLevelingState } from '@/shared/utils/leveling';
+import { getStreakRewardBonusPoints, normalizeLevelingState } from '@/shared/utils/leveling';
 import { getTodayDayKey } from '@/shared/utils/tasks';
 
 import {
@@ -793,10 +793,26 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
       throwSupabaseError('approve task submission', updateError.message);
     }
 
+    const { data: approvedSubmissionRows, error: approvedSubmissionsError } = await supabase
+      .from('task_submissions')
+      .select('*')
+      .eq('child_id', submission.child_id)
+      .eq('status', 'approved');
+
+    if (approvedSubmissionsError) {
+      throwSupabaseError('load approved submissions for streak bonus', approvedSubmissionsError.message);
+    }
+
+    const streakBonusPoints = getStreakRewardBonusPoints(
+      ((approvedSubmissionRows ?? []) as TaskSubmissionRow[]).map(mapTaskSubmissionRowToTaskSubmission),
+      submission.child_id,
+      new Date(reviewedAt),
+    );
+
     const { error: transactionError } = await supabase.from('point_transactions').insert({
       child_id: submission.child_id,
       title: task.title,
-      points: task.points,
+      points: task.points + streakBonusPoints,
       type: 'earn',
       source_task_submission_id: submission.id,
       source_reward_redemption_id: null,

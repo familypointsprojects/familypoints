@@ -5,14 +5,22 @@ import classes from './RocketProgressBar.module.css';
 const pigRunnerSource = require('@/assets/images/pig-running-coins-progress.png');
 
 type RocketProgressBarProps = {
+  compact?: boolean;
   progress: number;
+  showGlow?: boolean;
+  showRunner?: boolean;
 };
 
 const clampProgress = (progress: number) => Math.max(0, Math.min(progress, 100));
 const FILL_LEFT_INSET = 2;
 const FILL_RIGHT_INSET = 5;
 
-export const RocketProgressBar = ({ progress }: RocketProgressBarProps) => {
+export const RocketProgressBar = ({
+  compact = false,
+  progress,
+  showGlow = true,
+  showRunner = true,
+}: RocketProgressBarProps) => {
   const clampedProgress = clampProgress(progress);
   const progressRatio = Math.max(clampedProgress / 100, 0.01);
   const style = {
@@ -23,12 +31,19 @@ export const RocketProgressBar = ({ progress }: RocketProgressBarProps) => {
   } as CSSProperties;
 
   return (
-    <div className={classes.wrap}>
-      <div className={classes.megaProgress} style={style}>
+    <div className={[classes.wrap, compact ? classes.compact : undefined].filter(Boolean).join(' ')}>
+      <div
+        className={[
+          classes.megaProgress,
+          !showGlow ? classes.hideGlow : undefined,
+        ].filter(Boolean).join(' ')}
+        style={style}>
         <div className={classes.megaFill} />
-        <div className={classes.runner}>
-          <img className={classes.runnerImg} src={pigRunnerSource} alt="" />
-        </div>
+        {showRunner && (
+          <div className={classes.runner}>
+            <img className={classes.runnerImg} src={pigRunnerSource} alt="" />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -4,6 +4,12 @@
 -- without requiring a Supabase auth.users account.
 -- ============================================================
 
+alter table rewards
+  add column if not exists child_id uuid references children(id) on delete set null;
+
+create index if not exists rewards_child_id_idx
+on rewards(child_id);
+
 create or replace function get_child_family_state(
   child_id_input uuid,
   profile_id_input uuid

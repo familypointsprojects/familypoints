@@ -68,6 +68,14 @@ export const IconChest: React.FC<IconProps> = ({ size = 26 }) => (
   />
 );
 
+export const IconOpenToyChest: React.FC<IconProps> = ({ size = 26 }) => (
+  <Image
+    contentFit="contain"
+    source={require('@/assets/images/tab-rewards-chest-open-toys.png')}
+    style={{ width: size, height: size }}
+  />
+);
+
 export const IconFamily: React.FC<IconProps> = ({ size = 26 }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
     <Path

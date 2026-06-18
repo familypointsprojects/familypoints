@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { FP } from '@/constants/theme';
 import { useLanguage, type TranslationKey } from '@/shared/i18n';
 import { useActiveChild, useFamilyPoints } from '@/shared/state';
-import { AppButton, AppCard, AppScreen, LevelHeroCard, RocketProgressBar, SegmentedControl, StatusBadge } from '@/shared/ui';
+import { AppButton, AppCard, AppScreen, LevelHeroCard, SegmentedControl, StatusBadge } from '@/shared/ui';
 import type { ChildAchievementId, ChildSkillId } from '@/shared/types/family';
 import {
   ACHIEVEMENT_DEFINITIONS,
@@ -99,6 +99,11 @@ const ChildAchievementsScreen = () => {
       <LevelHeroCard
         avatarColor={activeChild?.avatarColor}
         avatarLabel={activeChildName || t('common.child')}
+        detailLabel={
+          levelProgress.isMaxLevel
+            ? t('child.level.maxed')
+            : t('child.level.toLevel', { level: levelProgress.level + 1 })
+        }
         levelLabel={t('child.level.levelShort', { level: levelProgress.level })}
         progress={levelProgress.progressPercent}
         rankLabel={hasLegendBadge ? t('child.level.legendStatus') : levelProgress.rank}
@@ -182,7 +187,9 @@ const ChildAchievementsScreen = () => {
                     tone={achievement.unlocked ? 'success' : 'muted'}
                   />
                 </View>
-                <RocketProgressBar progress={Math.round((achievement.progress / achievement.target) * 100)} />
+                <View style={styles.progressTrack}>
+                  <View style={[styles.progressFill, { width: `${Math.round((achievement.progress / achievement.target) * 100)}%` as `${number}%` }]} />
+                </View>
                 <Text style={styles.meta}>
                   {t('child.level.progressCount', {
                     current: storedAchievement?.progress ?? achievement.progress,
@@ -247,14 +254,18 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   progressTrack: {
-    backgroundColor: FP.border,
-    borderRadius: 8,
-    height: 12,
+    backgroundColor: 'rgba(102,58,0,0.12)',
+    borderColor: 'rgba(0,0,0,0.08)',
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 10,
     overflow: 'hidden',
+    padding: 1,
   },
   progressFill: {
-    backgroundColor: FP.primary,
-    height: 12,
+    backgroundColor: FP.accent,
+    borderRadius: 999,
+    height: '100%',
   },
   legendProgressFill: {
     backgroundColor: '#D89B21',

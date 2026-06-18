@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EasyQuest background options</title>
+  <style>
+    :root {
+      --ink: #10233f;
+      --paper: #f4f8ff;
+      --line: rgba(16, 35, 63, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #f1f5fb;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .page {
+      margin: 0 auto;
+      max-width: 1280px;
+      padding: 30px;
+    }
+
+    h1 {
+      font-size: 24px;
+      line-height: 1.15;
+      margin: 0 0 8px;
+    }
+
+    .intro {
+      color: #66768a;
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0 0 24px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(260px, 1fr));
+      gap: 22px;
+    }
+
+    .option {
+      background: white;
+      border: 1px solid rgba(191, 215, 245, 0.82);
+      border-radius: 18px;
+      box-shadow: 0 18px 38px rgba(16, 35, 63, 0.08);
+      padding: 14px;
+    }
+
+    .phone {
+      aspect-ratio: 390 / 844;
+      border: 10px solid #111827;
+      border-radius: 42px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.42);
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+    }
+
+    .label {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+
+    .label strong {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0;
+    }
+
+    .label span {
+      color: #77879a;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-align: right;
+    }
+
+    svg {
+      display: block;
+      height: 100%;
+      width: 100%;
+    }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: repeat(2, minmax(240px, 1fr)); }
+    }
+
+    @media (max-width: 640px) {
+      .page { padding: 18px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1>Фоны для детского dashboard</h1>
+    <p class="intro">Только background: без карточек, чтобы сравнить настроение и плотность.</p>
+    <section class="grid">
+      <article class="option">
+        <div class="phone">
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none" aria-label="Тихая карта">
+            <defs>
+              <linearGradient id="bg-a" x1="0" x2="0" y1="0" y2="1">
+                <stop stop-color="#edf8ff" />
+                <stop offset="0.62" stop-color="#f5fbff" />
+                <stop offset="1" stop-color="#fff7df" />
+              </linearGradient>
+              <filter id="soft-a"><feGaussianBlur stdDeviation="11" /></filter>
+            </defs>
+            <rect fill="url(#bg-a)" height="844" width="390" />
+            <g filter="url(#soft-a)" opacity="0.5">
+              <path d="M-70 228C18 184 126 204 179 272C235 343 201 425 105 441C25 454 -55 414 -78 344C-97 286 -125 255 -70 228Z" fill="#cbeeff" />
+              <path d="M316 216C410 216 463 284 443 358C421 439 316 477 249 432C192 394 216 307 258 254C276 231 294 216 316 216Z" fill="#c8eadf" />
+              <path d="M-35 666C38 624 129 635 188 698C242 755 222 819 149 850H-35Z" fill="#ffe8a8" />
+            </g>
+            <path d="M46 174C101 136 184 135 250 164C310 190 350 238 366 298" fill="none" opacity="0.16" stroke="#0b6f8a" stroke-dasharray="7 13" stroke-linecap="round" stroke-width="3" />
+            <path d="M65 610C121 578 199 580 263 611C314 636 347 677 360 725" fill="none" opacity="0.12" stroke="#1647b7" stroke-dasharray="8 15" stroke-linecap="round" stroke-width="3" />
+            <g opacity="0.16">
+              <circle cx="58" cy="124" fill="#f7b721" r="5" />
+              <circle cx="58" cy="124" fill="none" r="8" stroke="#d88b08" stroke-width="1.4" />
+              <circle cx="326" cy="162" fill="#f7b721" r="4" />
+              <circle cx="326" cy="162" fill="none" r="7" stroke="#d88b08" stroke-width="1.3" />
+            </g>
+            <g fill="#1647b7" opacity="0.1">
+              <path d="M45 386l3 9 9 3-9 3-3 10-3-10-9-3 9-3z" />
+              <path d="M335 546l2.5 7.5 7.5 2.5-7.5 2.5-2.5 8-2.5-8-7.5-2.5 7.5-2.5z" />
+            </g>
+          </svg>
+        </div>
+        <div class="label"><strong>1. Тихая карта</strong><span>самый безопасный</span></div>
+      </article>
+
+      <article class="option">
+        <div class="phone">
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none" aria-label="Маршрут наград">
+            <defs>
+              <linearGradient id="bg-b" x1="0" x2="1" y1="0" y2="1">
+                <stop stop-color="#eaf7ff" />
+                <stop offset="0.54" stop-color="#f8fcff" />
+                <stop offset="1" stop-color="#e7f7ef" />
+              </linearGradient>
+              <filter id="soft-b"><feGaussianBlur stdDeviation="8" /></filter>
+            </defs>
+            <rect fill="url(#bg-b)" height="844" width="390" />
+            <g opacity="0.38" filter="url(#soft-b)">
+              <path d="M-16 124C43 82 117 80 166 128C214 174 207 239 151 273C93 308 11 289 -25 233C-56 186 -58 154 -16 124Z" fill="#d6f3ff" />
+              <path d="M246 508C344 481 424 538 421 626C418 713 318 765 234 722C155 682 155 588 246 508Z" fill="#d2f3e4" />
+            </g>
+            <path d="M55 128C140 136 214 186 216 258C218 336 115 340 101 418C88 494 194 519 244 586C284 639 288 708 245 760" fill="none" opacity="0.18" stroke="#1647b7" stroke-dasharray="9 13" stroke-linecap="round" stroke-width="4" />
+            <g opacity="0.18">
+              <circle cx="55" cy="128" fill="#f7b721" r="10" />
+              <circle cx="216" cy="258" fill="#f7b721" r="10" />
+              <circle cx="101" cy="418" fill="#f7b721" r="10" />
+              <circle cx="244" cy="586" fill="#f7b721" r="10" />
+              <path d="M236 748l12 10 14-24z" fill="#ff642d" />
+            </g>
+            <g opacity="0.08" stroke="#0b2b70" stroke-width="2">
+              <circle cx="314" cy="154" fill="none" r="42" />
+              <path d="M314 112v84M272 154h84M286 126l56 56M342 126l-56 56" />
+            </g>
+            <path d="M34 706C83 673 139 668 183 690C224 711 252 755 252 815H34Z" fill="#ffe8a8" opacity="0.25" />
+          </svg>
+        </div>
+        <div class="label"><strong>2. Маршрут наград</strong><span>понятнее прогресс</span></div>
+      </article>
+
+      <article class="option">
+        <div class="phone">
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none" aria-label="Воздух и флаги">
+            <defs>
+              <linearGradient id="bg-c" x1="0" x2="0" y1="0" y2="1">
+                <stop stop-color="#eef9ff" />
+                <stop offset="0.55" stop-color="#f9fdff" />
+                <stop offset="1" stop-color="#edf7ff" />
+              </linearGradient>
+              <filter id="soft-c"><feGaussianBlur stdDeviation="13" /></filter>
+            </defs>
+            <rect fill="url(#bg-c)" height="844" width="390" />
+            <g filter="url(#soft-c)" opacity="0.43">
+              <ellipse cx="65" cy="326" fill="#ccefff" rx="155" ry="86" />
+              <ellipse cx="327" cy="596" fill="#d6f1e6" rx="118" ry="92" />
+              <ellipse cx="252" cy="210" fill="#e8f6ff" rx="140" ry="70" />
+            </g>
+            <path d="M-18 118C38 94 112 100 168 128C224 156 280 158 331 126C357 109 379 96 407 94" fill="none" opacity="0.14" stroke="#10c7e8" stroke-dasharray="10 18" stroke-linecap="round" stroke-width="3" />
+            <path d="M-10 520C54 493 117 499 180 527C242 555 304 559 396 516" fill="none" opacity="0.12" stroke="#1647b7" stroke-dasharray="10 18" stroke-linecap="round" stroke-width="3" />
+            <g opacity="0.16">
+              <path d="M74 203v54" stroke="#1647b7" stroke-linecap="round" stroke-width="3" />
+              <path d="M76 206h42l-12 17 12 17H76z" fill="#ff642d" />
+              <path d="M284 392v54" stroke="#1647b7" stroke-linecap="round" stroke-width="3" />
+              <path d="M286 395h42l-12 17 12 17h-42z" fill="#f7b721" />
+              <path d="M88 660v54" stroke="#1647b7" stroke-linecap="round" stroke-width="3" />
+              <path d="M90 663h42l-12 17 12 17H90z" fill="#25d989" />
+            </g>
+            <g fill="#1647b7" opacity="0.08">
+              <circle cx="202" cy="398" r="5" />
+              <circle cx="222" cy="398" r="5" />
+              <circle cx="242" cy="398" r="5" />
+              <circle cx="262" cy="398" r="5" />
+            </g>
+          </svg>
+        </div>
+        <div class="label"><strong>3. Воздух и флаги</strong><span>минимум шума</span></div>
+      </article>
+
+      <article class="option">
+        <div class="phone">
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none" aria-label="Сундук вдалеке">
+            <defs>
+              <linearGradient id="bg-d" x1="0" x2="0" y1="0" y2="1">
+                <stop stop-color="#eaf6ff" />
+                <stop offset="0.58" stop-color="#f7fbff" />
+                <stop offset="1" stop-color="#eff9f1" />
+              </linearGradient>
+              <filter id="soft-d"><feGaussianBlur stdDeviation="12" /></filter>
+            </defs>
+            <rect fill="url(#bg-d)" height="844" width="390" />
+            <g filter="url(#soft-d)">
+              <path d="M-55 370C19 327 119 331 174 392C232 456 211 535 126 565C42 596 -53 558 -82 486C-105 429 -108 400 -55 370Z" fill="#d2f0ff" opacity="0.42" />
+              <path d="M288 170C367 150 428 187 431 252C433 319 351 366 281 338C208 309 203 191 288 170Z" fill="#bfeade" opacity="0.38" />
+            </g>
+            <path d="M63 190C109 226 129 279 119 343C108 415 72 448 91 511C109 573 163 605 224 637C275 663 306 694 318 738" fill="none" opacity="0.14" stroke="#0b6f8a" stroke-dasharray="8 14" stroke-linecap="round" stroke-width="4" />
+            <g opacity="0.18">
+              <path d="M288 698h54v36h-54z" fill="#d88b08" />
+              <path d="M288 698c4-25 50-25 54 0z" fill="#ffb31a" />
+              <path d="M312 698h8v36h-8z" fill="#fff2be" />
+              <path d="M288 716h54" stroke="#835100" stroke-width="3" />
+              <circle cx="316" cy="716" fill="#1647b7" r="4" />
+            </g>
+            <g opacity="0.15">
+              <circle cx="54" cy="178" fill="#f7b721" r="5" />
+              <circle cx="75" cy="203" fill="#f7b721" r="4" />
+              <circle cx="105" cy="254" fill="#f7b721" r="4" />
+              <circle cx="104" cy="500" fill="#f7b721" r="5" />
+              <circle cx="222" cy="638" fill="#f7b721" r="4" />
+            </g>
+            <path d="M-16 756C55 713 130 713 184 754C222 783 236 816 232 854H-16Z" fill="#ffe8a8" opacity="0.23" />
+          </svg>
+        </div>
+        <div class="label"><strong>4. Сундук вдалеке</strong><span>больше сюжета</span></div>
+      </article>
+
+      <article class="option">
+        <div class="phone">
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none" aria-label="Островки привычек">
+            <defs>
+              <linearGradient id="bg-e" x1="0" x2="1" y1="0" y2="1">
+                <stop stop-color="#eaf7ff" />
+                <stop offset="0.5" stop-color="#fbfdff" />
+                <stop offset="1" stop-color="#f0f5ff" />
+              </linearGradient>
+              <filter id="soft-e"><feGaussianBlur stdDeviation="10" /></filter>
+            </defs>
+            <rect fill="url(#bg-e)" height="844" width="390" />
+            <g filter="url(#soft-e)" opacity="0.42">
+              <path d="M36 148C103 102 196 114 238 182C281 251 231 327 139 327C52 327 -23 263 1 203C9 181 19 160 36 148Z" fill="#d4f3ff" />
+              <path d="M250 392C338 354 421 399 427 482C433 567 331 621 245 587C159 553 154 433 250 392Z" fill="#c9efdf" />
+              <path d="M43 610C117 570 205 591 239 660C274 731 217 792 132 785C52 778 -21 709 4 652C13 632 25 620 43 610Z" fill="#ddeeff" />
+            </g>
+            <g fill="none" opacity="0.16" stroke="#1647b7" stroke-linecap="round" stroke-width="3">
+              <path d="M111 318C119 366 151 389 202 396" stroke-dasharray="7 12" />
+              <path d="M252 581C238 616 230 643 224 675" stroke-dasharray="7 12" />
+            </g>
+            <g opacity="0.18">
+              <circle cx="112" cy="318" fill="#1647b7" r="14" />
+              <path d="M106 318l5 5 10-12" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+              <circle cx="202" cy="396" fill="#f7b721" r="14" />
+              <path d="M202 386l3 9 9 3-9 3-3 9-3-9-9-3 9-3z" fill="#fff7d7" />
+              <circle cx="252" cy="581" fill="#25d989" r="14" />
+              <path d="M246 581l5 5 10-12" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+              <circle cx="224" cy="675" fill="#ff642d" r="14" />
+              <path d="M218 675l5 5 10-12" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" />
+            </g>
+          </svg>
+        </div>
+        <div class="label"><strong>5. Островки привычек</strong><span>квесты как путь</span></div>
+      </article>
+
+      <article class="option">
+        <div class="phone">
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none" aria-label="Копилки и цель">
+            <defs>
+              <linearGradient id="bg-f" x1="0" x2="0" y1="0" y2="1">
+                <stop stop-color="#eff9ff" />
+                <stop offset="0.5" stop-color="#fbfdff" />
+                <stop offset="1" stop-color="#eef8f5" />
+              </linearGradient>
+              <filter id="soft-f"><feGaussianBlur stdDeviation="14" /></filter>
+            </defs>
+            <rect fill="url(#bg-f)" height="844" width="390" />
+            <g filter="url(#soft-f)" opacity="0.4">
+              <ellipse cx="304" cy="238" fill="#d2f0ff" rx="128" ry="105" />
+              <ellipse cx="82" cy="535" fill="#d5f1e3" rx="120" ry="92" />
+              <ellipse cx="240" cy="720" fill="#fff0b7" rx="142" ry="82" />
+            </g>
+            <path d="M308 128C252 170 232 226 256 294C280 361 340 386 336 464C333 533 278 565 217 583C153 602 105 640 81 711" fill="none" opacity="0.13" stroke="#1647b7" stroke-dasharray="7 13" stroke-linecap="round" stroke-width="4" />
+            <g opacity="0.16">
+              <circle cx="308" cy="128" fill="#f7b721" r="8" />
+              <circle cx="256" cy="294" fill="#f7b721" r="8" />
+              <circle cx="336" cy="464" fill="#f7b721" r="8" />
+              <circle cx="217" cy="583" fill="#f7b721" r="8" />
+              <circle cx="81" cy="711" fill="#f7b721" r="8" />
+            </g>
+            <g opacity="0.15">
+              <path d="M72 670c-22 0-39 14-39 32 0 18 17 32 39 32h32c23 0 40-14 40-32 0-18-17-32-40-32z" fill="#ff8fb5" />
+              <circle cx="59" cy="699" fill="#10233f" r="3" />
+              <path d="M33 700c-12 4-16 13-15 25" fill="none" stroke="#ff8fb5" stroke-linecap="round" stroke-width="8" />
+              <path d="M111 734l-8 15M74 734l-8 15" stroke="#d76694" stroke-linecap="round" stroke-width="5" />
+            </g>
+            <g fill="#1647b7" opacity="0.08">
+              <path d="M74 166l3 9 9 3-9 3-3 10-3-10-9-3 9-3z" />
+              <path d="M310 646l3 9 9 3-9 3-3 10-3-10-9-3 9-3z" />
+            </g>
+          </svg>
+        </div>
+        <div class="label"><strong>6. Копилки и цель</strong><span>баллы → мечта</span></div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

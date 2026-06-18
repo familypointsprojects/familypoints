@@ -61,6 +61,8 @@ export type SavingsSkillResult = {
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const TASK_BONUS_TRANSACTION_PREFIX = 'Skill bonus: task_bonus';
 const COMBO_BONUS_TRANSACTION_PREFIX = 'Skill bonus: combo_bonus';
+export const STREAK_REWARD_BONUS_MIN_DAYS = 7;
+export const STREAK_REWARD_BONUS_POINTS = 1;
 
 export const LEVEL_XP_THRESHOLDS = [
   0,
@@ -379,6 +381,15 @@ export const getTaskStreakDays = (
 
   return streak;
 };
+
+export const getStreakRewardBonusPoints = (
+  submissions: TaskSubmission[],
+  childId: string,
+  now = new Date(),
+): number =>
+  getTaskStreakDays(submissions, childId, now) >= STREAK_REWARD_BONUS_MIN_DAYS
+    ? STREAK_REWARD_BONUS_POINTS
+    : 0;
 
 export const getSkillRank = (
   unlocks: ChildSkillUnlock[],

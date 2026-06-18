@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EasyQuest background colorways</title>
+  <style>
+    :root {
+      --ink: #10233f;
+      --muted: #728196;
+      --stroke: rgba(191, 215, 245, 0.82);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #eef3fa;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .page {
+      margin: 0 auto;
+      max-width: 1280px;
+      padding: 30px;
+    }
+
+    h1 {
+      font-size: 24px;
+      line-height: 1.15;
+      margin: 0 0 8px;
+    }
+
+    .intro {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 750;
+      margin: 0 0 24px;
+      max-width: 760px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(260px, 1fr));
+      gap: 22px;
+    }
+
+    .option {
+      background: #fff;
+      border: 1px solid var(--stroke);
+      border-radius: 18px;
+      box-shadow: 0 18px 38px rgba(16, 35, 63, 0.08);
+      padding: 14px;
+    }
+
+    .phone {
+      aspect-ratio: 390 / 844;
+      border: 10px solid #111827;
+      border-radius: 42px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.42);
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+    }
+
+    .label {
+      align-items: baseline;
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+
+    .label strong {
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .label span {
+      color: #77879a;
+      font-size: 11px;
+      font-weight: 800;
+      text-align: right;
+    }
+
+    svg {
+      display: block;
+      height: 100%;
+      width: 100%;
+    }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: repeat(2, minmax(240px, 1fr)); }
+    }
+
+    @media (max-width: 640px) {
+      .page { padding: 18px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1>Цветовые варианты фона</h1>
+    <p class="intro">Одна и та же профессиональная композиция, разные палитры. Цель: найти цвет, который поддержит детский экран и не будет спорить с синими, фиолетовыми и золотыми карточками.</p>
+
+    <section class="grid">
+      <article class="option">
+        <div class="phone">
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none" aria-label="Fresh sky">
+            <defs>
+              <linearGradient id="bg1" x1="0" x2="0" y1="0" y2="1">
+                <stop stop-color="#eef9ff" />
+                <stop offset="0.46" stop-color="#fbfdff" />
+                <stop offset="1" stop-color="#f0fbf6" />
+              </linearGradient>
+              <radialGradient id="light1" cx="0.12" cy="0.06" r="0.9">
+                <stop stop-color="#fff4bd" stop-opacity="0.5" />
+                <stop offset="0.4" stop-color="#fff4bd" stop-opacity="0.13" />
+                <stop offset="1" stop-color="#fff4bd" stop-opacity="0" />
+              </radialGradient>
+              <filter id="blur1"><feGaussianBlur stdDeviation="18" /></filter>
+            </defs>
+            <rect width="390" height="844" fill="url(#bg1)" />
+            <rect width="390" height="844" fill="url(#light1)" />
+            <g filter="url(#blur1)">
+              <path d="M-80 210C-6 118 146 132 217 232C282 324 225 427 102 421C-25 415 -150 296 -80 210Z" fill="#ccefff" opacity="0.48" />
+              <path d="M238 440C340 365 458 438 433 557C411 666 279 723 184 650C91 579 126 523 238 440Z" fill="#bff0dc" opacity="0.36" />
+              <path d="M-42 728C46 656 178 686 239 787C256 816 264 843 264 878H-42Z" fill="#ffeaa7" opacity="0.3" />
+            </g>
+            <g opacity="0.16" fill="none" stroke-linecap="round">
+              <path d="M-24 372C61 327 143 330 219 370C282 403 334 397 413 342" stroke="#1647b7" stroke-width="2.2" />
+              <path d="M-18 401C68 356 149 361 222 397C284 429 337 423 409 376" stroke="#10c7e8" stroke-width="1.7" />
+              <path d="M-26 631C62 590 146 596 224 638C283 670 332 668 412 616" stroke="#1647b7" stroke-width="1.6" stroke-dasharray="9 16" />
+            </g>
+          </svg>
+        </div>
+        <div class="label"><strong>1. Fresh Sky</strong><span>чисто и привычно</span></div>
+      </article>
+
+      <article class="option">
+        <div class="phone">
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none" aria-label="Peach morning">
+            <defs>
+              <linearGradient id="bg2" x1="0" x2="0" y1="0" y2="1">
+                <stop stop-color="#f3f9ff" />
+                <stop offset="0.5" stop-color="#fffdf9" />
+                <stop offset="1" stop-color="#f2fbf7" />
+              </linearGradient>
+              <radialGradient id="light2" cx="0.12" cy="0.08" r="0.86">
+                <stop stop-color="#ffd5a8" stop-opacity="0.42" />
+                <stop offset="0.42" stop-color="#ffd5a8" stop-opacity="0.12" />
+                <stop offset="1" stop-color="#ffd5a8" stop-opacity="0" />
+              </radialGradient>
+              <filter id="blur2"><feGaussianBlur stdDeviation="18" /></filter>
+            </defs>
+            <rect width="390" height="844" fill="url(#bg2)" />
+            <rect width="390" height="844" fill="url(#light2)" />
+            <g filter="url(#blur2)">
+              <path d="M-80 210C-6 118 146 132 217 232C282 324 225 427 102 421C-25 415 -150 296 -80 210Z" fill="#d9f1ff" opacity="0.4" />
+              <path d="M238 440C340 365 458 438 433 557C411 666 279 723 184 650C91 579 126 523 238 440Z" fill="#c7f1dc" opacity="0.32" />
+              <path d="M-42 728C46 656 178 686 239 787C256 816 264 843 264 878H-42Z" fill="#ffd0a5" opacity="0.28" />
+            </g>
+            <g opacity="0.14" fill="none" stroke-linecap="round">
+              <path d="M-24 372C61 327 143 330 219 370C282 403 334 397 413 342" stroke="#2f64c8" stroke-width="2.2" />
+              <path d="M-18 401C68 356 149 361 222 397C284 429 337 423 409 376" stroke="#ff8f66" stroke-width="1.7" />
+              <path d="M-26 631C62 590 146 596 224 638C283 670 332 668 412 616" stroke="#1da98a" stroke-width="1.6" stroke-dasharray="9 16" />
+            </g>
+          </svg>
+        </div>
+        <div class="label"><strong>2. Peach Morning</strong><span>теплее, дружелюбнее</span></div>
+      </article>
+
+      <article class="option">
+        <div class="phone">
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none" aria-label="Aqua lime">
+            <defs>
+              <linearGradient id="bg3" x1="0" x2="0" y1="0" y2="1">
+                <stop stop-color="#ecfbff" />
+                <stop offset="0.5" stop-color="#fbfeff" />
+                <stop offset="1" stop-color="#f4fee8" />
+              </linearGradient>
+              <radialGradient id="light3" cx="0.16" cy="0.08" r="0.9">
+                <stop stop-color="#dfff62" stop-opacity="0.28" />
+                <stop offset="0.42" stop-color="#dfff62" stop-opacity="0.1" />
+                <stop offset="1" stop-color="#dfff62" stop-opacity="0" />
+              </radialGradient>
+              <filter id="blur3"><feGaussianBlur stdDeviation="18" /></filter>
+            </defs>
+            <rect width="390" height="844" fill="url(#bg3)" />
+            <rect width="390" height="844" fill="url(#light3)" />
+            <g filter="url(#blur3)">
+              <path d="M-80 210C-6 118 146 132 217 232C282 324 225 427 102 421C-25 415 -150 296 -80 210Z" fill="#bff4ff" opacity="0.5" />
+              <path d="M238 440C340 365 458 438 433 557C411 666 279 723 184 650C91 579 126 523 238 440Z" fill="#c9f65c" opacity="0.2" />
+              <path d="M-42 728C46 656 178 686 239 787C256 816 264 843 264 878H-42Z" fill="#fff0a8" opacity="0.25" />
+            </g>
+            <g opacity="0.14" fill="none" stroke-linecap="round">
+              <path d="M-24 372C61 327 143 330 219 370C282 403 334 397 413 342" stroke="#0b6f8a" stroke-width="2.2" />
+              <path d="M-18 401C68 356 149 361 222 397C284 429 337 423 409 376" stroke="#25d989" stroke-width="1.7" />
+              <path d="M-26 631C62 590 146 596 224 638C283 670 332 668 412 616" stroke="#1647b7" stroke-width="1.6" stroke-dasharray="9 16" />
+            </g>
+          </svg>
+        </div>
+        <div class="label"><strong>3. Aqua Lime</strong><span>бодрее, свежее</span></div>
+      </article>
+
+      <article class="option">
+        <div class="phone">
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none" aria-label="Coral lagoon">
+            <defs>
+              <linearGradient id="bg4" x1="0" x2="0" y1="0" y2="1">
+                <stop stop-color="#eef8ff" />
+                <stop offset="0.48" stop-color="#fffcfb" />
+                <stop offset="1" stop-color="#effbf8" />
+              </linearGradient>
+              <radialGradient id="light4" cx="0.1" cy="0.06" r="0.9">
+                <stop stop-color="#ffb0a0" stop-opacity="0.34" />
+                <stop offset="0.42" stop-color="#ffb0a0" stop-opacity="0.11" />
+                <stop offset="1" stop-color="#ffb0a0" stop-opacity="0" />
+              </radialGradient>
+              <filter id="blur4"><feGaussianBlur stdDeviation="18" /></filter>
+            </defs>
+            <rect width="390" height="844" fill="url(#bg4)" />
+            <rect width="390" height="844" fill="url(#light4)" />
+            <g filter="url(#blur4)">
+              <path d="M-80 210C-6 118 146 132 217 232C282 324 225 427 102 421C-25 415 -150 296 -80 210Z" fill="#d6efff" opacity="0.4" />
+              <path d="M238 440C340 365 458 438 433 557C411 666 279 723 184 650C91 579 126 523 238 440Z" fill="#adefe2" opacity="0.32" />
+              <path d="M-42 728C46 656 178 686 239 787C256 816 264 843 264 878H-42Z" fill="#ffc2af" opacity="0.24" />
+            </g>
+            <g opacity="0.14" fill="none" stroke-linecap="round">
+              <path d="M-24 372C61 327 143 330 219 370C282 403 334 397 413 342" stroke="#2563b8" stroke-width="2.2" />
+              <path d="M-18 401C68 356 149 361 222 397C284 429 337 423 409 376" stroke="#ff6f59" stroke-width="1.7" />
+              <path d="M-26 631C62 590 146 596 224 638C283 670 332 668 412 616" stroke="#12a594" stroke-width="1.6" stroke-dasharray="9 16" />
+            </g>
+          </svg>
+        </div>
+        <div class="label"><strong>4. Coral Lagoon</strong><span>мягче и теплее</span></div>
+      </article>
+
+      <article class="option">
+        <div class="phone">
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none" aria-label="Lilac mint">
+            <defs>
+              <linearGradient id="bg5" x1="0" x2="0" y1="0" y2="1">
+                <stop stop-color="#f1f7ff" />
+                <stop offset="0.5" stop-color="#fbfdff" />
+                <stop offset="1" stop-color="#f3fbf7" />
+              </linearGradient>
+              <radialGradient id="light5" cx="0.12" cy="0.06" r="0.88">
+                <stop stop-color="#d9d0ff" stop-opacity="0.32" />
+                <stop offset="0.42" stop-color="#d9d0ff" stop-opacity="0.11" />
+                <stop offset="1" stop-color="#d9d0ff" stop-opacity="0" />
+              </radialGradient>
+              <filter id="blur5"><feGaussianBlur stdDeviation="18" /></filter>
+            </defs>
+            <rect width="390" height="844" fill="url(#bg5)" />
+            <rect width="390" height="844" fill="url(#light5)" />
+            <g filter="url(#blur5)">
+              <path d="M-80 210C-6 118 146 132 217 232C282 324 225 427 102 421C-25 415 -150 296 -80 210Z" fill="#d9e7ff" opacity="0.38" />
+              <path d="M238 440C340 365 458 438 433 557C411 666 279 723 184 650C91 579 126 523 238 440Z" fill="#c8f1df" opacity="0.34" />
+              <path d="M-42 728C46 656 178 686 239 787C256 816 264 843 264 878H-42Z" fill="#fff0b6" opacity="0.22" />
+            </g>
+            <g opacity="0.13" fill="none" stroke-linecap="round">
+              <path d="M-24 372C61 327 143 330 219 370C282 403 334 397 413 342" stroke="#395fc7" stroke-width="2.2" />
+              <path d="M-18 401C68 356 149 361 222 397C284 429 337 423 409 376" stroke="#7e6df2" stroke-width="1.7" />
+              <path d="M-26 631C62 590 146 596 224 638C283 670 332 668 412 616" stroke="#23b386" stroke-width="1.6" stroke-dasharray="9 16" />
+            </g>
+          </svg>
+        </div>
+        <div class="label"><strong>5. Lilac Mint</strong><span>немного сказочнее</span></div>
+      </article>
+
+      <article class="option">
+        <div class="phone">
+          <svg viewBox="0 0 390 844" preserveAspectRatio="none" aria-label="Clean ice">
+            <defs>
+              <linearGradient id="bg6" x1="0" x2="0" y1="0" y2="1">
+                <stop stop-color="#edf8ff" />
+                <stop offset="0.5" stop-color="#fbfdff" />
+                <stop offset="1" stop-color="#f7fbff" />
+              </linearGradient>
+              <radialGradient id="light6" cx="0.12" cy="0.06" r="0.9">
+                <stop stop-color="#f7b721" stop-opacity="0.2" />
+                <stop offset="0.44" stop-color="#f7b721" stop-opacity="0.07" />
+                <stop offset="1" stop-color="#f7b721" stop-opacity="0" />
+              </radialGradient>
+              <filter id="blur6"><feGaussianBlur stdDeviation="18" /></filter>
+            </defs>
+            <rect width="390" height="844" fill="url(#bg6)" />
+            <rect width="390" height="844" fill="url(#light6)" />
+            <g filter="url(#blur6)">
+              <path d="M-80 210C-6 118 146 132 217 232C282 324 225 427 102 421C-25 415 -150 296 -80 210Z" fill="#d8f2ff" opacity="0.38" />
+              <path d="M238 440C340 365 458 438 433 557C411 666 279 723 184 650C91 579 126 523 238 440Z" fill="#d8f1ff" opacity="0.28" />
+              <path d="M-42 728C46 656 178 686 239 787C256 816 264 843 264 878H-42Z" fill="#e9f4ff" opacity="0.34" />
+            </g>
+            <g opacity="0.14" fill="none" stroke-linecap="round">
+              <path d="M-24 372C61 327 143 330 219 370C282 403 334 397 413 342" stroke="#1647b7" stroke-width="2.2" />
+              <path d="M-18 401C68 356 149 361 222 397C284 429 337 423 409 376" stroke="#10c7e8" stroke-width="1.7" />
+              <path d="M-26 631C62 590 146 596 224 638C283 670 332 668 412 616" stroke="#8eb8e8" stroke-width="1.6" stroke-dasharray="9 16" />
+            </g>
+          </svg>
+        </div>
+        <div class="label"><strong>6. Clean Ice</strong><span>самый нейтральный</span></div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

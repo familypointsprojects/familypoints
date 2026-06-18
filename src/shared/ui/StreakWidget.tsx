@@ -1,10 +1,28 @@
 import { Platform, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 import { FP } from '@/constants/theme';
 import { TaskSubmission } from '@/shared/types/family';
 import { getTaskStreakDays } from '@/shared/utils/leveling';
 
 const DAY_LABELS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+const StreakFlameIcon = () => (
+  <Svg width={30} height={30} viewBox="0 0 160 160">
+    <Path
+      d="M79 151C47 151 23 131 23 105C23 82 38 69 58 54C74 42 81 26 89 9C109 34 116 54 112 72C119 62 124 51 127 39C142 64 149 84 149 107C149 134 127 151 95 151Z"
+      fill="#FF9F38"
+    />
+    <Path
+      d="M80 146C58 146 45 133 45 115C45 101 53 91 65 80C74 71 79 59 81 47C95 63 101 79 98 94C105 86 109 78 111 70C122 85 127 99 127 115C127 134 112 146 80 146Z"
+      fill="#FFD35A"
+    />
+    <Path
+      d="M91 147C73 147 61 136 61 121C61 107 69 96 81 82C91 96 103 108 107 122C112 136 103 147 91 147Z"
+      fill="#A83AFF"
+    />
+  </Svg>
+);
 
 /** Returns "YYYY-MM-DD" in the device's local timezone. */
 const toLocalDateKey = (d: Date): string => {
@@ -47,14 +65,17 @@ export const StreakWidget = ({ taskSubmissions, childId }: StreakWidgetProps) =>
   const hasStreak = streakDays > 0;
 
   const subText = hasStreak
-    ? `${streakDays} ${streakDays === 1 ? 'день' : streakDays < 5 ? 'дня' : 'дней'} подряд 🔥`
+    ? `${streakDays} ${streakDays === 1 ? 'день' : streakDays < 5 ? 'дня' : 'дней'} подряд`
     : 'Выполни задание сегодня — начни серию!';
 
   return (
     <View style={styles.streak}>
       <View style={styles.streakHead}>
         <View style={styles.streakHeadLeft}>
-          <Text style={styles.streakTitle}>🔥 Серия</Text>
+          <View style={styles.streakTitleRow}>
+            <StreakFlameIcon />
+            <Text style={styles.streakTitle}>Серия</Text>
+          </View>
           <Text style={styles.streakSub}>{subText}</Text>
         </View>
         {hasStreak && (
@@ -99,6 +120,12 @@ const styles = StyleSheet.create({
     color: FP.white,
     fontSize: 16,
     fontWeight: '900',
+  },
+  streakTitleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 7,
+    minHeight: 36,
   },
   streakSub: {
     color: 'rgba(255,255,255,0.5)',

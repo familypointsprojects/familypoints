@@ -14,6 +14,7 @@ const OUTER_H       = 58;
 const ROCKET_TOP_PX = 20;
 
 const TRACK_TOP     = 34;
+const TRACK_TOP_COMPACT = 16;
 const TRACK_H       = 24;
 const TRACK_PAD     = 2;
 const FILL_LEFT_INSET = 2;
@@ -23,6 +24,7 @@ const FILL_H        = TRACK_H - TRACK_BRD * 2 - TRACK_PAD * 2;  // 18
 
 const GLOW_SZ       = 36;
 const GLOW_TOP      = TRACK_TOP - (GLOW_SZ - TRACK_H) / 2;  // 28
+const GLOW_TOP_COMPACT = TRACK_TOP_COMPACT - (GLOW_SZ - TRACK_H) / 2;
 
 // ─── Coin gradient colours ─────────────────────────────────────────────────────
 const gradientAnchors = [
@@ -46,26 +48,34 @@ const getStop = (index: number, count: number) => {
 
 const fillStops = Array.from({ length: 32 }, (_, i) => getStop(i, 32));
 
-type Props = { progress: number; showRunner?: boolean; showGlow?: boolean };
+type Props = { progress: number; showRunner?: boolean; showGlow?: boolean; compact?: boolean };
 const clamp = (v: number) => Math.max(0, Math.min(v, 100));
 
-export const RocketProgressBar = ({ progress, showRunner = true, showGlow = true }: Props) => {
+export const RocketProgressBar = ({
+  compact = false,
+  progress,
+  showRunner = true,
+  showGlow = true,
+}: Props) => {
   const [trackWidth, setTrackWidth] = useState(0);
   const ratio   = clamp(progress) / 100;
   const innerW  = Math.max(trackWidth - FILL_LEFT_INSET - FILL_RIGHT_INSET, 0);
   const fillW   = innerW * ratio;
   const fillEnd = FILL_LEFT_INSET + fillW;
+  const glowTop = compact ? GLOW_TOP_COMPACT : GLOW_TOP;
+  const runnerTop = compact ? 2 : ROCKET_TOP_PX;
+  const trackTop = compact ? TRACK_TOP_COMPACT : TRACK_TOP;
   const stripeOffsets = useMemo(
     () => Array.from({ length: Math.ceil(innerW / 15) + 8 }, (_, i) => i * 15 - 48),
     [innerW],
   );
 
   return (
-    <View style={styles.outer}>
+    <View style={[styles.outer, compact && styles.outerCompact]}>
       {/* ── Track ── */}
       <View
         onLayout={e => setTrackWidth(e.nativeEvent.layout.width)}
-        style={styles.track}>
+        style={[styles.track, { top: trackTop }]}>
         {trackWidth > 0 && (
           <>
             <View style={[styles.fill, { width: fillW }]}>
@@ -88,7 +98,7 @@ export const RocketProgressBar = ({ progress, showRunner = true, showGlow = true
         <Svg
           width={GLOW_SZ}
           height={GLOW_SZ}
-          style={[styles.glow, { left: fillEnd - OVERHANG + ROCKET_W / 2 - GLOW_SZ / 2 }]}>
+          style={[styles.glow, { left: fillEnd - OVERHANG + ROCKET_W / 2 - GLOW_SZ / 2, top: glowTop }]}>
           <Defs>
             <RadialGradient id="g" cx="50%" cy="50%" r="50%">
               <Stop offset="0"   stopColor="#FFD84D" stopOpacity="0.72" />
@@ -102,7 +112,7 @@ export const RocketProgressBar = ({ progress, showRunner = true, showGlow = true
 
       {/* ── Pig runner (centred in track) ── */}
       {trackWidth > 0 && showRunner && (
-        <View style={[styles.runner, { left: fillEnd - OVERHANG }]}>
+        <View style={[styles.runner, { left: fillEnd - OVERHANG, top: runnerTop }]}>
           <Image
             source={pigRunnerSource}
             style={styles.runnerImg}
@@ -122,6 +132,9 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
   },
+  outerCompact: {
+    height: 40,
+  },
 
   track: {
     backgroundColor: 'rgba(102,58,0,0.38)',
@@ -133,7 +146,6 @@ const styles = StyleSheet.create({
     overflow: 'visible',
     position: 'absolute',
     right: 0,
-    top: TRACK_TOP,
   },
 
   fill: {
@@ -173,14 +185,12 @@ const styles = StyleSheet.create({
 
   glow: {
     position: 'absolute',
-    top: GLOW_TOP,
     zIndex: 2,
   },
 
   runner: {
     height: ROCKET_H,
     position: 'absolute',
-    top: ROCKET_TOP_PX,
     width: ROCKET_W,
     zIndex: 3,
   },

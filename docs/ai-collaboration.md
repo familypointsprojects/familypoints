@@ -79,6 +79,7 @@ Respect these invariants:
 - Use design tokens from `src/constants/theme.ts`.
 - Do not add new libraries for icons or styling unless the existing shared UI cannot cover it.
 - Avoid screen-local SVG duplication; reusable icon art belongs in `QuestIcons`.
+- For every bottom popup/drawer, use `src/shared/ui/AppBottomSheet`. This is the canonical pattern: a transparent native `Modal` sits above all app content, `@gorhom/bottom-sheet` provides the sheet, swipe down closes it, and buttons/backdrop should call the sheet close path so it animates down before unmounting. Do not replace this component with a plain modal, custom `Animated` drawer, or `BottomSheetModal`.
 
 ## Skill: Review Work
 

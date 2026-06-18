@@ -1,0 +1,4202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EasyQuest Mobile Redesign Board</title>
+<style>
+  * { box-sizing: border-box; }
+
+  :root {
+    --coin-deep: #D06F08;
+    --coin-gold: #F7B721;
+    --coin-shine: #FFD84D;
+    --coin-edge: #FFC838;
+    --radius-card: 20px;
+    --shadow-soft: 0 12px 26px rgba(16, 35, 63, .10);
+    --shadow-hero: 0 18px 34px rgba(16, 35, 63, .18);
+  }
+
+  body {
+    margin: 0;
+    min-width: 1480px;
+    background:
+      radial-gradient(circle at 9% 3%, rgba(216, 255, 62, .16), transparent 24%),
+      radial-gradient(circle at 92% 0%, rgba(16, 199, 232, .14), transparent 26%),
+      linear-gradient(145deg, #f7fbff 0%, #ffffff 52%, #fff9ed 100%);
+    color: #10233F;
+    font-family: ui-rounded, "Arial Rounded MT Bold", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    padding: 30px;
+  }
+
+  .board {
+    width: 1420px;
+    margin: 0 auto;
+  }
+
+  .intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 430px;
+    gap: 28px;
+    align-items: end;
+    margin-bottom: 26px;
+  }
+
+  h1 {
+    margin: 0;
+    max-width: 850px;
+    color: #10233F;
+    font-size: 44px;
+    line-height: 1.02;
+    font-weight: 1000;
+    letter-spacing: 0;
+  }
+
+  .intro p {
+    margin: 12px 0 0;
+    max-width: 830px;
+    color: #60748B;
+    font-size: 15px;
+    line-height: 1.45;
+    font-weight: 800;
+  }
+
+  .source-note {
+    border: 1px solid rgba(191, 215, 245, .9);
+    border-radius: 18px;
+    background: rgba(255,255,255,.78);
+    box-shadow: 0 10px 26px rgba(16,35,63,.07);
+    padding: 16px;
+  }
+
+  .source-note strong {
+    display: block;
+    margin-bottom: 7px;
+    color: #10233F;
+    font-size: 14px;
+    font-weight: 1000;
+  }
+
+  .source-note span {
+    display: block;
+    color: #63758A;
+    font-size: 12px;
+    line-height: 1.45;
+    font-weight: 800;
+  }
+
+  .concept {
+    --bg: #EDF5FF;
+    --paper: #F8FCFF;
+    --card: #FFFFFF;
+    --ink: #10233F;
+    --sub: #66788C;
+    --muted: #EDF3FA;
+    --border: #DCE8F5;
+    --primary: #1647B7;
+    --primary-dark: #10233F;
+    --accent: #D8FF3E;
+    --accent-ink: #10233F;
+    --gold: #F7B721;
+    --orange: #FF642D;
+    --cyan: #10C7E8;
+    --success: #1CA66A;
+    --danger: #DC3D2E;
+    --hero: #1647B7;
+    --hero-2: #10233F;
+    --hero-glow: rgba(216,255,62,.25);
+    margin-top: 34px;
+    padding: 22px;
+    border: 1px solid rgba(191, 215, 245, .75);
+    border-radius: 28px;
+    background: rgba(255,255,255,.70);
+    box-shadow: 0 18px 42px rgba(16, 35, 63, .07);
+  }
+
+  .concept[data-theme="tropical"] {
+    --bg: #E9FAFD;
+    --paper: #F5FEFF;
+    --card: #FFFFFF;
+    --ink: #103149;
+    --sub: #5C7886;
+    --muted: #E3F6F8;
+    --border: #C7E8ED;
+    --primary: #1477C8;
+    --primary-dark: #0D4166;
+    --accent: #2FE7D2;
+    --accent-ink: #073F45;
+    --gold: #F7B721;
+    --orange: #FF7D3B;
+    --cyan: #10C7E8;
+    --success: #159B76;
+    --danger: #D74835;
+    --hero: #0A8FA4;
+    --hero-2: #0B4F82;
+    --hero-glow: rgba(47,231,210,.26);
+  }
+
+  .concept[data-theme="gold"] {
+    --bg: #FFF6E3;
+    --paper: #FFFCF4;
+    --card: #FFFFFF;
+    --ink: #1C2C3F;
+    --sub: #776B58;
+    --muted: #FFF0CE;
+    --border: #F0D8A3;
+    --primary: #1647B7;
+    --primary-dark: #10233F;
+    --accent: #FF9C2E;
+    --accent-ink: #4B2300;
+    --gold: #F7B721;
+    --orange: #EB6D18;
+    --cyan: #12B9D4;
+    --success: #188A5B;
+    --danger: #C83F2D;
+    --hero: #8A4B00;
+    --hero-2: #16283A;
+    --hero-glow: rgba(255,216,77,.30);
+  }
+
+  .concept[data-theme="night"] {
+    --bg: #EAF1F8;
+    --paper: #F7FAFE;
+    --card: #FFFFFF;
+    --ink: #0D2237;
+    --sub: #65768B;
+    --muted: #E8EEF6;
+    --border: #D8E3EF;
+    --primary: #1647B7;
+    --primary-dark: #071827;
+    --accent: #D8FF3E;
+    --accent-ink: #10233F;
+    --gold: #F7B721;
+    --orange: #FF6A32;
+    --cyan: #20CFE8;
+    --success: #1EA86D;
+    --danger: #DC3D2E;
+    --hero: #071827;
+    --hero-2: #16283A;
+    --hero-glow: rgba(216,255,62,.22);
+  }
+
+  .concept[data-theme="candy"] {
+    --bg: #F7F1FF;
+    --paper: #FFF9FE;
+    --card: #FFFFFF;
+    --ink: #172947;
+    --sub: #6C7190;
+    --muted: #F0E9FF;
+    --border: #E6DDF8;
+    --primary: #3264D9;
+    --primary-dark: #183B85;
+    --accent: #FF74A8;
+    --accent-ink: #5B1230;
+    --gold: #F7B721;
+    --orange: #FF8B45;
+    --cyan: #26D6E8;
+    --success: #33B879;
+    --danger: #D83E65;
+    --hero: #3264D9;
+    --hero-2: #FF74A8;
+    --hero-glow: rgba(38,214,232,.26);
+  }
+
+  .concept-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 520px;
+    gap: 22px;
+    align-items: start;
+    margin-bottom: 20px;
+  }
+
+  .concept-title {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+  }
+
+  .concept-index {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 16px;
+    background: var(--hero);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 1000;
+    box-shadow: 0 10px 18px color-mix(in srgb, var(--hero) 28%, transparent);
+  }
+
+  h2 {
+    margin: 0;
+    color: var(--ink);
+    font-size: 28px;
+    line-height: 1.05;
+    font-weight: 1000;
+    letter-spacing: 0;
+  }
+
+  .concept-kicker {
+    margin: 5px 0 0;
+    color: var(--sub);
+    font-size: 13px;
+    line-height: 1.4;
+    font-weight: 800;
+  }
+
+  .spec {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .spec-card {
+    min-height: 82px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: rgba(255,255,255,.78);
+    padding: 10px 11px;
+  }
+
+  .spec-card strong {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--ink);
+    font-size: 11px;
+    line-height: 1.1;
+    text-transform: uppercase;
+    font-weight: 1000;
+    letter-spacing: .4px;
+  }
+
+  .spec-card span {
+    display: block;
+    color: var(--sub);
+    font-size: 11px;
+    line-height: 1.35;
+    font-weight: 800;
+  }
+
+  .swatches {
+    display: flex;
+    gap: 6px;
+    margin-top: 2px;
+    margin-bottom: 7px;
+  }
+
+  .swatch {
+    width: 28px;
+    height: 18px;
+    border: 1px solid rgba(16,35,63,.10);
+    border-radius: 7px;
+  }
+
+  .screens {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px;
+  }
+
+  .phone-wrap {
+    width: 218px;
+  }
+
+  .phone-label {
+    height: 25px;
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 7px;
+    padding: 0 9px;
+    border-radius: 99px;
+    background: var(--primary-dark);
+    color: #fff;
+    font-size: 9px;
+    line-height: 1;
+    font-weight: 1000;
+    letter-spacing: .45px;
+    text-transform: uppercase;
+  }
+
+  .phone {
+    width: 218px;
+    height: 472px;
+    overflow: hidden;
+    border: 6px solid #101E31;
+    border-radius: 28px;
+    background: var(--bg);
+    box-shadow: 0 18px 34px rgba(16,35,63,.18);
+  }
+
+  .screen {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    padding: 12px 10px 58px;
+    background:
+      radial-gradient(circle at 18% -4%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 24%),
+      radial-gradient(circle at 98% 2%, color-mix(in srgb, var(--cyan) 20%, transparent), transparent 28%),
+      linear-gradient(180deg, var(--bg) 0%, var(--paper) 100%);
+  }
+
+  .screen.keyHero {
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--hero) 14%, var(--bg)) 0%, var(--paper) 37%, var(--paper) 100%);
+  }
+
+  .topbar {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 29px;
+    margin-bottom: 7px;
+  }
+
+  .hello span,
+  .eyebrow {
+    display: block;
+    color: var(--sub);
+    font-size: 8px;
+    line-height: 1.1;
+    font-weight: 1000;
+  }
+
+  .hello strong,
+  .screen-title {
+    display: block;
+    margin-top: 2px;
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1;
+    font-weight: 1000;
+    letter-spacing: 0;
+  }
+
+  .avatar {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: rgba(255,255,255,.94);
+    box-shadow: 0 7px 13px rgba(16,35,63,.08);
+    color: var(--primary-dark);
+    font-size: 12px;
+    font-weight: 1000;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .row { display: flex; gap: 7px; }
+  .grow { flex: 1; min-width: 0; }
+
+  .card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--card);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+  }
+
+  .inner { padding: 9px; }
+
+  .section-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 2px 0 0;
+  }
+
+  .section-row h3 {
+    margin: 0;
+    color: var(--ink);
+    font-size: 10px;
+    line-height: 1.05;
+    font-weight: 1000;
+  }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 18px;
+    max-width: 84px;
+    padding: 0 7px;
+    border-radius: 99px;
+    background: var(--muted);
+    color: var(--primary-dark);
+    font-size: 7px;
+    line-height: 1;
+    font-weight: 1000;
+    white-space: nowrap;
+  }
+
+  .status.gold {
+    background: #FFF3CA;
+    color: #845300;
+  }
+
+  .status.success {
+    background: color-mix(in srgb, var(--success) 15%, white);
+    color: color-mix(in srgb, var(--success) 82%, #10233F);
+  }
+
+  .status.warn {
+    background: #FFF2D6;
+    color: #8A5A00;
+  }
+
+  .status.danger {
+    background: #FFE6E4;
+    color: var(--danger);
+  }
+
+  .points {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    min-height: 19px;
+    padding: 0 7px 0 5px;
+    border: 1px solid #F2D17B;
+    border-radius: 99px;
+    background: #FFF6D8;
+    color: #8A5A00;
+    font-size: 8px;
+    line-height: 1;
+    font-weight: 1000;
+    white-space: nowrap;
+  }
+
+  .points img {
+    width: 13px;
+    height: 13px;
+    object-fit: contain;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 25px;
+    padding: 0 11px;
+    border-radius: 99px;
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 7px 13px color-mix(in srgb, var(--primary) 24%, transparent);
+    font-size: 8px;
+    font-weight: 1000;
+    white-space: nowrap;
+  }
+
+  .btn.secondary {
+    background: color-mix(in srgb, var(--primary) 9%, white);
+    color: var(--primary);
+    box-shadow: none;
+  }
+
+  .btn.disabled {
+    background: #E8EEF6;
+    color: #8A9BAF;
+    box-shadow: none;
+  }
+
+  .balance-card {
+    position: relative;
+    min-height: 82px;
+    padding: 9px;
+    border-radius: 20px;
+    background:
+      radial-gradient(circle at 78% 8%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 39%),
+      radial-gradient(circle at 18% 110%, color-mix(in srgb, var(--cyan) 22%, transparent), transparent 44%),
+      linear-gradient(135deg, var(--hero) 0%, var(--hero-2) 100%);
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow: var(--shadow-hero);
+    overflow: visible;
+  }
+
+  .balance-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    background: radial-gradient(circle at 82% 32%, var(--hero-glow), transparent 42%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .balance-left,
+  .pirate {
+    position: relative;
+    z-index: 1;
+  }
+
+  .balance-label {
+    color: rgba(255,255,255,.58);
+    font-size: 7px;
+    font-weight: 1000;
+    letter-spacing: .45px;
+    text-transform: uppercase;
+  }
+
+  .balance-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 2px;
+  }
+
+  .balance-row img {
+    width: 25px;
+    height: 25px;
+    object-fit: contain;
+  }
+
+  .balance-number {
+    color: #fff;
+    font-size: 26px;
+    line-height: 1;
+    font-weight: 1000;
+    letter-spacing: 0;
+  }
+
+  .pending-pill {
+    display: inline-flex;
+    align-items: center;
+    height: 18px;
+    margin-top: 5px;
+    padding: 0 7px;
+    border-radius: 99px;
+    background: rgba(255,255,255,.12);
+    color: var(--accent);
+    font-size: 7px;
+    font-weight: 1000;
+    white-space: nowrap;
+  }
+
+  .pirate {
+    position: absolute;
+    right: -12px;
+    bottom: -12px;
+    width: 94px;
+    height: 114px;
+    object-fit: contain;
+  }
+
+  .level-card {
+    min-height: 78px;
+  }
+
+  .level-top {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 6px;
+  }
+
+  .level-avatar {
+    width: 31px;
+    height: 31px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--primary) 11%, white);
+    border: 1px solid color-mix(in srgb, var(--primary) 20%, white);
+  }
+
+  .level-avatar img {
+    width: 23px;
+    height: 23px;
+    object-fit: contain;
+  }
+
+  .level-title {
+    color: var(--ink);
+    font-size: 11px;
+    line-height: 1.05;
+    font-weight: 1000;
+  }
+
+  .level-meta {
+    margin-top: 2px;
+    color: var(--sub);
+    font-size: 7px;
+    line-height: 1.15;
+    font-weight: 900;
+  }
+
+  .streak {
+    min-height: 78px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 9px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background:
+      linear-gradient(155deg, color-mix(in srgb, var(--orange) 16%, white), white 72%);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .streak-mark {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: var(--orange);
+    box-shadow: 0 8px 14px color-mix(in srgb, var(--orange) 22%, transparent);
+  }
+
+  .streak-mark::before {
+    content: "";
+    width: 11px;
+    height: 16px;
+    background: #fff;
+    clip-path: polygon(56% 0, 14% 50%, 48% 50%, 35% 100%, 88% 39%, 55% 39%);
+  }
+
+  .streak strong {
+    display: block;
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1;
+    font-weight: 1000;
+  }
+
+  .streak span {
+    color: var(--sub);
+    font-size: 7px;
+    font-weight: 900;
+  }
+
+  .goal-card .title-line,
+  .reward-card .title-line {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .goal-name,
+  .task-title,
+  .reward-title,
+  .tx-title,
+  .mission-title {
+    color: var(--ink);
+    font-size: 10px;
+    line-height: 1.12;
+    font-weight: 1000;
+  }
+
+  .goal-meta,
+  .task-desc,
+  .reward-meta,
+  .tx-meta,
+  .mission-meta {
+    color: var(--sub);
+    font-size: 7px;
+    line-height: 1.35;
+    font-weight: 800;
+  }
+
+  .progress {
+    --p: 70%;
+    position: relative;
+    height: 36px;
+    overflow: visible;
+    margin-top: 5px;
+  }
+
+  .progress.compact {
+    height: 30px;
+  }
+
+  .track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 9px;
+    height: 24px;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 999px;
+    background: rgba(102, 58, 0, .38);
+    overflow: visible;
+  }
+
+  .compact .track { top: 4px; }
+
+  .fill {
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    bottom: 2px;
+    width: calc(var(--p) - 5px);
+    min-width: 0;
+    overflow: hidden;
+    border-radius: 999px;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,.38), transparent 18%, rgba(255,255,255,.24) 38%, transparent 58%),
+      repeating-linear-gradient(18deg, rgba(255,255,255,.26) 0 7px, transparent 7px 15px),
+      linear-gradient(90deg, var(--coin-deep) 0%, var(--coin-gold) 38%, var(--coin-shine) 72%, var(--coin-edge) 100%);
+    background-size: 120px 100%, 48px 100%, 100% 100%;
+    box-shadow: 0 0 18px rgba(247,183,33,.42), 0 0 22px rgba(216,139,8,.28);
+  }
+
+  .fill::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    right: 18px;
+    top: 3px;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.30);
+  }
+
+  .progress.runner .track::after {
+    content: "";
+    position: absolute;
+    left: calc(var(--p) - 9px);
+    top: -9px;
+    width: 48px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,216,77,.76) 0%, rgba(247,183,33,.36) 48%, transparent 74%);
+    filter: blur(1px);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .runner-img {
+    position: absolute;
+    left: calc(var(--p) - 30px);
+    top: -1px;
+    z-index: 4;
+    width: 60px;
+    height: 40px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 0 rgba(7,24,39,.16)) drop-shadow(0 0 10px rgba(247,183,33,.32));
+  }
+
+  .compact .runner-img { top: -7px; }
+
+  .task-card {
+    display: flex;
+    min-height: 76px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--card);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .task-icon {
+    width: 42px;
+    flex: 0 0 42px;
+    display: grid;
+    place-items: center;
+    background: color-mix(in srgb, var(--primary) 12%, white);
+  }
+
+  .task-card:nth-child(2n) .task-icon {
+    background: color-mix(in srgb, var(--accent) 18%, white);
+  }
+
+  .task-card.pending .task-icon {
+    background: #FFF2CA;
+  }
+
+  .task-card.done .task-icon {
+    background: color-mix(in srgb, var(--success) 17%, white);
+  }
+
+  .task-card.rejected .task-icon {
+    background: #FFE1DD;
+  }
+
+  .task-icon img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+  }
+
+  .task-body {
+    flex: 1;
+    min-width: 0;
+    padding: 9px 8px;
+  }
+
+  .task-desc {
+    margin-top: 3px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .task-footer,
+  .reward-footer,
+  .tx-row,
+  .mission-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+    margin-top: 7px;
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    min-height: 30px;
+    padding: 3px;
+    border-radius: 13px;
+    background: var(--muted);
+  }
+
+  .tab {
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    color: var(--sub);
+    font-size: 8px;
+    font-weight: 1000;
+  }
+
+  .tab.active {
+    background: #fff;
+    color: var(--primary);
+    box-shadow: 0 6px 12px rgba(16,35,63,.08);
+  }
+
+  .reward-card.focus {
+    border-color: color-mix(in srgb, var(--gold) 72%, var(--border));
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--gold) 12%, white) 0%, white 70%);
+  }
+
+  .reward-head-icon {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--gold) 17%, white);
+  }
+
+  .reward-head-icon img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+  }
+
+  .reward-title-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .balance-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .mini-stat {
+    text-align: center;
+  }
+
+  .mini-stat strong {
+    display: block;
+    color: var(--ink);
+    font-size: 11px;
+    line-height: 1;
+    font-weight: 1000;
+  }
+
+  .mini-stat span {
+    display: block;
+    margin-top: 3px;
+    color: var(--sub);
+    font-size: 7px;
+    line-height: 1;
+    font-weight: 900;
+  }
+
+  .tx-card,
+  .mission-card,
+  .achievement-card {
+    padding: 9px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--card);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .tx-amount.plus { color: var(--success); }
+  .tx-amount.minus { color: var(--orange); }
+
+  .tx-amount {
+    flex: 0 0 auto;
+    font-size: 10px;
+    font-weight: 1000;
+    white-space: nowrap;
+  }
+
+  .achievement-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .achievement-icon {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--primary) 12%, white);
+  }
+
+  .achievement-icon img {
+    width: 23px;
+    height: 23px;
+    object-fit: contain;
+  }
+
+  .skill-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .skill {
+    min-height: 55px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: var(--card);
+  }
+
+  .skill strong {
+    display: block;
+    color: var(--ink);
+    font-size: 9px;
+    line-height: 1.1;
+    font-weight: 1000;
+  }
+
+  .skill span {
+    display: block;
+    margin-top: 4px;
+    color: var(--sub);
+    font-size: 7px;
+    line-height: 1.25;
+    font-weight: 800;
+  }
+
+  .mission-card.invested {
+    border-color: color-mix(in srgb, var(--gold) 60%, var(--border));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--gold) 10%, white), white 74%);
+  }
+
+  .mission-range {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+
+  .nav {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    padding: 8px 8px 9px;
+    border-top: 1px solid var(--border);
+    border-top-left-radius: 23px;
+    border-top-right-radius: 23px;
+    background: rgba(255,255,255,.97);
+    box-shadow: 0 -11px 24px rgba(16,35,63,.13);
+  }
+
+  .nav-item {
+    position: relative;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .nav-item img {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+  }
+
+  .nav-item span {
+    width: 100%;
+    color: #8B9CAF;
+    font-size: 7px;
+    line-height: 1;
+    font-weight: 1000;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .nav-item.active span {
+    color: var(--primary);
+  }
+
+  .nav-badge {
+    position: absolute;
+    right: 5px;
+    top: -3px;
+    min-width: 14px;
+    height: 14px;
+    display: grid;
+    place-items: center;
+    padding: 0 3px;
+    border: 1.5px solid #fff;
+    border-radius: 99px;
+    background: var(--orange);
+    color: #fff;
+    font-size: 7px;
+    line-height: 1;
+    font-weight: 1000;
+  }
+</style>
+</head>
+<body>
+  <main class="board">
+    <section class="intro">
+      <div>
+        <h1>EasyQuest: профессиональные mobile-first направления</h1>
+        <p>Пять продуктовых концепций для текущей React Native/Expo codebase. Все экраны используют существующую логику: компактная карточка баллов, уровень без персонажей, специальные progress bars, карточки задач с левым цветовым блоком и мобильная нижняя навигация.</p>
+      </div>
+      <div class="source-note">
+        <strong>Источник паттернов</strong>
+        <span>Основано на `child/dashboard`, `tasks`, `rewards`, `balance`, `achievements`, `growth-missions`, `BottomActionBar`, `QuestIcons` и текущем `RocketProgressBar`. В макетах нет внешних emoji, lucide, новых персонажей или generic progress.</span>
+      </div>
+    </section>
+    <div id="concepts">
+    <section class="concept" data-theme="classic" style="--sw0:#1647B7;--sw1:#10233F;--sw2:#D8FF3E;--sw3:#F7B721;--sw4:#EDF5FF">
+      <div class="concept-head">
+        <div class="concept-title">
+          <div class="concept-index">1</div>
+          <div>
+            <h2>Classic EasyQuest</h2>
+            <p class="concept-kicker">Самый близкий к текущему стилю: уверенный синий, graphite, лайм как активный сигнал, золото только для ценности.</p>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spec-card">
+            <strong>Palette tokens</strong>
+            <div class="swatches"><i class="swatch" style="background:var(--sw0)"></i><i class="swatch" style="background:var(--sw1)"></i><i class="swatch" style="background:var(--sw2)"></i><i class="swatch" style="background:var(--sw3)"></i><i class="swatch" style="background:var(--sw4)"></i></div>
+            <span>#1647B7 · #10233F · #D8FF3E · #F7B721 · #EDF5FF</span>
+          </div>
+          <div class="spec-card"><strong>Роли цветов</strong><span>Blue = CTA и active nav; graphite = hero depth; lime = короткие success/active акценты; gold = баллы и награды.</span></div>
+          <div class="spec-card"><strong>Пират</strong><span>Только карточка баллов, success/empty states. Не использовать в task/reward rows.</span></div>
+          <div class="spec-card"><strong>Свинка</strong><span>Runner только в progress главной цели. `piggy-bank-mascot` только nav/icon label миссий.</span></div>
+          <div class="spec-card"><strong>Progress bar</strong><span>Goal: runner+glow. Level/reward/wish/achievement: compact/no runner/no glow.</span></div>
+          <div class="spec-card"><strong>States</strong><span>Available = blue CTA; pending = warm badge; done = green; rejected = orange/red; nav active только label color.</span></div>
+        </div>
+      </div>
+      <div class="screens">
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Главная</div>
+            <div class="phone">
+    <div class="screen keyHero">
+      
+    <div class="topbar">
+      <div class="hello"><span>Сегодня хороший день</span><strong>Привет, Антон</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        
+    <div class="balance-card">
+      <div class="balance-left">
+        <div class="balance-label">Мои баллы</div>
+        <div class="balance-row"><img src="../assets/images/coin.png" alt="" /><div class="balance-number">1 240</div></div>
+        <div class="pending-pill">+85 на проверке</div>
+      </div>
+      <img class="pirate" src="../assets/images/pirate-variants/flat-pirate-17-coin-rain.png" alt="" />
+    </div>
+  
+        <div class="row">
+          <div class="grow">
+    <div class="card level-card">
+      <div class="inner">
+        <div class="level-top">
+          <div class="level-avatar"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+          <div class="grow">
+            <div class="level-title">Уровень 8</div>
+            <div class="level-meta">Искатель сокровищ · 420 / 600 XP</div>
+          </div>
+          <span class="status">2 навыка</span>
+        </div>
+        
+    <div class="progress compact" style="--p:68%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+      </div>
+    </div>
+  </div>
+          
+    <div class="streak">
+      <div class="streak-mark"></div>
+      <div>
+        <strong>7 дней</strong>
+        <span>серия заданий</span>
+      </div>
+    </div>
+  
+        </div>
+        
+    <div class="card goal-card">
+      <div class="inner">
+        <div class="title-line">
+          <div>
+            <div class="eyebrow">Главная цель</div>
+            <div class="goal-name">LEGO Creator Pirate Ship</div>
+          </div>
+          <span class="status gold">копилка</span>
+        </div>
+        <div class="goal-meta">1 240 / 1 800 баллов · осталось 560</div>
+        
+    <div class="progress compact runner" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      <img class="runner-img" src="../assets/images/pig-running-coins-progress.png" alt="" />
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="section-row"><h3>Сегодняшние задания</h3><span class="status">4 открыто</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Убрать стол после ужина</div>
+        <div class="task-desc">Сделай фото или коротко напиши, что готово.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+25</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-vmeste.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">15 минут чтения</div>
+        <div class="task-desc">Прочитай главу и отметь прогресс.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+40</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Задания</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Карта квестов</span><strong>Задания</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="tabs"><div class="tab active">Доступно (6)</div><div class="tab">На проверке (2)</div></div>
+        <div class="section-row"><h3>Ежедневные</h3><span class="status gold">бонус</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Заправить кровать</div>
+        <div class="task-desc">Быстрый утренний квест для серии.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+15</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card pending">
+      <div class="task-icon"><img src="assets/icon-vmeste.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Помочь с посудой</div>
+        <div class="task-desc">Поставь тарелки и вытри стол после еды.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+35</span><span class="status warn">на проверке</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card done">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Собрать рюкзак</div>
+        <div class="task-desc">Проверь учебники, форму и бутылку воды.</div>
+        <div class="task-footer"><span class="status success">выполнено</span><span class="status success">готово</span></div>
+      </div>
+    </div>
+  
+        <div class="section-row"><h3>Можно взять</h3><span class="status">+160</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-kopilki.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Разобрать игрушки</div>
+        <div class="task-desc">Верни вещи на места и освободи пол.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+30</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card rejected">
+      <div class="task-icon"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Переделать фотоотчет</div>
+        <div class="task-desc">Родитель попросил понятнее показать результат.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+25</span><span class="btn secondary">Снова</span></div>
+      </div>
+    </div>
+  
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Награды</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Магазин желаний</span><strong>Награды</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="tabs"><div class="tab active">Награды</div><div class="tab">Желания</div></div>
+        <div class="card reward-card focus">
+          <div class="inner">
+            <div class="title-line">
+              <div class="reward-title-row"><div class="reward-head-icon"><img src="assets/icon-nagrady.svg" alt="" /></div><div><div class="reward-title">Главная цель</div><div class="reward-meta">LEGO Creator Pirate Ship</div></div></div>
+              <span class="points"><img src="../assets/images/coin.png" alt="" />1800</span>
+            </div>
+            
+    <div class="progress compact" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status gold">выбрано</span><span class="btn">Копить</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">30 минут игры</div><div class="reward-meta">Можно запросить сегодня</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />300</span></div>
+            
+    <div class="progress compact" style="--p:100%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status success">доступно</span><span class="btn">Получить</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">Поход в кино</div><div class="reward-meta">Семейная награда</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />2200</span></div>
+            
+    <div class="progress compact" style="--p:56%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status">56%</span><span class="btn disabled">Не хватает</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">Мороженое</div><div class="reward-meta">Ждет одобрения</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />180</span></div>
+            <div class="reward-footer"><span class="status warn">запрошено</span><span class="btn secondary">Ждем</span></div>
+          </div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Баллы</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Копилка и история</span><strong>Баллы</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="card">
+          <div class="inner">
+            <div class="section-row"><h3>Текущий баланс</h3><span class="points"><img src="../assets/images/coin.png" alt="" />1240</span></div>
+            <div class="balance-summary">
+              <div class="mini-stat"><strong>+2 480</strong><span>заработано</span></div>
+              <div class="mini-stat"><strong>-1 240</strong><span>потрачено</span></div>
+              <div class="mini-stat"><strong>+85</strong><span>на проверке</span></div>
+            </div>
+          </div>
+        </div>
+        
+    <div class="card goal-card">
+      <div class="inner">
+        <div class="title-line">
+          <div>
+            <div class="eyebrow">Главная цель</div>
+            <div class="goal-name">LEGO Creator Pirate Ship</div>
+          </div>
+          <span class="status gold">копилка</span>
+        </div>
+        <div class="goal-meta">1 240 / 1 800 баллов · осталось 560</div>
+        
+    <div class="progress compact runner" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      <img class="runner-img" src="../assets/images/pig-running-coins-progress.png" alt="" />
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="tabs"><div class="tab active">Баллы</div><div class="tab">Квесты</div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">15 минут чтения</div><div class="tx-meta">Сегодня · одобрено</div></div><div class="tx-amount plus">+40</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Мороженое</div><div class="tx-meta">Вчера · награда</div></div><div class="tx-amount minus">-180</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Помочь с посудой</div><div class="tx-meta">На проверке</div></div><div class="tx-amount plus">+35</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Миссия накоплений</div><div class="tx-meta">Созреет через 2 дня</div></div><div class="tx-amount plus">+72</div></div></div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Достижения</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Навыки и достижения</span><strong>Уровень</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        
+    <div class="card level-card">
+      <div class="inner">
+        <div class="level-top">
+          <div class="level-avatar"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+          <div class="grow">
+            <div class="level-title">Уровень 8</div>
+            <div class="level-meta">Искатель сокровищ · 420 / 600 XP</div>
+          </div>
+          <span class="status">2 навыка</span>
+        </div>
+        
+    <div class="progress compact" style="--p:68%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="tabs"><div class="tab active">Навыки</div><div class="tab">Достижения</div></div>
+        <div class="skill-grid">
+          <div class="skill"><strong>Бонус квестов</strong><span>Ранг 2 / 5 · +10% к XP</span></div>
+          <div class="skill"><strong>Серия</strong><span>Ранг 1 / 3 · держит мотивацию</span></div>
+          <div class="skill"><strong>Копилка</strong><span>Откроется на уровне 9</span></div>
+          <div class="skill"><strong>Легенда</strong><span>Нужен уровень 12</span></div>
+        </div>
+        <div class="achievement-card">
+          <div class="achievement-head"><div class="achievement-icon"><img src="assets/icon-dostizheniya.svg" alt="" /></div><div class="grow"><div class="reward-title">10 заданий</div><div class="reward-meta">8 / 10 завершено · +80 XP</div></div><span class="status">80%</span></div>
+          
+    <div class="progress compact" style="--p:80%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+        </div>
+        <div class="achievement-card">
+          <div class="achievement-head"><div class="achievement-icon"><img src="assets/icon-bally.svg" alt="" /></div><div class="grow"><div class="reward-title">Первая награда</div><div class="reward-meta">Получено вчера</div></div><span class="status success">открыто</span></div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Миссии</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Накопления</span><strong>Миссии роста</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="card">
+          <div class="inner">
+            <div class="title-line">
+              <div class="reward-title-row"><div class="reward-head-icon"><img src="assets/icon-kopilki.svg" alt="" /></div><div><div class="reward-title">Цель накоплений</div><div class="reward-meta">Пусть баллы растут сами</div></div></div>
+              <span class="points"><img src="../assets/images/coin.png" alt="" />1240</span>
+            </div>
+          </div>
+        </div>
+        <div class="section-row"><h3>Доступные миссии</h3><span class="status">3 проекта</span></div>
+        <div class="mission-card">
+          <div class="mission-title">Остров сокровищ</div>
+          <div class="mission-meta">+12% через 5 дней</div>
+          <div class="mission-range"><span class="status gold">50-400 баллов</span><span class="status">низкий риск</span></div>
+          <div class="mission-row"><span class="mission-meta">Минимум 50</span><span class="btn">Вложить</span></div>
+        </div>
+        <div class="mission-card invested">
+          <div class="mission-title">Сундук капитана</div>
+          <div class="mission-meta">200 → 230 баллов</div>
+          
+    <div class="progress compact" style="--p:62%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+          <div class="mission-row"><span class="status warn">2 дня 4 часа</span><span class="btn secondary">Ждем</span></div>
+        </div>
+        <div class="mission-card">
+          <div class="mission-title">Командная цель</div>
+          <div class="mission-meta">Семейный проект на выходные</div>
+          <div class="mission-row"><span class="status success">готово</span><span class="btn">Забрать +72</span></div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+      </div>
+    </section>
+  
+    <section class="concept" data-theme="tropical" style="--sw0:#0A8FA4;--sw1:#1477C8;--sw2:#2FE7D2;--sw3:#F7B721;--sw4:#E9FAFD">
+      <div class="concept-head">
+        <div class="concept-title">
+          <div class="concept-index">2</div>
+          <div>
+            <h2>Tropical Adventure</h2>
+            <p class="concept-kicker">Приключение, карта и острова: cyan/turquoise ведет визуальный ритм, синий остается для важных действий.</p>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spec-card">
+            <strong>Palette tokens</strong>
+            <div class="swatches"><i class="swatch" style="background:var(--sw0)"></i><i class="swatch" style="background:var(--sw1)"></i><i class="swatch" style="background:var(--sw2)"></i><i class="swatch" style="background:var(--sw3)"></i><i class="swatch" style="background:var(--sw4)"></i></div>
+            <span>#0A8FA4 · #1477C8 · #2FE7D2 · #F7B721 · #E9FAFD</span>
+          </div>
+          <div class="spec-card"><strong>Роли цветов</strong><span>Turquoise = exploration surfaces; blue = CTA/status; lime = micro accent; gold = reward value.</span></div>
+          <div class="spec-card"><strong>Пират</strong><span>Остается в balance hero как эмоциональный brand anchor, не становится декором всего экрана.</span></div>
+          <div class="spec-card"><strong>Свинка</strong><span>Свинка появляется на runner цели и маленькой миссионной иконке, без отдельной mascot-карточки.</span></div>
+          <div class="spec-card"><strong>Progress bar</strong><span>Тот же gold segmented bar; окружающие карточки холоднее, чтобы bar был ценностным акцентом.</span></div>
+          <div class="spec-card"><strong>States</strong><span>Available = blue; pending = sand/gold; done = mint; rejected = coral; nav active = blue/cyan label.</span></div>
+        </div>
+      </div>
+      <div class="screens">
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Главная</div>
+            <div class="phone">
+    <div class="screen keyHero">
+      
+    <div class="topbar">
+      <div class="hello"><span>Сегодня хороший день</span><strong>Привет, Антон</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        
+    <div class="balance-card">
+      <div class="balance-left">
+        <div class="balance-label">Мои баллы</div>
+        <div class="balance-row"><img src="../assets/images/coin.png" alt="" /><div class="balance-number">1 240</div></div>
+        <div class="pending-pill">+85 на проверке</div>
+      </div>
+      <img class="pirate" src="../assets/images/pirate-variants/flat-pirate-17-coin-rain.png" alt="" />
+    </div>
+  
+        <div class="row">
+          <div class="grow">
+    <div class="card level-card">
+      <div class="inner">
+        <div class="level-top">
+          <div class="level-avatar"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+          <div class="grow">
+            <div class="level-title">Уровень 8</div>
+            <div class="level-meta">Искатель сокровищ · 420 / 600 XP</div>
+          </div>
+          <span class="status">2 навыка</span>
+        </div>
+        
+    <div class="progress compact" style="--p:68%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+      </div>
+    </div>
+  </div>
+          
+    <div class="streak">
+      <div class="streak-mark"></div>
+      <div>
+        <strong>7 дней</strong>
+        <span>серия заданий</span>
+      </div>
+    </div>
+  
+        </div>
+        
+    <div class="card goal-card">
+      <div class="inner">
+        <div class="title-line">
+          <div>
+            <div class="eyebrow">Главная цель</div>
+            <div class="goal-name">LEGO Creator Pirate Ship</div>
+          </div>
+          <span class="status gold">копилка</span>
+        </div>
+        <div class="goal-meta">1 240 / 1 800 баллов · осталось 560</div>
+        
+    <div class="progress compact runner" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      <img class="runner-img" src="../assets/images/pig-running-coins-progress.png" alt="" />
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="section-row"><h3>Сегодняшние задания</h3><span class="status">4 открыто</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Убрать стол после ужина</div>
+        <div class="task-desc">Сделай фото или коротко напиши, что готово.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+25</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-vmeste.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">15 минут чтения</div>
+        <div class="task-desc">Прочитай главу и отметь прогресс.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+40</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Задания</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Карта квестов</span><strong>Задания</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="tabs"><div class="tab active">Доступно (6)</div><div class="tab">На проверке (2)</div></div>
+        <div class="section-row"><h3>Ежедневные</h3><span class="status gold">бонус</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Заправить кровать</div>
+        <div class="task-desc">Быстрый утренний квест для серии.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+15</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card pending">
+      <div class="task-icon"><img src="assets/icon-vmeste.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Помочь с посудой</div>
+        <div class="task-desc">Поставь тарелки и вытри стол после еды.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+35</span><span class="status warn">на проверке</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card done">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Собрать рюкзак</div>
+        <div class="task-desc">Проверь учебники, форму и бутылку воды.</div>
+        <div class="task-footer"><span class="status success">выполнено</span><span class="status success">готово</span></div>
+      </div>
+    </div>
+  
+        <div class="section-row"><h3>Можно взять</h3><span class="status">+160</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-kopilki.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Разобрать игрушки</div>
+        <div class="task-desc">Верни вещи на места и освободи пол.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+30</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card rejected">
+      <div class="task-icon"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Переделать фотоотчет</div>
+        <div class="task-desc">Родитель попросил понятнее показать результат.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+25</span><span class="btn secondary">Снова</span></div>
+      </div>
+    </div>
+  
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Награды</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Магазин желаний</span><strong>Награды</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="tabs"><div class="tab active">Награды</div><div class="tab">Желания</div></div>
+        <div class="card reward-card focus">
+          <div class="inner">
+            <div class="title-line">
+              <div class="reward-title-row"><div class="reward-head-icon"><img src="assets/icon-nagrady.svg" alt="" /></div><div><div class="reward-title">Главная цель</div><div class="reward-meta">LEGO Creator Pirate Ship</div></div></div>
+              <span class="points"><img src="../assets/images/coin.png" alt="" />1800</span>
+            </div>
+            
+    <div class="progress compact" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status gold">выбрано</span><span class="btn">Копить</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">30 минут игры</div><div class="reward-meta">Можно запросить сегодня</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />300</span></div>
+            
+    <div class="progress compact" style="--p:100%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status success">доступно</span><span class="btn">Получить</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">Поход в кино</div><div class="reward-meta">Семейная награда</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />2200</span></div>
+            
+    <div class="progress compact" style="--p:56%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status">56%</span><span class="btn disabled">Не хватает</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">Мороженое</div><div class="reward-meta">Ждет одобрения</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />180</span></div>
+            <div class="reward-footer"><span class="status warn">запрошено</span><span class="btn secondary">Ждем</span></div>
+          </div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Баллы</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Копилка и история</span><strong>Баллы</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="card">
+          <div class="inner">
+            <div class="section-row"><h3>Текущий баланс</h3><span class="points"><img src="../assets/images/coin.png" alt="" />1240</span></div>
+            <div class="balance-summary">
+              <div class="mini-stat"><strong>+2 480</strong><span>заработано</span></div>
+              <div class="mini-stat"><strong>-1 240</strong><span>потрачено</span></div>
+              <div class="mini-stat"><strong>+85</strong><span>на проверке</span></div>
+            </div>
+          </div>
+        </div>
+        
+    <div class="card goal-card">
+      <div class="inner">
+        <div class="title-line">
+          <div>
+            <div class="eyebrow">Главная цель</div>
+            <div class="goal-name">LEGO Creator Pirate Ship</div>
+          </div>
+          <span class="status gold">копилка</span>
+        </div>
+        <div class="goal-meta">1 240 / 1 800 баллов · осталось 560</div>
+        
+    <div class="progress compact runner" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      <img class="runner-img" src="../assets/images/pig-running-coins-progress.png" alt="" />
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="tabs"><div class="tab active">Баллы</div><div class="tab">Квесты</div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">15 минут чтения</div><div class="tx-meta">Сегодня · одобрено</div></div><div class="tx-amount plus">+40</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Мороженое</div><div class="tx-meta">Вчера · награда</div></div><div class="tx-amount minus">-180</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Помочь с посудой</div><div class="tx-meta">На проверке</div></div><div class="tx-amount plus">+35</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Миссия накоплений</div><div class="tx-meta">Созреет через 2 дня</div></div><div class="tx-amount plus">+72</div></div></div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Достижения</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Навыки и достижения</span><strong>Уровень</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        
+    <div class="card level-card">
+      <div class="inner">
+        <div class="level-top">
+          <div class="level-avatar"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+          <div class="grow">
+            <div class="level-title">Уровень 8</div>
+            <div class="level-meta">Искатель сокровищ · 420 / 600 XP</div>
+          </div>
+          <span class="status">2 навыка</span>
+        </div>
+        
+    <div class="progress compact" style="--p:68%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="tabs"><div class="tab active">Навыки</div><div class="tab">Достижения</div></div>
+        <div class="skill-grid">
+          <div class="skill"><strong>Бонус квестов</strong><span>Ранг 2 / 5 · +10% к XP</span></div>
+          <div class="skill"><strong>Серия</strong><span>Ранг 1 / 3 · держит мотивацию</span></div>
+          <div class="skill"><strong>Копилка</strong><span>Откроется на уровне 9</span></div>
+          <div class="skill"><strong>Легенда</strong><span>Нужен уровень 12</span></div>
+        </div>
+        <div class="achievement-card">
+          <div class="achievement-head"><div class="achievement-icon"><img src="assets/icon-dostizheniya.svg" alt="" /></div><div class="grow"><div class="reward-title">10 заданий</div><div class="reward-meta">8 / 10 завершено · +80 XP</div></div><span class="status">80%</span></div>
+          
+    <div class="progress compact" style="--p:80%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+        </div>
+        <div class="achievement-card">
+          <div class="achievement-head"><div class="achievement-icon"><img src="assets/icon-bally.svg" alt="" /></div><div class="grow"><div class="reward-title">Первая награда</div><div class="reward-meta">Получено вчера</div></div><span class="status success">открыто</span></div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Миссии</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Накопления</span><strong>Миссии роста</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="card">
+          <div class="inner">
+            <div class="title-line">
+              <div class="reward-title-row"><div class="reward-head-icon"><img src="assets/icon-kopilki.svg" alt="" /></div><div><div class="reward-title">Цель накоплений</div><div class="reward-meta">Пусть баллы растут сами</div></div></div>
+              <span class="points"><img src="../assets/images/coin.png" alt="" />1240</span>
+            </div>
+          </div>
+        </div>
+        <div class="section-row"><h3>Доступные миссии</h3><span class="status">3 проекта</span></div>
+        <div class="mission-card">
+          <div class="mission-title">Остров сокровищ</div>
+          <div class="mission-meta">+12% через 5 дней</div>
+          <div class="mission-range"><span class="status gold">50-400 баллов</span><span class="status">низкий риск</span></div>
+          <div class="mission-row"><span class="mission-meta">Минимум 50</span><span class="btn">Вложить</span></div>
+        </div>
+        <div class="mission-card invested">
+          <div class="mission-title">Сундук капитана</div>
+          <div class="mission-meta">200 → 230 баллов</div>
+          
+    <div class="progress compact" style="--p:62%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+          <div class="mission-row"><span class="status warn">2 дня 4 часа</span><span class="btn secondary">Ждем</span></div>
+        </div>
+        <div class="mission-card">
+          <div class="mission-title">Командная цель</div>
+          <div class="mission-meta">Семейный проект на выходные</div>
+          <div class="mission-row"><span class="status success">готово</span><span class="btn">Забрать +72</span></div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+      </div>
+    </section>
+  
+    <section class="concept" data-theme="gold" style="--sw0:#FFF6E3;--sw1:#F7B721;--sw2:#FF9C2E;--sw3:#1647B7;--sw4:#16283A">
+      <div class="concept-head">
+        <div class="concept-title">
+          <div class="concept-index">3</div>
+          <div>
+            <h2>Treasure Gold</h2>
+            <p class="concept-kicker">Больше ощущения магазина сокровищ и монет, но фон и карточки остаются светлыми, чтобы не залить продукт желтым.</p>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spec-card">
+            <strong>Palette tokens</strong>
+            <div class="swatches"><i class="swatch" style="background:var(--sw0)"></i><i class="swatch" style="background:var(--sw1)"></i><i class="swatch" style="background:var(--sw2)"></i><i class="swatch" style="background:var(--sw3)"></i><i class="swatch" style="background:var(--sw4)"></i></div>
+            <span>#FFF6E3 · #F7B721 · #FF9C2E · #1647B7 · #16283A</span>
+          </div>
+          <div class="spec-card"><strong>Роли цветов</strong><span>Gold/orange = value and reward emphasis; blue = decisions and navigation; graphite = balance hero.</span></div>
+          <div class="spec-card"><strong>Пират</strong><span>Hero-card only. Допустим для reward success, но не как повторяющийся card icon.</span></div>
+          <div class="spec-card"><strong>Свинка</strong><span>Runner на цели; `icon-kopilki`/small pig label в savings surfaces.</span></div>
+          <div class="spec-card"><strong>Progress bar</strong><span>Gold progress не перекрашивается: он совпадает с coin economy и работает как главный affordance.</span></div>
+          <div class="spec-card"><strong>States</strong><span>Not enough = secondary; redeem = blue; chosen focus = gold border; pending = amber; rejected = red-orange.</span></div>
+        </div>
+      </div>
+      <div class="screens">
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Главная</div>
+            <div class="phone">
+    <div class="screen keyHero">
+      
+    <div class="topbar">
+      <div class="hello"><span>Сегодня хороший день</span><strong>Привет, Антон</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        
+    <div class="balance-card">
+      <div class="balance-left">
+        <div class="balance-label">Мои баллы</div>
+        <div class="balance-row"><img src="../assets/images/coin.png" alt="" /><div class="balance-number">1 240</div></div>
+        <div class="pending-pill">+85 на проверке</div>
+      </div>
+      <img class="pirate" src="../assets/images/pirate-variants/flat-pirate-17-coin-rain.png" alt="" />
+    </div>
+  
+        <div class="row">
+          <div class="grow">
+    <div class="card level-card">
+      <div class="inner">
+        <div class="level-top">
+          <div class="level-avatar"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+          <div class="grow">
+            <div class="level-title">Уровень 8</div>
+            <div class="level-meta">Искатель сокровищ · 420 / 600 XP</div>
+          </div>
+          <span class="status">2 навыка</span>
+        </div>
+        
+    <div class="progress compact" style="--p:68%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+      </div>
+    </div>
+  </div>
+          
+    <div class="streak">
+      <div class="streak-mark"></div>
+      <div>
+        <strong>7 дней</strong>
+        <span>серия заданий</span>
+      </div>
+    </div>
+  
+        </div>
+        
+    <div class="card goal-card">
+      <div class="inner">
+        <div class="title-line">
+          <div>
+            <div class="eyebrow">Главная цель</div>
+            <div class="goal-name">LEGO Creator Pirate Ship</div>
+          </div>
+          <span class="status gold">копилка</span>
+        </div>
+        <div class="goal-meta">1 240 / 1 800 баллов · осталось 560</div>
+        
+    <div class="progress compact runner" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      <img class="runner-img" src="../assets/images/pig-running-coins-progress.png" alt="" />
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="section-row"><h3>Сегодняшние задания</h3><span class="status">4 открыто</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Убрать стол после ужина</div>
+        <div class="task-desc">Сделай фото или коротко напиши, что готово.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+25</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-vmeste.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">15 минут чтения</div>
+        <div class="task-desc">Прочитай главу и отметь прогресс.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+40</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Задания</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Карта квестов</span><strong>Задания</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="tabs"><div class="tab active">Доступно (6)</div><div class="tab">На проверке (2)</div></div>
+        <div class="section-row"><h3>Ежедневные</h3><span class="status gold">бонус</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Заправить кровать</div>
+        <div class="task-desc">Быстрый утренний квест для серии.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+15</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card pending">
+      <div class="task-icon"><img src="assets/icon-vmeste.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Помочь с посудой</div>
+        <div class="task-desc">Поставь тарелки и вытри стол после еды.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+35</span><span class="status warn">на проверке</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card done">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Собрать рюкзак</div>
+        <div class="task-desc">Проверь учебники, форму и бутылку воды.</div>
+        <div class="task-footer"><span class="status success">выполнено</span><span class="status success">готово</span></div>
+      </div>
+    </div>
+  
+        <div class="section-row"><h3>Можно взять</h3><span class="status">+160</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-kopilki.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Разобрать игрушки</div>
+        <div class="task-desc">Верни вещи на места и освободи пол.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+30</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card rejected">
+      <div class="task-icon"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Переделать фотоотчет</div>
+        <div class="task-desc">Родитель попросил понятнее показать результат.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+25</span><span class="btn secondary">Снова</span></div>
+      </div>
+    </div>
+  
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Награды</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Магазин желаний</span><strong>Награды</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="tabs"><div class="tab active">Награды</div><div class="tab">Желания</div></div>
+        <div class="card reward-card focus">
+          <div class="inner">
+            <div class="title-line">
+              <div class="reward-title-row"><div class="reward-head-icon"><img src="assets/icon-nagrady.svg" alt="" /></div><div><div class="reward-title">Главная цель</div><div class="reward-meta">LEGO Creator Pirate Ship</div></div></div>
+              <span class="points"><img src="../assets/images/coin.png" alt="" />1800</span>
+            </div>
+            
+    <div class="progress compact" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status gold">выбрано</span><span class="btn">Копить</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">30 минут игры</div><div class="reward-meta">Можно запросить сегодня</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />300</span></div>
+            
+    <div class="progress compact" style="--p:100%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status success">доступно</span><span class="btn">Получить</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">Поход в кино</div><div class="reward-meta">Семейная награда</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />2200</span></div>
+            
+    <div class="progress compact" style="--p:56%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status">56%</span><span class="btn disabled">Не хватает</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">Мороженое</div><div class="reward-meta">Ждет одобрения</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />180</span></div>
+            <div class="reward-footer"><span class="status warn">запрошено</span><span class="btn secondary">Ждем</span></div>
+          </div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Баллы</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Копилка и история</span><strong>Баллы</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="card">
+          <div class="inner">
+            <div class="section-row"><h3>Текущий баланс</h3><span class="points"><img src="../assets/images/coin.png" alt="" />1240</span></div>
+            <div class="balance-summary">
+              <div class="mini-stat"><strong>+2 480</strong><span>заработано</span></div>
+              <div class="mini-stat"><strong>-1 240</strong><span>потрачено</span></div>
+              <div class="mini-stat"><strong>+85</strong><span>на проверке</span></div>
+            </div>
+          </div>
+        </div>
+        
+    <div class="card goal-card">
+      <div class="inner">
+        <div class="title-line">
+          <div>
+            <div class="eyebrow">Главная цель</div>
+            <div class="goal-name">LEGO Creator Pirate Ship</div>
+          </div>
+          <span class="status gold">копилка</span>
+        </div>
+        <div class="goal-meta">1 240 / 1 800 баллов · осталось 560</div>
+        
+    <div class="progress compact runner" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      <img class="runner-img" src="../assets/images/pig-running-coins-progress.png" alt="" />
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="tabs"><div class="tab active">Баллы</div><div class="tab">Квесты</div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">15 минут чтения</div><div class="tx-meta">Сегодня · одобрено</div></div><div class="tx-amount plus">+40</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Мороженое</div><div class="tx-meta">Вчера · награда</div></div><div class="tx-amount minus">-180</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Помочь с посудой</div><div class="tx-meta">На проверке</div></div><div class="tx-amount plus">+35</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Миссия накоплений</div><div class="tx-meta">Созреет через 2 дня</div></div><div class="tx-amount plus">+72</div></div></div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Достижения</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Навыки и достижения</span><strong>Уровень</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        
+    <div class="card level-card">
+      <div class="inner">
+        <div class="level-top">
+          <div class="level-avatar"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+          <div class="grow">
+            <div class="level-title">Уровень 8</div>
+            <div class="level-meta">Искатель сокровищ · 420 / 600 XP</div>
+          </div>
+          <span class="status">2 навыка</span>
+        </div>
+        
+    <div class="progress compact" style="--p:68%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="tabs"><div class="tab active">Навыки</div><div class="tab">Достижения</div></div>
+        <div class="skill-grid">
+          <div class="skill"><strong>Бонус квестов</strong><span>Ранг 2 / 5 · +10% к XP</span></div>
+          <div class="skill"><strong>Серия</strong><span>Ранг 1 / 3 · держит мотивацию</span></div>
+          <div class="skill"><strong>Копилка</strong><span>Откроется на уровне 9</span></div>
+          <div class="skill"><strong>Легенда</strong><span>Нужен уровень 12</span></div>
+        </div>
+        <div class="achievement-card">
+          <div class="achievement-head"><div class="achievement-icon"><img src="assets/icon-dostizheniya.svg" alt="" /></div><div class="grow"><div class="reward-title">10 заданий</div><div class="reward-meta">8 / 10 завершено · +80 XP</div></div><span class="status">80%</span></div>
+          
+    <div class="progress compact" style="--p:80%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+        </div>
+        <div class="achievement-card">
+          <div class="achievement-head"><div class="achievement-icon"><img src="assets/icon-bally.svg" alt="" /></div><div class="grow"><div class="reward-title">Первая награда</div><div class="reward-meta">Получено вчера</div></div><span class="status success">открыто</span></div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Миссии</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Накопления</span><strong>Миссии роста</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="card">
+          <div class="inner">
+            <div class="title-line">
+              <div class="reward-title-row"><div class="reward-head-icon"><img src="assets/icon-kopilki.svg" alt="" /></div><div><div class="reward-title">Цель накоплений</div><div class="reward-meta">Пусть баллы растут сами</div></div></div>
+              <span class="points"><img src="../assets/images/coin.png" alt="" />1240</span>
+            </div>
+          </div>
+        </div>
+        <div class="section-row"><h3>Доступные миссии</h3><span class="status">3 проекта</span></div>
+        <div class="mission-card">
+          <div class="mission-title">Остров сокровищ</div>
+          <div class="mission-meta">+12% через 5 дней</div>
+          <div class="mission-range"><span class="status gold">50-400 баллов</span><span class="status">низкий риск</span></div>
+          <div class="mission-row"><span class="mission-meta">Минимум 50</span><span class="btn">Вложить</span></div>
+        </div>
+        <div class="mission-card invested">
+          <div class="mission-title">Сундук капитана</div>
+          <div class="mission-meta">200 → 230 баллов</div>
+          
+    <div class="progress compact" style="--p:62%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+          <div class="mission-row"><span class="status warn">2 дня 4 часа</span><span class="btn secondary">Ждем</span></div>
+        </div>
+        <div class="mission-card">
+          <div class="mission-title">Командная цель</div>
+          <div class="mission-meta">Семейный проект на выходные</div>
+          <div class="mission-row"><span class="status success">готово</span><span class="btn">Забрать +72</span></div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+      </div>
+    </section>
+  
+    <section class="concept" data-theme="night" style="--sw0:#071827;--sw1:#16283A;--sw2:#1647B7;--sw3:#D8FF3E;--sw4:#F7B721">
+      <div class="concept-head">
+        <div class="concept-title">
+          <div class="concept-index">4</div>
+          <div>
+            <h2>Night Quest</h2>
+            <p class="concept-kicker">Premium-направление: темный navy используется только в hero-зонах, а рабочие карточки остаются светлыми и читаемыми.</p>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spec-card">
+            <strong>Palette tokens</strong>
+            <div class="swatches"><i class="swatch" style="background:var(--sw0)"></i><i class="swatch" style="background:var(--sw1)"></i><i class="swatch" style="background:var(--sw2)"></i><i class="swatch" style="background:var(--sw3)"></i><i class="swatch" style="background:var(--sw4)"></i></div>
+            <span>#071827 · #16283A · #1647B7 · #D8FF3E · #F7B721</span>
+          </div>
+          <div class="spec-card"><strong>Роли цветов</strong><span>Dark navy = hero and high-value zones; light cards = daily work; lime/gold = energy and reward.</span></div>
+          <div class="spec-card"><strong>Пират</strong><span>Пират усиливает главную финансовую карту, но не попадает в compact cards.</span></div>
+          <div class="spec-card"><strong>Свинка</strong><span>Строго runner цели и missions tab. Без большой свинки в level/mission cards.</span></div>
+          <div class="spec-card"><strong>Progress bar</strong><span>Runner variant хорошо контрастирует с dark hero; no-runner variant в achievement/reward cards.</span></div>
+          <div class="spec-card"><strong>States</strong><span>Active nav = blue; hero active hints = lime; waiting = gold; success = green; danger = restrained red.</span></div>
+        </div>
+      </div>
+      <div class="screens">
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Главная</div>
+            <div class="phone">
+    <div class="screen keyHero">
+      
+    <div class="topbar">
+      <div class="hello"><span>Сегодня хороший день</span><strong>Привет, Антон</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        
+    <div class="balance-card">
+      <div class="balance-left">
+        <div class="balance-label">Мои баллы</div>
+        <div class="balance-row"><img src="../assets/images/coin.png" alt="" /><div class="balance-number">1 240</div></div>
+        <div class="pending-pill">+85 на проверке</div>
+      </div>
+      <img class="pirate" src="../assets/images/pirate-variants/flat-pirate-17-coin-rain.png" alt="" />
+    </div>
+  
+        <div class="row">
+          <div class="grow">
+    <div class="card level-card">
+      <div class="inner">
+        <div class="level-top">
+          <div class="level-avatar"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+          <div class="grow">
+            <div class="level-title">Уровень 8</div>
+            <div class="level-meta">Искатель сокровищ · 420 / 600 XP</div>
+          </div>
+          <span class="status">2 навыка</span>
+        </div>
+        
+    <div class="progress compact" style="--p:68%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+      </div>
+    </div>
+  </div>
+          
+    <div class="streak">
+      <div class="streak-mark"></div>
+      <div>
+        <strong>7 дней</strong>
+        <span>серия заданий</span>
+      </div>
+    </div>
+  
+        </div>
+        
+    <div class="card goal-card">
+      <div class="inner">
+        <div class="title-line">
+          <div>
+            <div class="eyebrow">Главная цель</div>
+            <div class="goal-name">LEGO Creator Pirate Ship</div>
+          </div>
+          <span class="status gold">копилка</span>
+        </div>
+        <div class="goal-meta">1 240 / 1 800 баллов · осталось 560</div>
+        
+    <div class="progress compact runner" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      <img class="runner-img" src="../assets/images/pig-running-coins-progress.png" alt="" />
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="section-row"><h3>Сегодняшние задания</h3><span class="status">4 открыто</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Убрать стол после ужина</div>
+        <div class="task-desc">Сделай фото или коротко напиши, что готово.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+25</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-vmeste.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">15 минут чтения</div>
+        <div class="task-desc">Прочитай главу и отметь прогресс.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+40</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Задания</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Карта квестов</span><strong>Задания</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="tabs"><div class="tab active">Доступно (6)</div><div class="tab">На проверке (2)</div></div>
+        <div class="section-row"><h3>Ежедневные</h3><span class="status gold">бонус</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Заправить кровать</div>
+        <div class="task-desc">Быстрый утренний квест для серии.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+15</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card pending">
+      <div class="task-icon"><img src="assets/icon-vmeste.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Помочь с посудой</div>
+        <div class="task-desc">Поставь тарелки и вытри стол после еды.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+35</span><span class="status warn">на проверке</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card done">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Собрать рюкзак</div>
+        <div class="task-desc">Проверь учебники, форму и бутылку воды.</div>
+        <div class="task-footer"><span class="status success">выполнено</span><span class="status success">готово</span></div>
+      </div>
+    </div>
+  
+        <div class="section-row"><h3>Можно взять</h3><span class="status">+160</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-kopilki.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Разобрать игрушки</div>
+        <div class="task-desc">Верни вещи на места и освободи пол.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+30</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card rejected">
+      <div class="task-icon"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Переделать фотоотчет</div>
+        <div class="task-desc">Родитель попросил понятнее показать результат.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+25</span><span class="btn secondary">Снова</span></div>
+      </div>
+    </div>
+  
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Награды</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Магазин желаний</span><strong>Награды</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="tabs"><div class="tab active">Награды</div><div class="tab">Желания</div></div>
+        <div class="card reward-card focus">
+          <div class="inner">
+            <div class="title-line">
+              <div class="reward-title-row"><div class="reward-head-icon"><img src="assets/icon-nagrady.svg" alt="" /></div><div><div class="reward-title">Главная цель</div><div class="reward-meta">LEGO Creator Pirate Ship</div></div></div>
+              <span class="points"><img src="../assets/images/coin.png" alt="" />1800</span>
+            </div>
+            
+    <div class="progress compact" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status gold">выбрано</span><span class="btn">Копить</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">30 минут игры</div><div class="reward-meta">Можно запросить сегодня</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />300</span></div>
+            
+    <div class="progress compact" style="--p:100%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status success">доступно</span><span class="btn">Получить</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">Поход в кино</div><div class="reward-meta">Семейная награда</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />2200</span></div>
+            
+    <div class="progress compact" style="--p:56%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status">56%</span><span class="btn disabled">Не хватает</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">Мороженое</div><div class="reward-meta">Ждет одобрения</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />180</span></div>
+            <div class="reward-footer"><span class="status warn">запрошено</span><span class="btn secondary">Ждем</span></div>
+          </div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Баллы</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Копилка и история</span><strong>Баллы</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="card">
+          <div class="inner">
+            <div class="section-row"><h3>Текущий баланс</h3><span class="points"><img src="../assets/images/coin.png" alt="" />1240</span></div>
+            <div class="balance-summary">
+              <div class="mini-stat"><strong>+2 480</strong><span>заработано</span></div>
+              <div class="mini-stat"><strong>-1 240</strong><span>потрачено</span></div>
+              <div class="mini-stat"><strong>+85</strong><span>на проверке</span></div>
+            </div>
+          </div>
+        </div>
+        
+    <div class="card goal-card">
+      <div class="inner">
+        <div class="title-line">
+          <div>
+            <div class="eyebrow">Главная цель</div>
+            <div class="goal-name">LEGO Creator Pirate Ship</div>
+          </div>
+          <span class="status gold">копилка</span>
+        </div>
+        <div class="goal-meta">1 240 / 1 800 баллов · осталось 560</div>
+        
+    <div class="progress compact runner" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      <img class="runner-img" src="../assets/images/pig-running-coins-progress.png" alt="" />
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="tabs"><div class="tab active">Баллы</div><div class="tab">Квесты</div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">15 минут чтения</div><div class="tx-meta">Сегодня · одобрено</div></div><div class="tx-amount plus">+40</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Мороженое</div><div class="tx-meta">Вчера · награда</div></div><div class="tx-amount minus">-180</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Помочь с посудой</div><div class="tx-meta">На проверке</div></div><div class="tx-amount plus">+35</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Миссия накоплений</div><div class="tx-meta">Созреет через 2 дня</div></div><div class="tx-amount plus">+72</div></div></div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Достижения</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Навыки и достижения</span><strong>Уровень</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        
+    <div class="card level-card">
+      <div class="inner">
+        <div class="level-top">
+          <div class="level-avatar"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+          <div class="grow">
+            <div class="level-title">Уровень 8</div>
+            <div class="level-meta">Искатель сокровищ · 420 / 600 XP</div>
+          </div>
+          <span class="status">2 навыка</span>
+        </div>
+        
+    <div class="progress compact" style="--p:68%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="tabs"><div class="tab active">Навыки</div><div class="tab">Достижения</div></div>
+        <div class="skill-grid">
+          <div class="skill"><strong>Бонус квестов</strong><span>Ранг 2 / 5 · +10% к XP</span></div>
+          <div class="skill"><strong>Серия</strong><span>Ранг 1 / 3 · держит мотивацию</span></div>
+          <div class="skill"><strong>Копилка</strong><span>Откроется на уровне 9</span></div>
+          <div class="skill"><strong>Легенда</strong><span>Нужен уровень 12</span></div>
+        </div>
+        <div class="achievement-card">
+          <div class="achievement-head"><div class="achievement-icon"><img src="assets/icon-dostizheniya.svg" alt="" /></div><div class="grow"><div class="reward-title">10 заданий</div><div class="reward-meta">8 / 10 завершено · +80 XP</div></div><span class="status">80%</span></div>
+          
+    <div class="progress compact" style="--p:80%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+        </div>
+        <div class="achievement-card">
+          <div class="achievement-head"><div class="achievement-icon"><img src="assets/icon-bally.svg" alt="" /></div><div class="grow"><div class="reward-title">Первая награда</div><div class="reward-meta">Получено вчера</div></div><span class="status success">открыто</span></div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Миссии</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Накопления</span><strong>Миссии роста</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="card">
+          <div class="inner">
+            <div class="title-line">
+              <div class="reward-title-row"><div class="reward-head-icon"><img src="assets/icon-kopilki.svg" alt="" /></div><div><div class="reward-title">Цель накоплений</div><div class="reward-meta">Пусть баллы растут сами</div></div></div>
+              <span class="points"><img src="../assets/images/coin.png" alt="" />1240</span>
+            </div>
+          </div>
+        </div>
+        <div class="section-row"><h3>Доступные миссии</h3><span class="status">3 проекта</span></div>
+        <div class="mission-card">
+          <div class="mission-title">Остров сокровищ</div>
+          <div class="mission-meta">+12% через 5 дней</div>
+          <div class="mission-range"><span class="status gold">50-400 баллов</span><span class="status">низкий риск</span></div>
+          <div class="mission-row"><span class="mission-meta">Минимум 50</span><span class="btn">Вложить</span></div>
+        </div>
+        <div class="mission-card invested">
+          <div class="mission-title">Сундук капитана</div>
+          <div class="mission-meta">200 → 230 баллов</div>
+          
+    <div class="progress compact" style="--p:62%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+          <div class="mission-row"><span class="status warn">2 дня 4 часа</span><span class="btn secondary">Ждем</span></div>
+        </div>
+        <div class="mission-card">
+          <div class="mission-title">Командная цель</div>
+          <div class="mission-meta">Семейный проект на выходные</div>
+          <div class="mission-row"><span class="status success">готово</span><span class="btn">Забрать +72</span></div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+      </div>
+    </section>
+  
+    <section class="concept" data-theme="candy" style="--sw0:#3264D9;--sw1:#FF74A8;--sw2:#26D6E8;--sw3:#D8FF3E;--sw4:#F7F1FF">
+      <div class="concept-head">
+        <div class="concept-title">
+          <div class="concept-index">5</div>
+          <div>
+            <h2>Candy Quest</h2>
+            <p class="concept-kicker">Мягкий вариант для младших детей: pink/cyan/lime/blue, но сетка, отступы и кнопки остаются зрелыми.</p>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spec-card">
+            <strong>Palette tokens</strong>
+            <div class="swatches"><i class="swatch" style="background:var(--sw0)"></i><i class="swatch" style="background:var(--sw1)"></i><i class="swatch" style="background:var(--sw2)"></i><i class="swatch" style="background:var(--sw3)"></i><i class="swatch" style="background:var(--sw4)"></i></div>
+            <span>#3264D9 · #FF74A8 · #26D6E8 · #D8FF3E · #F7F1FF</span>
+          </div>
+          <div class="spec-card"><strong>Роли цветов</strong><span>Pink = emotional accent; blue = trust/CTA; cyan = task freshness; gold = points economy.</span></div>
+          <div class="spec-card"><strong>Пират</strong><span>Только balance hero и редкая эмоциональная обратная связь, чтобы экран не стал nursery-style.</span></div>
+          <div class="spec-card"><strong>Свинка</strong><span>Runner цели; маленькая миссионная иконка в nav/header. Никаких больших random pig illustrations.</span></div>
+          <div class="spec-card"><strong>Progress bar</strong><span>Gold segmented bar сохраняет continuity с основной экономикой, даже в candy palette.</span></div>
+          <div class="spec-card"><strong>States</strong><span>Available = blue; selected = pink edge; done = green; pending = warm; nav active = blue label.</span></div>
+        </div>
+      </div>
+      <div class="screens">
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Главная</div>
+            <div class="phone">
+    <div class="screen keyHero">
+      
+    <div class="topbar">
+      <div class="hello"><span>Сегодня хороший день</span><strong>Привет, Антон</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        
+    <div class="balance-card">
+      <div class="balance-left">
+        <div class="balance-label">Мои баллы</div>
+        <div class="balance-row"><img src="../assets/images/coin.png" alt="" /><div class="balance-number">1 240</div></div>
+        <div class="pending-pill">+85 на проверке</div>
+      </div>
+      <img class="pirate" src="../assets/images/pirate-variants/flat-pirate-17-coin-rain.png" alt="" />
+    </div>
+  
+        <div class="row">
+          <div class="grow">
+    <div class="card level-card">
+      <div class="inner">
+        <div class="level-top">
+          <div class="level-avatar"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+          <div class="grow">
+            <div class="level-title">Уровень 8</div>
+            <div class="level-meta">Искатель сокровищ · 420 / 600 XP</div>
+          </div>
+          <span class="status">2 навыка</span>
+        </div>
+        
+    <div class="progress compact" style="--p:68%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+      </div>
+    </div>
+  </div>
+          
+    <div class="streak">
+      <div class="streak-mark"></div>
+      <div>
+        <strong>7 дней</strong>
+        <span>серия заданий</span>
+      </div>
+    </div>
+  
+        </div>
+        
+    <div class="card goal-card">
+      <div class="inner">
+        <div class="title-line">
+          <div>
+            <div class="eyebrow">Главная цель</div>
+            <div class="goal-name">LEGO Creator Pirate Ship</div>
+          </div>
+          <span class="status gold">копилка</span>
+        </div>
+        <div class="goal-meta">1 240 / 1 800 баллов · осталось 560</div>
+        
+    <div class="progress compact runner" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      <img class="runner-img" src="../assets/images/pig-running-coins-progress.png" alt="" />
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="section-row"><h3>Сегодняшние задания</h3><span class="status">4 открыто</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Убрать стол после ужина</div>
+        <div class="task-desc">Сделай фото или коротко напиши, что готово.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+25</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-vmeste.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">15 минут чтения</div>
+        <div class="task-desc">Прочитай главу и отметь прогресс.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+40</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Задания</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Карта квестов</span><strong>Задания</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="tabs"><div class="tab active">Доступно (6)</div><div class="tab">На проверке (2)</div></div>
+        <div class="section-row"><h3>Ежедневные</h3><span class="status gold">бонус</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Заправить кровать</div>
+        <div class="task-desc">Быстрый утренний квест для серии.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+15</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card pending">
+      <div class="task-icon"><img src="assets/icon-vmeste.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Помочь с посудой</div>
+        <div class="task-desc">Поставь тарелки и вытри стол после еды.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+35</span><span class="status warn">на проверке</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card done">
+      <div class="task-icon"><img src="assets/icon-zadaniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Собрать рюкзак</div>
+        <div class="task-desc">Проверь учебники, форму и бутылку воды.</div>
+        <div class="task-footer"><span class="status success">выполнено</span><span class="status success">готово</span></div>
+      </div>
+    </div>
+  
+        <div class="section-row"><h3>Можно взять</h3><span class="status">+160</span></div>
+        
+    <div class="task-card available">
+      <div class="task-icon"><img src="assets/icon-kopilki.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Разобрать игрушки</div>
+        <div class="task-desc">Верни вещи на места и освободи пол.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+30</span><span class="btn">Старт</span></div>
+      </div>
+    </div>
+  
+        
+    <div class="task-card rejected">
+      <div class="task-icon"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+      <div class="task-body">
+        <div class="task-title">Переделать фотоотчет</div>
+        <div class="task-desc">Родитель попросил понятнее показать результат.</div>
+        <div class="task-footer"><span class="points"><img src="../assets/images/coin.png" alt="" />+25</span><span class="btn secondary">Снова</span></div>
+      </div>
+    </div>
+  
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Награды</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Магазин желаний</span><strong>Награды</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="tabs"><div class="tab active">Награды</div><div class="tab">Желания</div></div>
+        <div class="card reward-card focus">
+          <div class="inner">
+            <div class="title-line">
+              <div class="reward-title-row"><div class="reward-head-icon"><img src="assets/icon-nagrady.svg" alt="" /></div><div><div class="reward-title">Главная цель</div><div class="reward-meta">LEGO Creator Pirate Ship</div></div></div>
+              <span class="points"><img src="../assets/images/coin.png" alt="" />1800</span>
+            </div>
+            
+    <div class="progress compact" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status gold">выбрано</span><span class="btn">Копить</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">30 минут игры</div><div class="reward-meta">Можно запросить сегодня</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />300</span></div>
+            
+    <div class="progress compact" style="--p:100%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status success">доступно</span><span class="btn">Получить</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">Поход в кино</div><div class="reward-meta">Семейная награда</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />2200</span></div>
+            
+    <div class="progress compact" style="--p:56%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+            <div class="reward-footer"><span class="status">56%</span><span class="btn disabled">Не хватает</span></div>
+          </div>
+        </div>
+        <div class="card reward-card">
+          <div class="inner">
+            <div class="title-line"><div><div class="reward-title">Мороженое</div><div class="reward-meta">Ждет одобрения</div></div><span class="points"><img src="../assets/images/coin.png" alt="" />180</span></div>
+            <div class="reward-footer"><span class="status warn">запрошено</span><span class="btn secondary">Ждем</span></div>
+          </div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Баллы</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Копилка и история</span><strong>Баллы</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="card">
+          <div class="inner">
+            <div class="section-row"><h3>Текущий баланс</h3><span class="points"><img src="../assets/images/coin.png" alt="" />1240</span></div>
+            <div class="balance-summary">
+              <div class="mini-stat"><strong>+2 480</strong><span>заработано</span></div>
+              <div class="mini-stat"><strong>-1 240</strong><span>потрачено</span></div>
+              <div class="mini-stat"><strong>+85</strong><span>на проверке</span></div>
+            </div>
+          </div>
+        </div>
+        
+    <div class="card goal-card">
+      <div class="inner">
+        <div class="title-line">
+          <div>
+            <div class="eyebrow">Главная цель</div>
+            <div class="goal-name">LEGO Creator Pirate Ship</div>
+          </div>
+          <span class="status gold">копилка</span>
+        </div>
+        <div class="goal-meta">1 240 / 1 800 баллов · осталось 560</div>
+        
+    <div class="progress compact runner" style="--p:69%">
+      <div class="track"><div class="fill"></div></div>
+      <img class="runner-img" src="../assets/images/pig-running-coins-progress.png" alt="" />
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="tabs"><div class="tab active">Баллы</div><div class="tab">Квесты</div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">15 минут чтения</div><div class="tx-meta">Сегодня · одобрено</div></div><div class="tx-amount plus">+40</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Мороженое</div><div class="tx-meta">Вчера · награда</div></div><div class="tx-amount minus">-180</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Помочь с посудой</div><div class="tx-meta">На проверке</div></div><div class="tx-amount plus">+35</div></div></div>
+        <div class="tx-card"><div class="tx-row"><div><div class="tx-title">Миссия накоплений</div><div class="tx-meta">Созреет через 2 дня</div></div><div class="tx-amount plus">+72</div></div></div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Достижения</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Навыки и достижения</span><strong>Уровень</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        
+    <div class="card level-card">
+      <div class="inner">
+        <div class="level-top">
+          <div class="level-avatar"><img src="assets/icon-dostizheniya.svg" alt="" /></div>
+          <div class="grow">
+            <div class="level-title">Уровень 8</div>
+            <div class="level-meta">Искатель сокровищ · 420 / 600 XP</div>
+          </div>
+          <span class="status">2 навыка</span>
+        </div>
+        
+    <div class="progress compact" style="--p:68%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+      </div>
+    </div>
+  
+        <div class="tabs"><div class="tab active">Навыки</div><div class="tab">Достижения</div></div>
+        <div class="skill-grid">
+          <div class="skill"><strong>Бонус квестов</strong><span>Ранг 2 / 5 · +10% к XP</span></div>
+          <div class="skill"><strong>Серия</strong><span>Ранг 1 / 3 · держит мотивацию</span></div>
+          <div class="skill"><strong>Копилка</strong><span>Откроется на уровне 9</span></div>
+          <div class="skill"><strong>Легенда</strong><span>Нужен уровень 12</span></div>
+        </div>
+        <div class="achievement-card">
+          <div class="achievement-head"><div class="achievement-icon"><img src="assets/icon-dostizheniya.svg" alt="" /></div><div class="grow"><div class="reward-title">10 заданий</div><div class="reward-meta">8 / 10 завершено · +80 XP</div></div><span class="status">80%</span></div>
+          
+    <div class="progress compact" style="--p:80%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+        </div>
+        <div class="achievement-card">
+          <div class="achievement-head"><div class="achievement-icon"><img src="assets/icon-bally.svg" alt="" /></div><div class="grow"><div class="reward-title">Первая награда</div><div class="reward-meta">Получено вчера</div></div><span class="status success">открыто</span></div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+          <div class="phone-wrap">
+            <div class="phone-label">Миссии</div>
+            <div class="phone">
+    <div class="screen">
+      
+    <div class="topbar">
+      <div class="hello"><span>Накопления</span><strong>Миссии роста</strong></div>
+      <div class="avatar">A</div>
+    </div>
+  
+      <div class="content">
+        <div class="card">
+          <div class="inner">
+            <div class="title-line">
+              <div class="reward-title-row"><div class="reward-head-icon"><img src="assets/icon-kopilki.svg" alt="" /></div><div><div class="reward-title">Цель накоплений</div><div class="reward-meta">Пусть баллы растут сами</div></div></div>
+              <span class="points"><img src="../assets/images/coin.png" alt="" />1240</span>
+            </div>
+          </div>
+        </div>
+        <div class="section-row"><h3>Доступные миссии</h3><span class="status">3 проекта</span></div>
+        <div class="mission-card">
+          <div class="mission-title">Остров сокровищ</div>
+          <div class="mission-meta">+12% через 5 дней</div>
+          <div class="mission-range"><span class="status gold">50-400 баллов</span><span class="status">низкий риск</span></div>
+          <div class="mission-row"><span class="mission-meta">Минимум 50</span><span class="btn">Вложить</span></div>
+        </div>
+        <div class="mission-card invested">
+          <div class="mission-title">Сундук капитана</div>
+          <div class="mission-meta">200 → 230 баллов</div>
+          
+    <div class="progress compact" style="--p:62%">
+      <div class="track"><div class="fill"></div></div>
+      
+    </div>
+  
+          <div class="mission-row"><span class="status warn">2 дня 4 часа</span><span class="btn secondary">Ждем</span></div>
+        </div>
+        <div class="mission-card">
+          <div class="mission-title">Командная цель</div>
+          <div class="mission-meta">Семейный проект на выходные</div>
+          <div class="mission-row"><span class="status success">готово</span><span class="btn">Забрать +72</span></div>
+        </div>
+      </div>
+      
+    <nav class="nav">
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-home-compass.png" alt="" />
+          
+          <span>Дом</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-quests-map.png" alt="" />
+          <b class="nav-badge">4</b>
+          <span>Квесты</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/coin.png" alt="" />
+          
+          <span>Баллы</span>
+        </div>
+      
+        <div class="nav-item ">
+          <img src="../assets/images/tab-rewards-chest.png" alt="" />
+          <b class="nav-badge">1</b>
+          <span>Награды</span>
+        </div>
+      
+        <div class="nav-item active">
+          <img src="../assets/images/piggy-bank-mascot.png" alt="" />
+          
+          <span>Миссии</span>
+        </div>
+      
+    </nav>
+  
+    </div>
+  </div>
+          </div>
+        
+      </div>
+    </section>
+  </div>
+  </main>
+
+</body>
+</html>

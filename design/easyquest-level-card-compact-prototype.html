@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EasyQuest Compact Standalone Level Prototype</title>
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  :root {
+    --ink: #10233f;
+    --sub: #6b7b90;
+    --muted: #edf4fb;
+    --line: #d9e7f4;
+    --blue: #245bc8;
+    --blue-soft: #eaf2ff;
+    --lime: #d8ff3e;
+    --gold: #f7b721;
+    --orange: #f28a12;
+    --green: #27ae4b;
+    --paper: #ffffff;
+    --screen: #eaf5ff;
+    --shadow: 0 12px 28px rgba(16, 35, 63, .12);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(145deg, #f7fbff 0%, #ffffff 54%, #f0f7ff 100%);
+    color: var(--ink);
+    font-family: ui-rounded, "Arial Rounded MT Bold", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  .board {
+    width: min(1180px, calc(100vw - 48px));
+    margin: 0 auto;
+    padding: 30px 0 42px;
+  }
+
+  .heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 28px;
+    align-items: flex-end;
+    margin-bottom: 22px;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 34px;
+    line-height: 1.05;
+    letter-spacing: 0;
+  }
+
+  .heading p {
+    margin: 8px 0 0;
+    max-width: 640px;
+    color: var(--sub);
+    font-size: 15px;
+    line-height: 1.45;
+    font-weight: 800;
+  }
+
+  .scale-note {
+    min-width: 230px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .78);
+    color: #68798f;
+    font-size: 12px;
+    line-height: 1.4;
+    font-weight: 850;
+  }
+
+  .workspace {
+    display: grid;
+    grid-template-columns: 430px minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
+
+  .phone-shell {
+    width: 390px;
+    margin: 0 auto;
+    padding: 10px;
+    border-radius: 54px;
+    background: #0a0d12;
+    box-shadow: 0 30px 70px rgba(16, 35, 63, .28);
+  }
+
+  .phone {
+    position: relative;
+    height: 844px;
+    overflow: hidden;
+    border-radius: 44px;
+    background:
+      radial-gradient(circle at 92% 26%, rgba(16, 199, 232, .16), transparent 24%),
+      radial-gradient(circle at 12% 6%, rgba(216, 255, 62, .14), transparent 22%),
+      var(--screen);
+  }
+
+  .island {
+    position: absolute;
+    z-index: 4;
+    top: 12px;
+    left: 50%;
+    width: 126px;
+    height: 38px;
+    border-radius: 22px;
+    transform: translateX(-50%);
+    background: #020409;
+  }
+
+  .status {
+    height: 72px;
+    padding: 22px 28px 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    color: #05070b;
+    font-size: 17px;
+    font-weight: 1000;
+  }
+
+  .signal {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    padding-top: 3px;
+  }
+
+  .dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 99px;
+    background: #b7c2cf;
+  }
+
+  .wifi {
+    width: 18px;
+    height: 13px;
+    border: 3px solid #05070b;
+    border-bottom: 0;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .battery {
+    width: 28px;
+    height: 14px;
+    border: 2px solid #05070b;
+    border-radius: 5px;
+  }
+
+  .screen-content {
+    padding: 10px 18px 0;
+  }
+
+  .settings {
+    position: absolute;
+    z-index: 5;
+    right: 20px;
+    top: 62px;
+    width: 56px;
+    height: 56px;
+    border: 0;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #278dff, #0b73f2);
+    box-shadow: 0 8px 18px rgba(11, 115, 242, .35);
+  }
+
+  .settings::before,
+  .settings::after {
+    content: "";
+    position: absolute;
+    inset: 17px;
+    border-radius: 50%;
+    border: 6px solid #fff;
+  }
+
+  .settings::after {
+    inset: 25px;
+    background: #0b73f2;
+    border: 0;
+  }
+
+  .reward-banner {
+    position: relative;
+    display: grid;
+    grid-template-columns: 48px 1fr 34px;
+    align-items: center;
+    gap: 12px;
+    min-height: 82px;
+    margin: 2px 0 14px;
+    padding: 14px 16px;
+    border: 2px solid #f7b721;
+    border-radius: 24px;
+    background: linear-gradient(180deg, #fff9e9, #fff5cf);
+  }
+
+  .gift {
+    position: relative;
+    width: 42px;
+    height: 38px;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #f14536, #c92922);
+    box-shadow: inset 0 -8px 0 rgba(103, 30, 18, .15);
+  }
+
+  .gift::before {
+    content: "";
+    position: absolute;
+    left: 16px;
+    top: 0;
+    width: 9px;
+    height: 38px;
+    background: #ffd94a;
+  }
+
+  .gift::after {
+    content: "";
+    position: absolute;
+    left: 7px;
+    top: -10px;
+    width: 27px;
+    height: 12px;
+    border-radius: 12px 12px 4px 4px;
+    background: #ffd94a;
+  }
+
+  .reward-title {
+    color: #d58704;
+    font-size: 18px;
+    line-height: 1.1;
+    font-weight: 1000;
+  }
+
+  .reward-sub {
+    margin-top: 4px;
+    color: #6e5420;
+    font-size: 15px;
+    font-weight: 950;
+  }
+
+  .round-arrow,
+  .chevron {
+    display: grid;
+    place-items: center;
+    font-weight: 1000;
+  }
+
+  .round-arrow {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f7b721;
+    color: #fff;
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  .points {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 12px;
+    min-height: 88px;
+    margin-bottom: 14px;
+    padding: 16px 18px;
+    border-radius: 24px;
+    background:
+      radial-gradient(circle at 28% 80%, rgba(255, 255, 255, .18), transparent 34%),
+      linear-gradient(135deg, #392082, #253da6 52%, #5929c0);
+    box-shadow: var(--shadow);
+    color: #fff;
+  }
+
+  .coin {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 28%, #ffe67a 0 18%, #f7b721 19% 62%, #d06f08 63% 100%);
+    box-shadow: inset 0 0 0 4px #ffce35;
+  }
+
+  .coin::after {
+    content: "";
+    position: absolute;
+    inset: 13px 17px 11px 15px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, .72);
+    transform: rotate(-18deg);
+  }
+
+  .points-label {
+    color: rgba(255, 255, 255, .56);
+    font-size: 12px;
+    font-weight: 1000;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .points-value {
+    margin-top: 2px;
+    font-size: 43px;
+    line-height: .9;
+    font-weight: 1000;
+  }
+
+  .small-pirate {
+    width: 74px;
+    height: 70px;
+    border-radius: 22px;
+    background:
+      radial-gradient(circle at 62% 36%, #ff7046 0 13%, transparent 14%),
+      radial-gradient(circle at 50% 54%, #c0392b 0 27%, transparent 28%),
+      radial-gradient(circle at 50% 22%, #17233b 0 32%, transparent 33%);
+    opacity: .94;
+  }
+
+  .balance-level-card {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-height: 136px;
+    margin-bottom: 14px;
+    padding: 15px 16px 14px;
+    border: 1px solid rgba(203, 220, 238, .95);
+    border-radius: 24px;
+    background:
+      radial-gradient(circle at 92% 20%, rgba(216, 255, 62, .22), transparent 24%),
+      linear-gradient(180deg, rgba(255, 255, 255, .98), rgba(248, 252, 255, .98));
+    box-shadow: 0 12px 28px rgba(16, 35, 63, .1);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .balance-level-card::after {
+    content: "";
+    position: absolute;
+    inset: 1px 1px 1px auto;
+    width: 7px;
+    border-radius: 0 22px 22px 0;
+    background: linear-gradient(180deg, #d8ff3e, #39c76b);
+  }
+
+  .balance-level-card:active {
+    transform: translateY(1px);
+    box-shadow: 0 8px 20px rgba(16, 35, 63, .1);
+  }
+
+  .balance-top {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 13px;
+  }
+
+  .balance-coin {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 34% 28%, #ffe77c 0 18%, #f7b721 19% 62%, #c96a08 63% 100%);
+    box-shadow: inset 0 0 0 4px #ffce35, 0 6px 12px rgba(208, 111, 8, .16);
+  }
+
+  .balance-coin::after {
+    content: "";
+    position: absolute;
+    inset: 13px 17px 11px 15px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, .72);
+    transform: rotate(-18deg);
+  }
+
+  .balance-label {
+    color: #708095;
+    font-size: 11px;
+    line-height: 1;
+    font-weight: 1000;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+  }
+
+  .balance-value {
+    margin-top: 3px;
+    color: #10233f;
+    font-size: 38px;
+    line-height: .9;
+    font-weight: 1000;
+  }
+
+  .combined-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 9px 0 12px;
+    border-radius: 99px;
+    background: #eff6ff;
+    color: #245bc8;
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 1000;
+    white-space: nowrap;
+  }
+
+  .combined-level {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    column-gap: 11px;
+    row-gap: 8px;
+    align-items: center;
+  }
+
+  .combined-mark {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #278dff, #0b73f2);
+    color: #fff;
+    font-size: 24px;
+    line-height: 1;
+    font-weight: 1000;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .14);
+  }
+
+  .combined-copy {
+    min-width: 0;
+  }
+
+  .combined-title {
+    display: block;
+    overflow: hidden;
+    color: #10233f;
+    font-size: 19px;
+    line-height: 1.1;
+    font-weight: 1000;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .combined-meta {
+    display: block;
+    margin-top: 3px;
+    color: #697c92;
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .combined-stats {
+    display: grid;
+    justify-items: end;
+    gap: 4px;
+    color: #697c92;
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 1000;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .combined-stats span:first-child {
+    color: #7d8998;
+  }
+
+  .combined-track {
+    grid-column: 2 / 4;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: #e5edf6;
+    box-shadow: inset 0 0 0 1px rgba(16, 35, 63, .05);
+  }
+
+  .combined-fill {
+    width: 45.33%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #f28a12, #f7b721);
+  }
+
+  .level-card {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-height: 112px;
+    margin-bottom: 14px;
+    padding: 14px 16px;
+    border: 1px solid rgba(203, 220, 238, .95);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 10px 24px rgba(16, 35, 63, .08);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .level-card::after {
+    content: "";
+    position: absolute;
+    inset: 1px 1px 1px auto;
+    width: 7px;
+    border-radius: 0 20px 20px 0;
+    background: linear-gradient(180deg, #d8ff3e, #5adf79);
+  }
+
+  .level-card:active {
+    transform: translateY(1px);
+    box-shadow: 0 7px 18px rgba(16, 35, 63, .1);
+  }
+
+  .level-top {
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .level-mark {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    background: linear-gradient(180deg, #278dff, #0b73f2);
+    color: #fff;
+    font-size: 26px;
+    line-height: 1;
+    font-weight: 1000;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .14);
+  }
+
+  .level-name {
+    min-width: 0;
+  }
+
+  .level-name strong {
+    display: block;
+    overflow: hidden;
+    color: #10233f;
+    font-size: 22px;
+    line-height: 1.05;
+    font-weight: 1000;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .level-name span {
+    display: block;
+    margin-top: 4px;
+    color: var(--sub);
+    font-size: 12px;
+    line-height: 1.15;
+    font-weight: 900;
+  }
+
+  .level-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 10px 0 12px;
+    border-radius: 99px;
+    background: #eff6ff;
+    color: #245bc8;
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 1000;
+    white-space: nowrap;
+  }
+
+  .chevron {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #245bc8;
+    color: #fff;
+    font-size: 17px;
+    line-height: 16px;
+  }
+
+  .xp-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 12px 1px 7px 58px;
+    color: #697c92;
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 950;
+  }
+
+  .xp-row span:last-child {
+    color: #94a2b1;
+  }
+
+  .xp-track {
+    height: 8px;
+    margin-left: 58px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: #e5edf6;
+    box-shadow: inset 0 0 0 1px rgba(16, 35, 63, .05);
+  }
+
+  .xp-fill {
+    width: 45.33%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #f28a12, #f7b721);
+  }
+
+  .level-card.standalone-level {
+    min-height: 96px;
+    padding: 14px 16px;
+    background:
+      radial-gradient(circle at 96% 12%, rgba(216, 255, 62, .24), transparent 22%),
+      rgba(255, 255, 255, .97);
+  }
+
+  .standalone-level .level-shell {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    column-gap: 12px;
+    row-gap: 8px;
+    align-items: center;
+  }
+
+  .standalone-level .level-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    font-size: 24px;
+  }
+
+  .standalone-level .level-copy {
+    min-width: 0;
+  }
+
+  .standalone-level .level-title-compact {
+    display: block;
+    overflow: hidden;
+    color: #10233f;
+    font-size: 21px;
+    line-height: 1.05;
+    font-weight: 1000;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .standalone-level .level-xp {
+    display: block;
+    margin-top: 4px;
+    color: #697c92;
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .standalone-level .level-side {
+    display: grid;
+    justify-items: end;
+    gap: 5px;
+    color: #697c92;
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 1000;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .standalone-level .level-open {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #245bc8;
+  }
+
+  .standalone-level .xp-track {
+    grid-column: 2 / 4;
+    height: 8px;
+    margin: 0;
+  }
+
+  .streak {
+    min-height: 138px;
+    margin-bottom: 14px;
+    padding: 18px;
+    border-radius: 24px;
+    background: #142a3c;
+    color: #fff;
+    box-shadow: var(--shadow);
+  }
+
+  .streak h2,
+  .goal h2 {
+    margin: 0;
+    font-size: 19px;
+    line-height: 1.1;
+    font-weight: 1000;
+  }
+
+  .streak p {
+    margin: 9px 0 18px;
+    color: rgba(255, 255, 255, .62);
+    font-size: 13px;
+    line-height: 1.25;
+    font-weight: 900;
+  }
+
+  .days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+  }
+
+  .day {
+    display: grid;
+    place-items: center;
+    height: 34px;
+    border-radius: 13px;
+    background: #2e4255;
+    color: rgba(255, 255, 255, .62);
+    font-size: 13px;
+    font-weight: 1000;
+  }
+
+  .day.active {
+    background: var(--lime);
+    color: var(--ink);
+  }
+
+  .goal {
+    min-height: 210px;
+    padding: 20px 18px;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: var(--paper);
+    box-shadow: 0 8px 20px rgba(16, 35, 63, .06);
+  }
+
+  .goal-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .goal-chip {
+    padding: 8px 14px;
+    border-radius: 99px;
+    background: #f4f8fd;
+    color: #708095;
+    font-size: 13px;
+    font-weight: 1000;
+  }
+
+  .goal-title {
+    margin: 18px 0 8px;
+    font-size: 26px;
+    line-height: 1;
+    font-weight: 1000;
+  }
+
+  .goal-meta {
+    color: #708095;
+    font-size: 16px;
+    font-weight: 850;
+  }
+
+  .goal-track {
+    height: 19px;
+    margin: 28px 0 14px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: #c7b79d;
+  }
+
+  .goal-fill {
+    width: 25%;
+    height: 100%;
+    border-radius: inherit;
+    background: repeating-linear-gradient(-45deg, #f28a12 0 9px, #f6a12c 9px 18px);
+  }
+
+  .goal-done {
+    color: #708095;
+    font-size: 15px;
+    font-weight: 850;
+  }
+
+  .bottom-nav {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    height: 88px;
+    padding: 13px 16px 12px;
+    border-radius: 34px 34px 0 0;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 -10px 24px rgba(16, 35, 63, .1);
+  }
+
+  .nav-item {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 5px;
+    color: #8997a8;
+    font-size: 11px;
+    line-height: 1;
+    font-weight: 1000;
+  }
+
+  .nav-icon {
+    width: 33px;
+    height: 33px;
+    border-radius: 50%;
+    background: #f1f5fa;
+  }
+
+  .nav-item.active {
+    color: #245bc8;
+  }
+
+  .nav-item.active .nav-icon {
+    background:
+      radial-gradient(circle at 50% 50%, #14324e 0 26%, transparent 27%),
+      conic-gradient(#f7b721 0 20%, #0e9bb4 20% 45%, #f7b721 45% 70%, #0e9bb4 70% 100%);
+  }
+
+  .side {
+    display: grid;
+    gap: 18px;
+  }
+
+  .panel {
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, .86);
+    box-shadow: 0 14px 32px rgba(16, 35, 63, .08);
+  }
+
+  .panel h2 {
+    margin: 0 0 12px;
+    font-size: 21px;
+    line-height: 1.1;
+    letter-spacing: 0;
+  }
+
+  .panel p {
+    margin: 0;
+    color: var(--sub);
+    font-size: 14px;
+    line-height: 1.45;
+    font-weight: 800;
+  }
+
+  .variant-list {
+    display: grid;
+    gap: 14px;
+    margin-top: 14px;
+  }
+
+  .variant {
+    position: relative;
+    min-height: 118px;
+    padding: 14px 15px;
+    border: 1px solid #dce8f5;
+    border-radius: 18px;
+    background: #fff;
+  }
+
+  .variant.selected {
+    border-color: rgba(36, 91, 200, .35);
+    box-shadow: 0 10px 26px rgba(36, 91, 200, .1);
+  }
+
+  .variant .balance-top {
+    margin-bottom: 11px;
+  }
+
+  .variant .balance-coin {
+    width: 38px;
+    height: 38px;
+  }
+
+  .variant .balance-value {
+    font-size: 31px;
+  }
+
+  .variant .combined-mark {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    font-size: 21px;
+  }
+
+  .variant .combined-level {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+  }
+
+  .variant.compact {
+    min-height: 96px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .variant.compact .balance-coin {
+    width: 38px;
+    height: 38px;
+  }
+
+  .compact-mid strong {
+    display: block;
+    font-size: 18px;
+    line-height: 1.1;
+    font-weight: 1000;
+  }
+
+  .compact-mid span {
+    display: block;
+    margin-top: 4px;
+    color: var(--sub);
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .mini-track {
+    height: 7px;
+    margin-top: 9px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: #e7eff7;
+  }
+
+  .mini-fill {
+    width: 45.33%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #f28a12, #f7b721);
+  }
+
+  .density {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .density div {
+    min-height: 82px;
+    padding: 13px;
+    border-radius: 16px;
+    background: #f4f8fd;
+  }
+
+  .density strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .density span {
+    display: block;
+    color: var(--sub);
+    font-size: 12px;
+    line-height: 1.3;
+    font-weight: 800;
+  }
+
+  @media (max-width: 920px) {
+    .board {
+      width: min(430px, calc(100vw - 22px));
+      padding: 14px 0 24px;
+    }
+
+    .heading,
+    .workspace {
+      display: block;
+    }
+
+    .heading {
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    .scale-note,
+    .side {
+      margin-top: 18px;
+    }
+
+    .phone-shell {
+      width: min(390px, 100%);
+    }
+
+    .density {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+  <main class="board">
+    <header class="heading">
+      <div>
+        <h1>Компактная карточка уровня</h1>
+        <p>Баллы остаются отдельным блоком, а карточка уровня становится ниже, спокойнее и кликабельнее без лишней кнопки и персонажа в прогрессе.</p>
+      </div>
+      <div class="scale-note">Основная версия: высота 96 px, прогресс 8 px, карточка уровня остается отдельной.</div>
+    </header>
+
+    <section class="workspace">
+      <div class="phone-shell">
+        <div class="phone">
+          <div class="island"></div>
+          <button class="settings" aria-label="Настройки"></button>
+          <div class="status">
+            <span>12:22</span>
+            <span class="signal" aria-hidden="true">
+              <i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+              <i class="wifi"></i><i class="battery"></i>
+            </span>
+          </div>
+
+          <div class="screen-content">
+            <div class="reward-banner">
+              <div class="gift"></div>
+              <div>
+                <div class="reward-title">Ежедневная награда доступна!</div>
+                <div class="reward-sub">YouTube - 1 час</div>
+              </div>
+              <div class="round-arrow">›</div>
+            </div>
+
+            <section class="points">
+              <div class="coin"></div>
+              <div>
+                <div class="points-label">Мои баллы</div>
+                <div class="points-value">175</div>
+              </div>
+              <div class="small-pirate" aria-hidden="true"></div>
+            </section>
+
+            <button class="level-card standalone-level" type="button" aria-label="Открыть уровень Новичок">
+              <div class="level-shell">
+                <div class="level-mark">Ж</div>
+                <div>
+                  <strong class="level-title-compact">Новичок</strong>
+                  <span class="level-xp">34 / 75 XP</span>
+                </div>
+                <div class="level-side">
+                  <span>0 скиллов</span>
+                  <span class="level-open">
+                    Уровень 1
+                    <span class="chevron">›</span>
+                  </span>
+                </div>
+                <div class="xp-track">
+                  <div class="xp-fill"></div>
+                </div>
+              </div>
+            </button>
+                  <span class="chevron">›</span>
+                </div>
+              </div>
+              <div class="combined-level">
+                <div class="combined-mark">Ж</div>
+                <div class="combined-copy">
+                  <strong class="combined-title">Новичок</strong>
+                  <span class="combined-meta">34 / 75 XP</span>
+                </div>
+                <div class="combined-stats">
+                  <span>0 скиллов</span>
+                  <span>до уровня 2</span>
+                </div>
+                <div class="combined-track"><div class="combined-fill"></div></div>
+              </div>
+            </button>
+
+            <section class="streak">
+              <h2>Серия</h2>
+              <p>Выполни задание сегодня - начни серию!</p>
+              <div class="days">
+                <div class="day active">Пн</div>
+                <div class="day">Вт</div>
+                <div class="day">Ср</div>
+                <div class="day active">Чт</div>
+                <div class="day">Пт</div>
+                <div class="day">Сб</div>
+                <div class="day">Вс</div>
+              </div>
+            </section>
+
+            <section class="goal">
+              <div class="goal-head">
+                <h2>Главная цель</h2>
+                <span class="goal-chip">Награды</span>
+              </div>
+              <div class="goal-title">Набор LEGO</div>
+              <div class="goal-meta">175 из 695 бал.</div>
+              <div class="goal-track"><div class="goal-fill"></div></div>
+              <div class="goal-done">Выполнено на 25%</div>
+            </section>
+          </div>
+
+          <nav class="bottom-nav" aria-label="Нижняя навигация">
+            <div class="nav-item active"><div class="nav-icon"></div><span>Главная</span></div>
+            <div class="nav-item"><div class="nav-icon"></div><span>Квесты</span></div>
+            <div class="nav-item"><div class="nav-icon"></div><span>Баллы</span></div>
+            <div class="nav-item"><div class="nav-icon"></div><span>Награды</span></div>
+            <div class="nav-item"><div class="nav-icon"></div><span>Копилки</span></div>
+          </nav>
+        </div>
+      </div>
+
+      <aside class="side">
+        <section class="panel">
+          <h2>Варианты объединения</h2>
+          <p>Можно оставить общий блок как статус-виджет: наверху баланс, ниже уровень и XP. Так карточка остается компактной и кликабельной.</p>
+
+          <div class="variant-list">
+            <div class="variant selected">
+              <div class="balance-top">
+                <div class="balance-coin"></div>
+                <div>
+                  <div class="balance-label">Мои баллы</div>
+                  <div class="balance-value">175</div>
+                </div>
+                <div class="combined-pill">Уровень 1 <span class="chevron">›</span></div>
+              </div>
+              <div class="combined-level">
+                <div class="combined-mark">Ж</div>
+                <div class="combined-copy">
+                  <strong class="combined-title">Новичок</strong>
+                  <span class="combined-meta">34 / 75 XP</span>
+                </div>
+                <div class="combined-stats">
+                  <span>0 скиллов</span>
+                  <span>до уровня 2</span>
+                </div>
+                <div class="combined-track"><div class="combined-fill"></div></div>
+              </div>
+            </div>
+
+            <div class="variant compact">
+              <div class="balance-coin"></div>
+              <div class="compact-mid">
+                <strong>175 бал. · Новичок</strong>
+                <span>Уровень 1 · 34 / 75 XP</span>
+                <div class="mini-track"><div class="mini-fill"></div></div>
+              </div>
+              <div class="chevron">›</div>
+            </div>
+
+            <div class="variant compact">
+              <div class="combined-mark">Ж</div>
+              <div class="compact-mid">
+                <strong>175 баллов</strong>
+                <span>Новичок · уровень 1 · 0 скиллов</span>
+                <div class="mini-track"><div class="mini-fill"></div></div>
+              </div>
+              <div class="chevron">›</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Что изменилось</h2>
+          <div class="density">
+            <div>
+              <strong>Два в одном</strong>
+              <span>Баллы и уровень живут в одном статусе вместо двух конкурирующих блоков.</span>
+            </div>
+            <div>
+              <strong>Одна точка входа</strong>
+              <span>Стрелка справа и press-state показывают, что открывается вся карточка.</span>
+            </div>
+            <div>
+              <strong>Меньше высота</strong>
+              <span>Общий блок занимает место одной карточки уровня, а не двух секций подряд.</span>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

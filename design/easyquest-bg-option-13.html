@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EasyQuest background option 13</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      align-items: center;
+      background: #eef3fa;
+      color: #10233f;
+      display: flex;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      justify-content: center;
+      margin: 0;
+      min-height: 100vh;
+      padding: 28px;
+    }
+
+    .wrap {
+      width: min(430px, 100%);
+    }
+
+    .phone {
+      aspect-ratio: 390 / 844;
+      border: 10px solid #111827;
+      border-radius: 42px;
+      box-shadow: 0 24px 48px rgba(16, 35, 63, 0.18), inset 0 0 0 1px rgba(255,255,255,0.42);
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+    }
+
+    .caption {
+      align-items: baseline;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 14px;
+    }
+
+    .caption strong {
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .caption span {
+      color: #75869b;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    svg {
+      display: block;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="phone">
+      <svg viewBox="0 0 390 844" preserveAspectRatio="none" aria-label="Комната маленького героя">
+        <defs>
+          <linearGradient id="room-bg" x1="0" x2="0" y1="0" y2="1">
+            <stop stop-color="#f1f9ff" />
+            <stop offset="0.34" stop-color="#fbfdff" />
+            <stop offset="0.72" stop-color="#f7fbf7" />
+            <stop offset="1" stop-color="#fff5dc" />
+          </linearGradient>
+          <radialGradient id="sun" cx="0.18" cy="0.08" r="0.75">
+            <stop stop-color="#fff2b7" stop-opacity="0.68" />
+            <stop offset="0.28" stop-color="#fff7d8" stop-opacity="0.34" />
+            <stop offset="1" stop-color="#fff7d8" stop-opacity="0" />
+          </radialGradient>
+          <filter id="soft">
+            <feGaussianBlur stdDeviation="12" />
+          </filter>
+          <filter id="paper-blur">
+            <feGaussianBlur stdDeviation="1.6" />
+          </filter>
+        </defs>
+
+        <rect fill="url(#room-bg)" height="844" width="390" />
+        <rect fill="url(#sun)" height="844" width="390" />
+
+        <g filter="url(#soft)" opacity="0.36">
+          <ellipse cx="90" cy="236" fill="#cfefff" rx="118" ry="96" />
+          <ellipse cx="318" cy="536" fill="#cfefe0" rx="126" ry="112" />
+          <ellipse cx="136" cy="760" fill="#ffe8a8" rx="154" ry="88" />
+        </g>
+
+        <g opacity="0.14" filter="url(#paper-blur)">
+          <rect x="44" y="142" width="118" height="144" rx="18" fill="#ffffff" stroke="#bfd7f5" stroke-width="2" transform="rotate(-5 103 214)" />
+          <path d="M72 184h62M72 216h74M72 248h58" stroke="#1647b7" stroke-linecap="round" stroke-width="4" transform="rotate(-5 103 214)" />
+          <rect x="78" y="173" width="16" height="16" rx="5" fill="#dbfbef" transform="rotate(-5 103 214)" />
+          <path d="M82 181l4 4 8-10" fill="none" stroke="#25d989" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" transform="rotate(-5 103 214)" />
+          <rect x="78" y="205" width="16" height="16" rx="5" fill="#fff2be" transform="rotate(-5 103 214)" />
+          <path d="M82 213l4 4 8-10" fill="none" stroke="#d88b08" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" transform="rotate(-5 103 214)" />
+        </g>
+
+        <g opacity="0.13">
+          <path d="M272 126h54a20 20 0 0 1 20 20v30h-94v-30a20 20 0 0 1 20-20z" fill="#ffe4d6" />
+          <rect x="252" y="160" width="94" height="66" rx="18" fill="#ffffff" stroke="#ffd1bf" stroke-width="2" />
+          <path d="M276 194h48" stroke="#ff642d" stroke-linecap="round" stroke-width="5" />
+          <circle cx="300" cy="170" fill="#f7b721" r="8" />
+        </g>
+
+        <g opacity="0.15" transform="rotate(8 292 666)">
+          <rect x="248" y="612" width="42" height="42" rx="8" fill="#dff0ff" />
+          <rect x="292" y="612" width="42" height="42" rx="8" fill="#dbfbef" />
+          <rect x="270" y="656" width="42" height="42" rx="8" fill="#fff2be" />
+          <path d="M262 638h14M306 638h14M284 682h14" stroke="#10233f" stroke-linecap="round" stroke-width="3" />
+        </g>
+
+        <g opacity="0.15">
+          <circle cx="76" cy="622" fill="#f7b721" r="8" />
+          <circle cx="76" cy="622" fill="none" r="12" stroke="#d88b08" stroke-width="1.8" />
+          <circle cx="104" cy="644" fill="#f7b721" r="6" />
+          <circle cx="104" cy="644" fill="none" r="10" stroke="#d88b08" stroke-width="1.6" />
+          <circle cx="328" cy="358" fill="#f7b721" r="6" />
+          <circle cx="328" cy="358" fill="none" r="10" stroke="#d88b08" stroke-width="1.6" />
+        </g>
+
+        <g opacity="0.09" stroke="#1647b7" stroke-linecap="round" stroke-width="3">
+          <path d="M-12 394C48 368 118 372 182 400C242 426 300 426 402 370" />
+          <path d="M-18 428C58 392 129 396 194 424C256 451 316 447 408 394" />
+        </g>
+
+        <g fill="#1647b7" opacity="0.09">
+          <path d="M210 110l3 9 9 3-9 3-3 10-3-10-9-3 9-3z" />
+          <path d="M54 506l3 9 9 3-9 3-3 10-3-10-9-3 9-3z" />
+          <path d="M334 756l3 9 9 3-9 3-3 10-3-10-9-3 9-3z" />
+        </g>
+      </svg>
+    </div>
+    <div class="caption">
+      <strong>13. Комната маленького героя</strong>
+      <span>домашний ритуал, не карта</span>
+    </div>
+  </main>
+</body>
+</html>

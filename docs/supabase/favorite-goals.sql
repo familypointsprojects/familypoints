@@ -1,6 +1,12 @@
 -- Safe to run on a fresh or existing database.
 -- It also repairs older favorite_goals tables that were created without child_id.
 
+alter table rewards
+  add column if not exists child_id uuid references children(id) on delete set null;
+
+create index if not exists rewards_child_id_idx
+on rewards(child_id);
+
 create table if not exists favorite_goals (
   child_id uuid primary key references children(id) on delete cascade,
   target_type text not null check (target_type in ('reward', 'wish')),

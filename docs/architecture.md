@@ -40,6 +40,7 @@ flowchart TD
 - Keep bottom navigation off focused form/detail flows such as create, edit, invite, and task detail screens.
 - Keep old or experimental tab navigation (`QuestTabBar`) aligned with current routes and translations.
 - Use `SegmentedControl` for combined pages such as rewards/wishes and balance/history.
+- Use `AppBottomSheet` for all bottom popups and drawers. It intentionally combines a transparent native `Modal` for top-layer presentation with `@gorhom/bottom-sheet` for gestures, dynamic sizing, and swipe-down close. Close buttons should request the sheet to close so the panel animates down before unmounting. Do not reimplement this as a plain `Modal`, custom `Animated` sheet, or `BottomSheetModal`.
 
 ## Navigation Rules
 

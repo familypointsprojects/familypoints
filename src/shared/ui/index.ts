@@ -1,5 +1,6 @@
 export { AppButton } from './AppButton';
 export { AppBottomNavigation } from './AppBottomNavigation';
+export { AppBottomSheet } from './AppBottomSheet';
 export { AppCard } from './AppCard';
 export { AppHeaderMenu } from './AppHeaderMenu';
 export { AppScreen } from './AppScreen';

@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { router, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
-import { Platform, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Animated, Platform, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { FP } from '@/constants/theme';
@@ -10,19 +10,27 @@ import { useActiveChild, useFamilyPoints } from '@/shared/state';
 import { useGrowthMissions } from '@/shared/state/GrowthMissionsProvider';
 import {
   AppButton,
+  AppBottomSheet,
   AppCard,
   AppScreen,
+  BalancePill,
   LevelHeroCard,
   RocketProgressBar,
   SectionTitle,
   StatusBadge,
-  StreakWidget,
 } from '@/shared/ui';
-import { IconCoin } from '@/shared/ui/QuestIcons';
+import { IconCoin, IconOpenToyChest } from '@/shared/ui/QuestIcons';
 import { getRewardTitle, getTaskTitle, getWishTitle } from '@/shared/utils/content';
 import { getFavoriteGoalForChild } from '@/shared/utils/favoriteGoals';
 import { getMissionCountdown } from '@/shared/utils/growthMissions';
-import { getChildLevelProgressFromXp, getChildProgress, getSkillRank } from '@/shared/utils/leveling';
+import {
+  getChildLevelProgressFromXp,
+  getChildProgress,
+  getSkillRank,
+  getTaskStreakDays,
+  STREAK_REWARD_BONUS_MIN_DAYS,
+  STREAK_REWARD_BONUS_POINTS,
+} from '@/shared/utils/leveling';
 import { getBalance, getNearestWish, getPotentialPoints, getProgressPercent } from '@/shared/utils/points';
 import { getDailyRewardLockReason, isDailyRewardAvailableToday, isRewardAvailableForChild } from '@/shared/utils/rewards';
 import {
@@ -65,16 +73,124 @@ const MiniIconLeaf = ({ color }: { color: string }) => (
 );
 const MINI_ICONS = [MiniIconStar, MiniIconBolt, MiniIconBook, MiniIconLeaf, MiniIconStar] as const;
 
+const AnimatedStreakFire = () => {
+  const flicker = useRef(new Animated.Value(0)).current;
+  const core = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const flickerLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(flicker, { toValue: 1, duration: 560, useNativeDriver: true }),
+        Animated.timing(flicker, { toValue: 0, duration: 520, useNativeDriver: true }),
+      ]),
+    );
+    const coreLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(core, { toValue: 1, duration: 480, useNativeDriver: true }),
+        Animated.timing(core, { toValue: 0, duration: 540, useNativeDriver: true }),
+      ]),
+    );
+
+    flickerLoop.start();
+    coreLoop.start();
+    return () => {
+      flickerLoop.stop();
+      coreLoop.stop();
+    };
+  }, [core, flicker]);
+
+  const flameScaleX = flicker.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.97],
+  });
+  const flameScaleY = flicker.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.06],
+  });
+  const flameRotate = flicker.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['-2deg', '3deg'],
+  });
+  const yellowTranslateY = flicker.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -3],
+  });
+  const yellowRotate = flicker.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['1deg', '-3deg'],
+  });
+  const coreScaleX = core.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.96],
+  });
+  const coreScaleY = core.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.08],
+  });
+  const coreRotate = core.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['1deg', '-3deg'],
+  });
+  return (
+    <View style={styles.balanceFireBox}>
+      <Animated.View
+        style={[
+          styles.balanceFireLayer,
+          {
+            transform: [{ rotate: flameRotate }, { scaleX: flameScaleX }, { scaleY: flameScaleY }],
+          },
+        ]}>
+        <Svg width="100%" height="100%" viewBox="0 0 160 160">
+          <Path
+            d="M79 151C47 151 23 131 23 105C23 82 38 69 58 54C74 42 81 26 89 9C109 34 116 54 112 72C119 62 124 51 127 39C142 64 149 84 149 107C149 134 127 151 95 151Z"
+            fill="#FF9F38"
+          />
+        </Svg>
+      </Animated.View>
+      <Animated.View
+        style={[
+          styles.balanceFireLayer,
+          {
+            transform: [{ translateY: yellowTranslateY }, { rotate: yellowRotate }],
+          },
+        ]}>
+        <Svg width="100%" height="100%" viewBox="0 0 160 160">
+          <Path
+            d="M80 146C58 146 45 133 45 115C45 101 53 91 65 80C74 71 79 59 81 47C95 63 101 79 98 94C105 86 109 78 111 70C122 85 127 99 127 115C127 134 112 146 80 146Z"
+            fill="#FFD35A"
+          />
+        </Svg>
+      </Animated.View>
+      <Animated.View
+        style={[
+          styles.balanceFireLayer,
+          {
+            transform: [{ rotate: coreRotate }, { scaleX: coreScaleX }, { scaleY: coreScaleY }],
+          },
+        ]}>
+        <Svg width="100%" height="100%" viewBox="0 0 160 160">
+          <Path
+            d="M91 147C73 147 61 136 61 121C61 107 69 96 81 82C91 96 103 108 107 122C112 136 103 147 91 147Z"
+            fill="#A83AFF"
+          />
+        </Svg>
+      </Animated.View>
+    </View>
+  );
+};
+
 const ChildDashboardScreen = () => {
   const { t } = useLanguage();
   const { activeChild, activeChildId, activeChildName } = useActiveChild();
   const { myInvestments, reload } = useGrowthMissions();
+  const [isStreakInfoVisible, setIsStreakInfoVisible] = useState(false);
   const {
     hasHydrated,
     childProgress: storedChildProgress,
     childSkillUnlocks,
     favoriteGoals,
     pointTransactions,
+    redeemReward,
     rewardRedemptions,
     rewards,
     taskSubmissions,
@@ -87,8 +203,7 @@ const ChildDashboardScreen = () => {
   if (!hasHydrated) {
     return (
       <AppScreen
-        title={t('child.dashboard.title', { name: activeChildName || t('common.child') })}
-        subtitle={t('child.dashboard.subtitle')}>
+        title={t('child.dashboard.title', { name: activeChildName || t('common.child') })}>
         <AppCard>
           <Text style={styles.meta}>{t('common.loading')}</Text>
         </AppCard>
@@ -103,6 +218,12 @@ const ChildDashboardScreen = () => {
     activeChildId,
   );
   const levelProgress = getChildLevelProgressFromXp(activeChildProgress.xp);
+  const streakDays = getTaskStreakDays(taskSubmissions, activeChildId);
+  const streakBonusUnlocked = streakDays >= STREAK_REWARD_BONUS_MIN_DAYS;
+  const streakBonusDaysLeft = Math.max(STREAK_REWARD_BONUS_MIN_DAYS - streakDays, 0);
+  const streakBonusText = streakBonusUnlocked
+    ? `Бонус активен: +${STREAK_REWARD_BONUS_POINTS} бал. за каждый квест`
+    : `Еще ${streakBonusDaysLeft} ${streakBonusDaysLeft === 1 ? 'день' : streakBonusDaysLeft > 1 && streakBonusDaysLeft < 5 ? 'дня' : 'дней'} до бонуса +${STREAK_REWARD_BONUS_POINTS}`;
   const hasLegendBadge = getSkillRank(childSkillUnlocks, activeChildId, 'legend_badge') > 0;
   const visibleWishes = getVisibleWishes(wishes, rewards, rewardRedemptions);
   const nearestWish = getNearestWish(visibleWishes, balance);
@@ -121,6 +242,15 @@ const ChildDashboardScreen = () => {
           (wish) => wish.id === favoriteGoal.itemId && (wish.status ?? 'pending') === 'approved',
         )
       : undefined;
+  const openRewardRequestIds = new Set(
+    rewardRedemptions
+      .filter(
+        (r) =>
+          r.childId === activeChildId &&
+          (r.status === 'requested' || r.status === 'approved'),
+      )
+      .map((r) => r.rewardId),
+  );
   const dashboardGoal =
     favoriteReward
       ? {
@@ -128,6 +258,8 @@ const ChildDashboardScreen = () => {
           price: favoriteReward.price,
           sectionTitle: t('child.dashboard.favoriteGoal'),
           typeLabel: t('common.rewards'),
+          rewardId: favoriteReward.id,
+          hasOpenRequest: openRewardRequestIds.has(favoriteReward.id),
         }
       : favoriteWish
         ? {
@@ -151,19 +283,11 @@ const ChildDashboardScreen = () => {
   );
   const dashboardTasks = (pendingDailyTasks.length > 0 ? pendingDailyTasks : activeTasks).slice(0, 3);
   const progress = dashboardGoal ? getProgressPercent(balance, dashboardGoal.price) : 0;
+  const isDashboardGoalReady = Boolean(dashboardGoal && progress >= 100);
   const activeInvestments = myInvestments.filter((inv) => !inv.claimedAt);
   const expectedPayout = activeInvestments.reduce((s, inv) => s + inv.payoutAmount, 0);
   const totalIncoming = potentialPoints + expectedPayout;
 
-  const openRewardRequestIds = new Set(
-    rewardRedemptions
-      .filter(
-        (r) =>
-          r.childId === activeChildId &&
-          (r.status === 'requested' || r.status === 'approved'),
-      )
-      .map((r) => r.rewardId),
-  );
   const unlockedDailyRewards = rewards.filter(
     (reward) =>
       isDailyRewardAvailableToday(reward, activeChildId) &&
@@ -173,15 +297,24 @@ const ChildDashboardScreen = () => {
 
   return (
     <AppScreen
-      title={t('child.dashboard.title', { name: activeChildName || t('common.child') })}
-      subtitle={t('child.dashboard.subtitle')}>
+      headerRight={
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/child/balance')}
+          style={({ pressed }) => [styles.headerBalanceAction, pressed && { opacity: 0.88 }]}>
+          <BalancePill points={balance} />
+        </Pressable>
+      }
+      title={t('child.dashboard.title', { name: activeChildName || t('common.child') })}>
 
       {/* ── Daily reward unlock banner ── */}
       {unlockedDailyRewards.length > 0 && (
         <Pressable
           onPress={() => router.push('/child/rewards')}
           style={({ pressed }) => [styles.dailyBanner, pressed && { opacity: 0.88 }]}>
-          <Text style={styles.dailyBannerEmoji}>🎁</Text>
+          <View style={styles.dailyBannerIcon}>
+            <IconOpenToyChest size={52} />
+          </View>
           <View style={styles.dailyBannerText}>
             <Text style={styles.dailyBannerTitle}>{t('child.dashboard.dailyRewardReady')}</Text>
             <Text style={styles.dailyBannerSub}>
@@ -198,7 +331,8 @@ const ChildDashboardScreen = () => {
 
       {/* ── Balance card ── */}
       <Pressable
-        onPress={() => router.push('/child/balance')}
+        accessibilityRole="button"
+        onPress={() => setIsStreakInfoVisible(true)}
         style={({ pressed }) => [styles.balanceCard, pressed && { opacity: 0.88 }]}>
         {/* Layer 1 — glows, clipped inside card, zIndex 0 */}
         <View style={[StyleSheet.absoluteFill, styles.balanceGlowLayer]} pointerEvents="none">
@@ -207,13 +341,18 @@ const ChildDashboardScreen = () => {
         </View>
 
         {/* Layer 2 — all content + mascot in ONE wrapper with zIndex 1
-            Wrapping together forces them above the absolute glow layer on iOS */}
+        Wrapping together forces them above the absolute glow layer on iOS */}
         <View style={styles.balanceContent}>
           <View style={styles.balanceLeft}>
-            <Text style={styles.balanceLabel}>Мои баллы</Text>
-            <View style={styles.balanceRow}>
-              <IconCoin size={38} />
-              <Text style={styles.balanceAmount}>{balance}</Text>
+            <View style={styles.balanceStreak}>
+              <AnimatedStreakFire />
+              <View style={styles.balanceStreakCopy}>
+                <Text style={styles.balanceStreakKicker}>Серия дней</Text>
+                <Text style={styles.balanceStreakText}>
+                  {streakDays} {streakDays === 1 ? 'день' : streakDays > 1 && streakDays < 5 ? 'дня' : 'дней'} подряд
+                </Text>
+                <Text style={styles.balanceStreakSub}>{streakBonusText}</Text>
+              </View>
             </View>
             {potentialPoints > 0 && (
               <View style={styles.balancePending}>
@@ -234,9 +373,15 @@ const ChildDashboardScreen = () => {
       <LevelHeroCard
         avatarColor={activeChild?.avatarColor}
         avatarLabel={activeChildName || t('common.child')}
+        detailLabel={
+          levelProgress.isMaxLevel
+            ? t('child.level.maxed')
+            : t('child.level.toLevel', { level: levelProgress.level + 1 })
+        }
         levelLabel={t('child.level.levelShort', { level: levelProgress.level })}
         onLevelPress={() => router.push('/child/achievements' as never)}
         progress={levelProgress.progressPercent}
+        showGlow
         rankLabel={hasLegendBadge ? t('child.level.legendStatus') : levelProgress.rank}
         skillLabel={t('child.level.skillPoints', { count: activeChildProgress.unspentSkillPoints })}
         xpLabel={
@@ -246,21 +391,60 @@ const ChildDashboardScreen = () => {
         }
       />
 
-      <StreakWidget taskSubmissions={taskSubmissions} childId={activeChildId} />
-
       {dashboardGoal && (
-        <AppCard>
-          <SectionTitle
-            title={dashboardGoal.sectionTitle}
-            action={<StatusBadge label={dashboardGoal.typeLabel} />}
-          />
-          <Text style={styles.title}>{dashboardGoal.title}</Text>
-          <Text style={styles.meta}>
-            {t('child.dashboard.progressSummary', { balance, price: dashboardGoal.price })}
-          </Text>
-          <RocketProgressBar progress={progress} />
-          <Text style={styles.meta}>{t('child.dashboard.progressPercent', { progress })}</Text>
-        </AppCard>
+        <Pressable
+          accessibilityRole={dashboardGoal.rewardId ? 'button' : undefined}
+          disabled={!dashboardGoal.rewardId}
+          onPress={() => {
+            if (!dashboardGoal.rewardId) {
+              return;
+            }
+
+            router.push({
+              pathname: '/child/rewards',
+              params: {
+                rewardId: dashboardGoal.rewardId,
+                scrollToReward: String(Date.now()),
+              },
+            });
+          }}
+          style={({ pressed }) => [dashboardGoal.rewardId && pressed && styles.goalCardPressed]}>
+          <AppCard style={styles.goalCard}>
+            <View pointerEvents="none" style={styles.goalGlowCyan} />
+            <View pointerEvents="none" style={styles.goalGlowLime} />
+            <View style={styles.goalHeader}>
+              <Text style={styles.goalKicker}>{dashboardGoal.sectionTitle}</Text>
+              <View style={styles.goalBadge}>
+                <Text style={styles.goalBadgeText}>{dashboardGoal.typeLabel}</Text>
+              </View>
+            </View>
+            <Text style={styles.goalTitle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+              {dashboardGoal.title}
+            </Text>
+            <Text style={styles.goalMeta}>
+              {t('child.dashboard.progressSummary', { balance, price: dashboardGoal.price })}
+            </Text>
+            <RocketProgressBar
+              compact
+              progress={progress}
+              showGlow={!isDashboardGoalReady}
+              showRunner={!isDashboardGoalReady}
+            />
+            {isDashboardGoalReady && dashboardGoal.rewardId && (
+              <AppButton
+                title={
+                  dashboardGoal.hasOpenRequest
+                    ? t('common.waitingForApproval')
+                    : t('common.redeem')
+                }
+                onPress={() => redeemReward(dashboardGoal.rewardId)}
+                disabled={dashboardGoal.hasOpenRequest}
+                style={styles.goalActionButton}
+                variant={dashboardGoal.hasOpenRequest ? 'secondary' : 'primary'}
+              />
+            )}
+          </AppCard>
+        </Pressable>
       )}
 
       <AppCard>
@@ -305,6 +489,43 @@ const ChildDashboardScreen = () => {
         <Text style={styles.settingsLinkText}>⚙ {t('common.settings')}</Text>
       </Pressable>
 
+      <AppBottomSheet
+        contentStyle={styles.modalCard}
+        onClose={() => setIsStreakInfoVisible(false)}
+        visible={isStreakInfoVisible}>
+        <View style={styles.modalHero}>
+          <AnimatedStreakFire />
+          <View style={styles.modalHeroCopy}>
+            <Text style={styles.modalKicker}>Серия дней</Text>
+            <Text style={styles.modalTitle}>
+              {streakDays} {streakDays === 1 ? 'день' : streakDays > 1 && streakDays < 5 ? 'дня' : 'дней'} подряд
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.modalText}>
+          Серия растёт, когда за день есть хотя бы один одобренный квест.
+        </Text>
+        <View style={styles.modalRules}>
+          <Text style={styles.modalRule}>• Одобрили квест сегодня — серия продолжается.</Text>
+          <Text style={styles.modalRule}>• Если сегодня ещё нет квеста, вчерашняя серия пока сохраняется.</Text>
+          <Text style={styles.modalRule}>• Пропустил день без одобренных квестов — серия начнётся заново.</Text>
+          <Text style={styles.modalRule}>
+            • С {STREAK_REWARD_BONUS_MIN_DAYS} дней включается бонус: +{STREAK_REWARD_BONUS_POINTS} бал. за каждый квест.
+          </Text>
+        </View>
+        <View style={styles.modalBonusBox}>
+          <Text style={styles.modalBonusTitle}>
+            {streakBonusUnlocked ? 'Бонус уже активен' : `До бонуса: ${streakBonusDaysLeft}`}
+          </Text>
+          <Text style={styles.modalBonusText}>{streakBonusText}</Text>
+        </View>
+        <AppButton
+          title="Понятно"
+          onPress={() => setIsStreakInfoVisible(false)}
+          style={styles.modalButton}
+        />
+      </AppBottomSheet>
+
     </AppScreen>
   );
 };
@@ -317,6 +538,9 @@ const styles = StyleSheet.create({
     fontSize: 46,
     fontWeight: '900',
     lineHeight: 52,
+  },
+  headerBalanceAction: {
+    borderRadius: 999,
   },
   // ── Balance card ──
   balanceCard: {
@@ -368,13 +592,15 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 2,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    position: 'relative',
     zIndex: 1,
   },
   balanceLeft: {
-    gap: 2,
     flex: 1,
+    gap: 6,
+    minWidth: 0,
   },
   balanceLabel: {
     color: 'rgba(255,255,255,0.50)',
@@ -382,18 +608,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
-  },
-  balanceRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  balanceAmount: {
-    color: FP.white,
-    fontSize: 36,
-    fontWeight: '900',
-    letterSpacing: -1.5,
-    lineHeight: 40,
   },
   balancePending: {
     alignSelf: 'flex-start',
@@ -408,6 +622,50 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
   },
+  balanceStreak: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    gap: 10,
+    maxWidth: 260,
+  },
+  balanceStreakCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  balanceFireBox: {
+    height: 42,
+    marginRight: 1,
+    position: 'relative',
+    width: 42,
+  },
+  balanceFireLayer: {
+    bottom: -2,
+    height: 44,
+    left: -2,
+    position: 'absolute',
+    width: 44,
+  },
+  balanceStreakKicker: {
+    color: 'rgba(255,255,255,0.58)',
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+  },
+  balanceStreakText: {
+    color: FP.white,
+    fontSize: 20,
+    fontWeight: '900',
+    lineHeight: 23,
+  },
+  balanceStreakSub: {
+    color: 'rgba(255,255,255,0.70)',
+    fontSize: 11,
+    fontWeight: '800',
+    lineHeight: 14,
+    marginTop: 2,
+  },
   balanceMascot: {
     height: 162,
     marginBottom: -16,
@@ -419,6 +677,152 @@ const styles = StyleSheet.create({
     color: FP.text,
     fontSize: 20,
     fontWeight: '900',
+  },
+  goalActionButton: {
+    marginTop: 4,
+  },
+  goalBadge: {
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 99,
+    borderWidth: 1,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  goalBadgeText: {
+    color: 'rgba(255,255,255,0.70)',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  goalCard: {
+    backgroundColor: FP.primary,
+    borderColor: 'rgba(191,215,245,0.26)',
+    borderRadius: 22,
+    gap: 3,
+    overflow: 'hidden',
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    position: 'relative',
+    ...Platform.select({
+      ios: { shadowColor: FP.primary, shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.20, shadowRadius: 28 },
+      android: { elevation: 6 },
+      web: { boxShadow: '0 14px 32px rgba(22,71,183,0.22)' },
+    }) as ViewStyle,
+  },
+  goalCardPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
+  },
+  goalGlowCyan: {
+    backgroundColor: 'rgba(16,199,232,0.18)',
+    borderRadius: 180,
+    height: 260,
+    position: 'absolute',
+    right: -122,
+    top: -102,
+    width: 260,
+  },
+  goalGlowLime: {
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderRadius: 92,
+    height: 112,
+    position: 'absolute',
+    right: -12,
+    top: -52,
+    width: 112,
+  },
+  goalHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'space-between',
+    position: 'relative',
+    zIndex: 1,
+  },
+  goalKicker: {
+    color: FP.white,
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  goalMeta: {
+    color: 'rgba(255,255,255,0.62)',
+    fontSize: 11,
+    fontWeight: '800',
+    lineHeight: 14,
+    position: 'relative',
+    zIndex: 1,
+  },
+  goalTitle: {
+    color: FP.white,
+    fontSize: 21,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+    lineHeight: 24,
+    position: 'relative',
+    zIndex: 1,
+  },
+  modalBonusBox: {
+    backgroundColor: '#F6F9FF',
+    borderColor: '#DFE9FA',
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 3,
+    padding: 12,
+  },
+  modalBonusText: {
+    color: '#5E7182',
+    fontSize: 13,
+    fontWeight: '800',
+    lineHeight: 18,
+  },
+  modalBonusTitle: {
+    color: FP.primaryDark,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  modalButton: {
+    marginTop: 2,
+  },
+  modalCard: {
+    gap: 13,
+  },
+  modalHero: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalHeroCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  modalKicker: {
+    color: '#7A8CA0',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  modalRule: {
+    color: '#4B6072',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  modalRules: {
+    gap: 7,
+  },
+  modalText: {
+    color: '#5E7182',
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  modalTitle: {
+    color: '#10233F',
+    fontSize: 23,
+    fontWeight: '900',
+    lineHeight: 27,
   },
   // ── Daily reward banner ──────────────────────────────────────────────────────
   dailyBanner: {
@@ -436,8 +840,11 @@ const styles = StyleSheet.create({
       web: { boxShadow: '0 6px 16px rgba(200,140,0,0.18)' },
     }) as ViewStyle),
   },
-  dailyBannerEmoji: {
-    fontSize: 30,
+  dailyBannerIcon: {
+    alignItems: 'center',
+    height: 38,
+    justifyContent: 'center',
+    width: 48,
   },
   dailyBannerText: {
     flex: 1,

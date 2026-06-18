@@ -10,9 +10,9 @@ import { Platform } from 'react-native';
 export const Colors = {
   light: {
     text: '#10233F',
-    background: '#EDF5FF',
+    background: '#F6F2E8',
     backgroundElement: '#FFFFFF',
-    backgroundSelected: '#E8F2FF',
+    backgroundSelected: '#EDF5EF',
     textSecondary: '#63758A',
   },
   dark: {
@@ -57,16 +57,16 @@ export const FP = {
   redLight:     '#FFE3E0',
 
   // Neutrals — ice / navy
-  bg:           '#EDF5FF',
+  bg:           '#F6F2E8',
   card:         '#FFFFFF',
-  paper:        '#F7FBFF',
-  tan:          '#DCE8F5',
+  paper:        '#FBF8F0',
+  tan:          '#E6DDCB',
   ink:          '#10233F',
   ink2:         '#071827',
   text:         '#10233F',
   textSub:      '#63758A',
-  border:       '#DCE8F5',
-  muted:        '#F4F8FD',
+  border:       '#E6DDCB',
+  muted:        '#F8F4EC',
   white:        '#FFFFFF',
   graphite:     '#16283A',
 
