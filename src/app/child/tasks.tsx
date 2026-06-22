@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { Image } from 'expo-image';
 import {
   Alert,
   Animated,
@@ -13,9 +14,10 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Path, Polygon, Polyline } from 'react-native-svg';
 
-import { FP } from '@/constants/theme';
+import { FP, gameText } from '@/constants/theme';
+import { OutlineText } from '@/shared/ui/OutlineText';
 import { useLanguage } from '@/shared/i18n';
 import { Task, TaskSubmission } from '@/shared/types/family';
 import { useActiveChild, useFamilyPoints } from '@/shared/state';
@@ -23,8 +25,8 @@ import {
   AppButton,
   AppScreen,
   AppTextInput,
+  BalancePill,
   EmptyState,
-  PointsBadge,
   SegmentedControl,
   StatusBadge,
 } from '@/shared/ui';
@@ -39,17 +41,18 @@ import {
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const CLOSE_THRESHOLD = 80;
+const IMG_PIRATE_GUIDE = require('@/assets/images/pirate-variants/generated-pack/flat-pirate-16-reading-map.png');
 
 type Tab = 'available' | 'pending';
 
 // ─── Accent palette for task icons ──────────────────────────────────────────
 const ICON_PALETTES = [
-  { bg: '#E5EFFF', border: '#BFD7F5', fg: FP.primary },
-  { bg: '#DDF8FF', border: '#A0E8F8', fg: '#0B6F8A' },
-  { bg: FP.mintLight, border: '#A6EFCC', fg: '#15786A' },
-  { bg: FP.accentLight, border: '#F1D28A', fg: FP.accentDark },
-  { bg: FP.orangeLight, border: '#FFCBB0', fg: FP.orangeDark },
-  { bg: '#EDE9FF', border: '#C5B8FF', fg: '#5040C4' },
+  { bg: '#19B8F2', border: '#061426', rail: '#FFC400', fg: '#123F7C', card: '#30364F', inner: '#8FE7FF', bottom: '#24293F' },
+  { bg: '#F36B1D', border: '#061426', rail: '#FFC400', fg: '#5A1605', card: '#29334F', inner: '#FFB400', bottom: '#20263A' },
+  { bg: '#C229E8', border: '#061426', rail: '#D642FF', fg: '#FFFFFF', card: '#30364F', inner: '#D642FF', bottom: '#24293F' },
+  { bg: '#35D638', border: '#061426', rail: '#FFC400', fg: '#07501A', card: '#13B7EF', inner: '#35D638', bottom: '#0D79B6' },
+  { bg: '#FFC400', border: '#061426', rail: '#F36B1D', fg: '#5C3300', card: '#29334F', inner: '#FFE066', bottom: '#20263A' },
+  { bg: '#C229E8', border: '#061426', rail: '#19B8F2', fg: '#FFFFFF', card: '#30364F', inner: '#C229E8', bottom: '#24293F' },
 ] as const;
 
 // ─── Small SVG icons used in task cards ──────────────────────────────────────
@@ -127,6 +130,24 @@ const IconLeaf = () => (
 
 const TASK_ICONS = [IconStar, IconBolt, IconBook, IconLeaf, IconStar, IconBolt] as const;
 
+const MissionPlate = ({
+  fill,
+  stroke,
+}: {
+  fill: string;
+  stroke: string;
+}) => (
+  <Svg
+    pointerEvents="none"
+    preserveAspectRatio="none"
+    style={StyleSheet.absoluteFill}
+    viewBox="0 0 100 100">
+    <Polygon fill={fill} points="0,0 97,0 100,100 0,100" />
+    <Polyline fill="none" points="0,0 97,0 100,100 0,100" stroke={stroke} strokeLinejoin="round" strokeWidth={5} />
+    <Polyline fill="none" points="22,8 64,8" stroke="rgba(255,255,255,0.34)" strokeLinecap="round" strokeWidth={3} />
+  </Svg>
+);
+
 // ─── Quest action button ─────────────────────────────────────────────────────
 //  "Взять!"  — active quest (blue)
 //  "Заново"  — rejected quest (orange)
@@ -134,7 +155,12 @@ const QuestButton = ({ tone = 'blue' }: { tone?: 'blue' | 'orange' }) => {
   const isOrange = tone === 'orange';
   return (
     <View style={[questBtnStyles.pill, isOrange ? questBtnStyles.pillOrange : questBtnStyles.pillBlue]}>
-      <Text style={questBtnStyles.label}>{isOrange ? 'Снова!' : 'Старт!'}</Text>
+      <View pointerEvents="none" style={questBtnStyles.pillHighlight} />
+      <View
+        pointerEvents="none"
+        style={[questBtnStyles.pillBottom, { backgroundColor: isOrange ? '#A43A12' : '#1E9F24' }]}
+      />
+      <OutlineText style={[questBtnStyles.label, gameText]}>{isOrange ? 'Снова!' : 'Старт!'}</OutlineText>
     </View>
   );
 };
@@ -142,32 +168,54 @@ const QuestButton = ({ tone = 'blue' }: { tone?: 'blue' | 'orange' }) => {
 const questBtnStyles = StyleSheet.create({
   pill: {
     alignItems: 'center',
-    borderRadius: 99,
+    borderRadius: 3,
+    borderColor: '#061426',
+    borderWidth: 3,
     justifyContent: 'center',
-    paddingHorizontal: 14,
+    minHeight: 36,
+    overflow: 'hidden',
+    paddingHorizontal: 16,
     paddingVertical: 7,
+    position: 'relative',
+  },
+  pillHighlight: {
+    backgroundColor: 'rgba(255,255,255,0.42)',
+    height: 3,
+    left: 8,
+    position: 'absolute',
+    right: 10,
+    top: 4,
+    zIndex: 1,
+  },
+  pillBottom: {
+    bottom: 0,
+    height: 5,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    zIndex: 1,
   },
   pillBlue: {
-    backgroundColor: FP.primary,
+    backgroundColor: '#35D638',
     ...(Platform.select({
-      ios: { shadowColor: FP.primaryDark, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.32, shadowRadius: 8 },
+      ios: { shadowColor: '#061426', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.42, shadowRadius: 0 },
       android: { elevation: 4 },
-      web: { boxShadow: '0 4px 12px rgba(22,71,183,0.32)' },
+      web: { boxShadow: '0 3px 0 #1E9F24' },
     }) as ViewStyle),
   },
   pillOrange: {
-    backgroundColor: FP.orange,
+    backgroundColor: '#F36B1D',
     ...(Platform.select({
-      ios: { shadowColor: FP.orangeDark, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.32, shadowRadius: 8 },
+      ios: { shadowColor: '#061426', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.40, shadowRadius: 0 },
       android: { elevation: 4 },
-      web: { boxShadow: '0 4px 12px rgba(255,100,45,0.32)' },
+      web: { boxShadow: '0 3px 0 #A43A12' },
     }) as ViewStyle),
   },
   label: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '900',
-    letterSpacing: 0.2,
+    color: '#041426',
+    fontSize: 14,
+    letterSpacing: 0,
+    zIndex: 4,
   },
 });
 
@@ -188,64 +236,86 @@ const questBtnStyles = StyleSheet.create({
 type TaskCardProps = {
   task: Task;
   index: number;
+  featured?: boolean;
   done?: boolean;
   pending?: boolean;
   rejected?: boolean;
   onPress: () => void;
 };
 
-const TaskCard = ({ task, index, done, pending, rejected, onPress }: TaskCardProps) => {
+const TaskCard = ({ task, index, featured, done, pending, rejected, onPress }: TaskCardProps) => {
   const { t } = useLanguage();
   const palette = ICON_PALETTES[index % ICON_PALETTES.length];
   const Icon = done ? IconCheck : TASK_ICONS[index % TASK_ICONS.length];
 
   // Pick icon block color
-  const iconBg   = done ? '#D4F5E5' : rejected ? '#FFE0E3' : pending ? '#FFF6D6' : palette.bg;
-  const iconFg   = done ? '#15786A' : rejected ? '#A8210A' : pending ? '#8B5904' : palette.fg;
+  const iconBg   = done ? '#35D638' : rejected ? '#F36B1D' : pending ? '#FFC400' : palette.bg;
+  const outlineColor = palette.border;
 
   const inner = (
-    <View style={[styles.taskCard, done && styles.taskCardDone]}>
-      {/* Full-height color block */}
-      <View style={[styles.taskColorBlock, { backgroundColor: iconBg }]}>
-        <Icon />
-      </View>
+    <View style={[styles.taskCardShell, featured && styles.taskCardShellFeatured]}>
+      <View
+        style={[
+          styles.taskCard,
+          featured && styles.taskCardFeatured,
+          done && styles.taskCardDone,
+        ]}>
+        <MissionPlate
+          fill={done ? '#0F9D2A' : featured ? '#343A55' : palette.card}
+          stroke={outlineColor}
+        />
+        <View pointerEvents="none" style={[styles.taskCardLeftBorder, { backgroundColor: outlineColor }]} />
+        {featured && (
+          <View pointerEvents="none" style={styles.dailyQuestBadge}>
+            <Svg width={16} height={16} viewBox="0 0 32 32">
+              <Path d="M18 4L10 18h8l-4 10 12-14h-8z" fill={FP.orange} strokeWidth={0} />
+            </Svg>
+          </View>
+        )}
+        {/* Full-height color block */}
+        <View style={[styles.taskColorBlock, { backgroundColor: iconBg }]}>
+          <View style={[styles.taskIconMedallion, { borderColor: outlineColor }]}>
+            <Icon />
+          </View>
+        </View>
 
-      {/* Right: task info */}
-      <View style={styles.taskContent}>
-        {/* Title */}
-        <Text style={[styles.taskTitle, done && styles.taskTitleDone]} numberOfLines={2}>
-          {getTaskTitle(task, t)}
-        </Text>
-        {/* Description */}
-        <Text style={styles.taskDesc} numberOfLines={2}>
-          {getTaskDescription(task, t)}
-        </Text>
+        {/* Right: task info */}
+        <View style={styles.taskContent}>
+          {/* Title */}
+          <OutlineText style={[styles.taskTitle, featured && styles.taskTitleFeatured, done && styles.taskTitleDone]} numberOfLines={2}>
+            {getTaskTitle(task, t)}
+          </OutlineText>
+          {/* Description */}
+          <Text style={[styles.taskDesc, featured && styles.taskDescFeatured]} numberOfLines={2}>
+            {getTaskDescription(task, t)}
+          </Text>
 
-        {/* Footer row: reward + action */}
-        <View style={styles.taskFooter}>
-          {done ? (
-            <View style={styles.donePill}>
-              <Text style={styles.donePillText}>Выполнено ✓</Text>
-            </View>
-          ) : (
-            <>
-              {/* Status chip or reward */}
-              {pending ? (
-                <View style={styles.statusChip}>
-                  <Text style={styles.statusChipWarn}>На проверке ⏳</Text>
-                </View>
-              ) : rejected ? (
-                <View style={[styles.statusChip, styles.statusChipDangerBg]}>
-                  <Text style={styles.statusChipDanger}>Попробуй ещё ↩</Text>
-                </View>
-              ) : (
-                <PointsBadge points={task.points} />
-              )}
+          {/* Footer row: reward + action */}
+          <View style={styles.taskFooter}>
+            {done ? (
+              <View style={styles.donePill}>
+                <Text style={styles.donePillText}>Выполнено ✓</Text>
+              </View>
+            ) : (
+              <>
+                {/* Status chip or reward */}
+                {pending ? (
+                  <View style={styles.statusChip}>
+                    <Text style={styles.statusChipWarn}>На проверке ⏳</Text>
+                  </View>
+                ) : rejected ? (
+                  <View style={[styles.statusChip, styles.statusChipDangerBg]}>
+                    <Text style={styles.statusChipDanger}>Попробуй ещё ↩</Text>
+                  </View>
+                ) : (
+                  <BalancePill compact points={task.points} />
+                )}
 
-              {/* Action button */}
-              <QuestButton tone={rejected ? 'orange' : 'blue'} />
-            </>
-          )}
+                {/* Action button */}
+                <QuestButton tone={rejected ? 'orange' : 'blue'} />
+              </>
+            )}
+          </View>
         </View>
       </View>
     </View>
@@ -379,33 +449,48 @@ const ChildTasksScreen = () => {
       {/* ── Daily Quests ── */}
       {dailyTasks.length > 0 && (
         <>
-          <View style={styles.sectionRow}>
-            <View style={styles.boltBadge}>
-              <Svg width={14} height={14} viewBox="0 0 32 32">
-                <Path d="M18 4L10 18h8l-4 10 12-14h-8z" fill={FP.orange} strokeWidth={0} />
-              </Svg>
+          <View style={styles.dailyGuidePanel}>
+            <View style={styles.dailyGuideCopy}>
+              <View style={styles.sectionRow}>
+                <View style={styles.boltBadge}>
+                  <Svg width={14} height={14} viewBox="0 0 32 32">
+                    <Path d="M18 4L10 18h8l-4 10 12-14h-8z" fill={FP.orange} strokeWidth={0} />
+                  </Svg>
+                </View>
+                <OutlineText style={[styles.sectionTitle, styles.dailyGuideTitle]}>{t('child.tasks.todayTitle')}</OutlineText>
+              </View>
             </View>
-            <Text style={styles.sectionTitle}>{t('child.tasks.todayTitle')}</Text>
+            <View style={styles.pirateStage}>
+              <View style={styles.pirateShadow} />
+              <Image
+                contentFit="contain"
+                source={IMG_PIRATE_GUIDE}
+                style={styles.pirateGuide}
+              />
+            </View>
           </View>
 
-          {dailyTasks.map((task, i) => {
-            const submission = getTodaySubmission(taskSubmissions, task.id, activeChildId);
-            const isDone = submission?.status === 'approved';
-            const isPending = submission?.status === 'pending';
-            const isRejected = submission?.status === 'rejected';
+          <View style={styles.taskListCompact}>
+            {dailyTasks.map((task, i) => {
+              const submission = getTodaySubmission(taskSubmissions, task.id, activeChildId);
+              const isDone = submission?.status === 'approved';
+              const isPending = submission?.status === 'pending';
+              const isRejected = submission?.status === 'rejected';
 
-            return (
-              <TaskCard
-                key={task.id}
-                task={task}
-                index={i}
-                done={isDone}
-                pending={isPending}
-                rejected={isRejected}
-                onPress={() => handleOpen(task)}
-              />
-            );
-          })}
+              return (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  index={i}
+                  featured
+                  done={isDone}
+                  pending={isPending}
+                  rejected={isRejected}
+                  onPress={() => handleOpen(task)}
+                />
+              );
+            })}
+          </View>
         </>
       )}
 
@@ -415,19 +500,21 @@ const ChildTasksScreen = () => {
       {tab === 'available' && (
         <>
           <View style={styles.sectionRow}>
-            <Text style={styles.sectionTitle}>{t('common.availableTasks')}</Text>
+            <OutlineText style={styles.sectionTitle}>{t('common.availableTasks')}</OutlineText>
           </View>
           {availableTasks.length === 0 ? (
             <EmptyState title={t('common.availableTasks')} message={t('child.tasks.allDone')} />
           ) : (
-            availableTasks.map((task, i) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                index={i}
-                onPress={() => handleOpen(task)}
-              />
-            ))
+            <View style={styles.taskListCompact}>
+              {availableTasks.map((task, i) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  index={i}
+                  onPress={() => handleOpen(task)}
+                />
+              ))}
+            </View>
           )}
         </>
       )}
@@ -435,7 +522,7 @@ const ChildTasksScreen = () => {
       {tab === 'pending' && (
         <>
           <View style={styles.sectionRow}>
-            <Text style={styles.sectionTitle}>{t('child.tasks.tabPending')}</Text>
+            <OutlineText style={styles.sectionTitle}>{t('child.tasks.tabPending')}</OutlineText>
           </View>
           {pendingTasks.length === 0 ? (
             <EmptyState
@@ -443,15 +530,17 @@ const ChildTasksScreen = () => {
               message={t('child.tasks.pendingEmptyMessage')}
             />
           ) : (
-            pendingTasks.map((task, i) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                index={i}
-                pending
-                onPress={() => handleOpen(task)}
-              />
-            ))
+            <View style={styles.taskListCompact}>
+              {pendingTasks.map((task, i) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  index={i}
+                  pending
+                  onPress={() => handleOpen(task)}
+                />
+              ))}
+            </View>
           )}
         </>
       )}
@@ -477,7 +566,7 @@ const ChildTasksScreen = () => {
                   <Text style={styles.sheetSubtitle}>{t('child.taskDetails.subtitle')}</Text>
                   <View style={styles.sheetCard}>
                     <Text style={styles.detailDescription}>{getTaskDescription(selectedTask, t)}</Text>
-                    <PointsBadge points={selectedTask.points} />
+                    <BalancePill compact points={selectedTask.points} />
                     {isSubmitted ? (
                       <StatusBadge label={t('common.waitingForApproval')} tone="warning" />
                     ) : (
@@ -513,131 +602,241 @@ export default ChildTasksScreen;
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   // Section headers
+  dailyGuidePanel: {
+    alignItems: 'center',
+    backgroundColor: '#343A55',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 4,
+    flexDirection: 'row',
+    gap: 8,
+    minHeight: 44,
+    overflow: 'visible',
+    paddingHorizontal: 10,
+    paddingRight: 100,
+    paddingVertical: 5,
+    position: 'relative',
+    ...(Platform.select({
+      ios: { shadowColor: '#061426', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.30, shadowRadius: 0 },
+      android: { elevation: 4 },
+      web: { boxShadow: 'inset 0 3px 0 #19B8F2, 4px 4px 0 #061426' },
+    }) as ViewStyle),
+  },
+  dailyGuideCopy: {
+    flex: 1,
+    minWidth: 0,
+    zIndex: 2,
+  },
+  pirateStage: {
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    bottom: -7,
+    position: 'absolute',
+    right: 10,
+    width: 86,
+    zIndex: 3,
+  },
+  pirateGuide: {
+    height: 112,
+    width: 92,
+    zIndex: 2,
+  },
+  pirateShadow: {
+    backgroundColor: 'rgba(4,20,38,0.30)',
+    borderRadius: 999,
+    bottom: 4,
+    height: 16,
+    position: 'absolute',
+    width: 62,
+    zIndex: 1,
+  },
   sectionRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 8,
-    marginBottom: -4,
+    marginBottom: -2,
+    marginTop: 2,
   },
   boltBadge: {
     alignItems: 'center',
-    backgroundColor: FP.orangeLight,
-    borderRadius: 8,
-    height: 26,
+    backgroundColor: '#FFC400',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 3,
+    height: 28,
     justifyContent: 'center',
-    width: 26,
+    width: 28,
   },
   sectionTitle: {
-    color: FP.ink,
-    fontSize: 17,
-    fontWeight: '900',
-    letterSpacing: -0.2,
+    ...gameText,
+    color: '#FFFFFF',
+    fontSize: 18,
+  },
+  dailyGuideTitle: {
+    fontSize: 16,
+    lineHeight: 19,
+  },
+  taskListCompact: {
+    gap: 8,
   },
 
   // ── Task card ──────────────────────────────────────────────────────────────
   cardPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.985 }],
+    opacity: 0.82,
+    transform: [{ translateY: 2 }, { scale: 0.992 }],
+  },
+  taskCardShell: {
+    paddingBottom: 0,
+    paddingTop: 2,
+    paddingRight: 0,
+    position: 'relative',
+  },
+  taskCardShellFeatured: {
+    paddingLeft: 0,
   },
   taskCard: {
-    backgroundColor: FP.card,
-    borderColor: FP.border,
-    borderRadius: 20,
-    borderWidth: 1,
     flexDirection: 'row',
-    overflow: 'hidden',
-    ...(Platform.select({
-      ios: { shadowColor: FP.primaryDark, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.10, shadowRadius: 20 },
-      android: { elevation: 3 },
-      web: { boxShadow: '0 8px 24px rgba(16,35,63,0.10)' },
-    }) as ViewStyle),
+    minHeight: 104,
+    overflow: 'visible',
+    position: 'relative',
+  },
+  taskCardFeatured: {
+    transform: [{ scale: 1.006 }],
   },
   taskCardDone: {
-    borderColor: '#C2EEDD',
     opacity: 0.72,
+  },
+  taskCardLeftBorder: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    top: 0,
+    width: 3,
+    zIndex: 3,
+  },
+  dailyQuestBadge: {
+    alignItems: 'center',
+    backgroundColor: '#FFC400',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 3,
+    height: 30,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 12,
+    top: 10,
+    width: 30,
+    zIndex: 6,
   },
   // Full-height color block on the left
   taskColorBlock: {
     alignItems: 'center',
+    borderRadius: 2,
     justifyContent: 'center',
-    width: 68,
-    paddingVertical: 18,
+    marginLeft: 8,
+    marginVertical: 10,
+    overflow: 'hidden',
+    position: 'relative',
+    width: 56,
+    zIndex: 4,
+  },
+  taskIconMedallion: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.82)',
+    borderRadius: 3,
+    borderWidth: 3,
+    height: 40,
+    justifyContent: 'center',
+    transform: [{ skewX: '3deg' }],
+    width: 40,
   },
   // Right content area
   taskContent: {
     flex: 1,
-    gap: 4,
+    gap: 3,
     minWidth: 0,
-    padding: 14,
+    padding: 12,
     paddingLeft: 12,
+    position: 'relative',
+    zIndex: 4,
   },
   taskTitle: {
-    color: FP.ink,
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: -0.3,
-    lineHeight: 21,
+    lineHeight: 20,
+  },
+  taskTitleFeatured: {
+    paddingRight: 46,
   },
   taskTitleDone: {
-    color: FP.textSub,
+    color: '#FFFFFF',
   },
   taskDesc: {
-    color: FP.textSub,
-    fontSize: 13,
-    fontWeight: '500',
-    lineHeight: 18,
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 16,
+  },
+  taskDescFeatured: {
+    paddingRight: 46,
   },
   // Footer row inside card: reward badge + action button
   taskFooter: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 6,
+    gap: 8,
+    marginTop: 5,
   },
   // Done pill (replaces reward + button)
   donePill: {
-    backgroundColor: FP.greenLight,
-    borderRadius: 99,
+    backgroundColor: '#35D638',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 3,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   donePillText: {
-    color: FP.green,
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '700',
   },
   // Status chips inside footer
   statusChip: {
     alignSelf: 'flex-start',
-    backgroundColor: '#FFFBEC',
-    borderRadius: 99,
+    backgroundColor: '#FFC400',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 3,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   statusChipWarn: {
-    color: '#8B5904',
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '700',
   },
   statusChipDangerBg: {
-    backgroundColor: '#FFF0F0',
+    backgroundColor: '#F36B1D',
   },
   statusChipDanger: {
-    color: '#A8210A',
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '700',
   },
 
   // Streak widget
   streak: {
     backgroundColor: FP.graphite,
-    borderRadius: 22,
+    borderRadius: 3,
     padding: 16,
     gap: 12,
     ...(Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.18, shadowRadius: 28 },
+      ios: { shadowColor: '#061426', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.24, shadowRadius: 0 },
       android: { elevation: 6 },
-      web: { boxShadow: '0 14px 32px rgba(0,0,0,0.18)' },
+      web: { boxShadow: '4px 4px 0 #061426' },
     }) as ViewStyle),
   },
   streakHead: {
@@ -650,9 +849,9 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   streakTitle: {
+    ...gameText,
     color: FP.white,
     fontSize: 16,
-    fontWeight: '900',
   },
   streakSub: {
     color: 'rgba(255,255,255,0.5)',
@@ -662,14 +861,14 @@ const styles = StyleSheet.create({
   },
   streakBadge: {
     backgroundColor: FP.lime,
-    borderRadius: 99,
+    borderRadius: 3,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   streakBadgeText: {
-    color: '#264000',
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '900',
   },
   streakDays: {
     flexDirection: 'row',
@@ -678,7 +877,7 @@ const styles = StyleSheet.create({
   dayCell: {
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 11,
+    borderRadius: 3,
     flex: 1,
     justifyContent: 'center',
     paddingVertical: 10,
@@ -687,9 +886,9 @@ const styles = StyleSheet.create({
     backgroundColor: FP.lime,
   },
   dayLetter: {
+    ...gameText,
     color: 'rgba(255,255,255,0.55)',
     fontSize: 13,
-    fontWeight: '900',
   },
   dayLetterHot: {
     color: '#10233F',
@@ -705,8 +904,8 @@ const styles = StyleSheet.create({
   },
   sheet: {
     backgroundColor: FP.bg,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
     maxHeight: '85%',
     paddingTop: 4,
   },
@@ -718,7 +917,7 @@ const styles = StyleSheet.create({
   },
   sheetHandleBar: {
     backgroundColor: FP.tan,
-    borderRadius: 3,
+    borderRadius: 1,
     height: 4,
     width: 40,
   },
@@ -728,9 +927,9 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   sheetTitle: {
-    color: FP.ink,
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 22,
-    fontWeight: '900',
   },
   sheetSubtitle: {
     color: FP.textSub,
@@ -738,20 +937,20 @@ const styles = StyleSheet.create({
     marginTop: -4,
   },
   sheetCard: {
-    backgroundColor: FP.card,
-    borderColor: FP.border,
-    borderRadius: 22,
-    borderWidth: 1,
+    backgroundColor: '#30364F',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 4,
     gap: 12,
     padding: 16,
     ...(Platform.select({
-      ios: { shadowColor: FP.primaryDark, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.10, shadowRadius: 24 },
+      ios: { shadowColor: '#061426', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.26, shadowRadius: 0 },
       android: { elevation: 3 },
-      web: { boxShadow: '0 12px 28px rgba(16,35,63,0.10)' },
+      web: { boxShadow: '4px 4px 0 #061426' },
     }) as ViewStyle),
   },
   detailDescription: {
-    color: FP.ink,
+    color: '#FFFFFF',
     fontSize: 16,
     lineHeight: 23,
   },

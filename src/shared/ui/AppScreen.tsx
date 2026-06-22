@@ -1,6 +1,8 @@
 import { PropsWithChildren, ReactNode, RefObject } from 'react';
 import { router, usePathname } from 'expo-router';
 import {
+  Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -8,17 +10,19 @@ import {
   Text,
   View,
   ViewStyle,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, Ellipse, G, Line, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
-import { FP } from '@/constants/theme';
+import { FP, gameText } from '@/constants/theme';
 import { useLanguage } from '@/shared/i18n';
 import { useActiveChild, useFamilyPoints } from '@/shared/state';
 import { AppHeaderMenu } from '@/shared/ui/AppHeaderMenu';
 import { BalancePill } from '@/shared/ui/BalancePill';
 import { BrandLogo } from '@/shared/ui/BrandLogo';
 import { LanguageToggle } from '@/shared/ui/LanguageToggle';
+import { OutlineText } from '@/shared/ui/OutlineText';
 import { shouldShowBottomNavigation } from '@/shared/ui/bottomNavigationRoutes';
 import { getBalance } from '@/shared/utils/points';
 
@@ -33,147 +37,459 @@ type AppScreenProps = PropsWithChildren<{
   scrollRef?: RefObject<ScrollView | null>;
 }>;
 
-type MapBackdropProps = {
-  emphasis?: boolean;
+// ── Icon watermarks — равномерная диагональная сетка по всему экрану ─────────
+const WMARK_TINT = '#3759A0';
+const OP = 0.078;
+
+// Источники PNG-иконок (только ассеты с прозрачным фоном)
+const IMG_BALLY   = require('../../../design/assets/icon-bally.png');
+const IMG_COMPASS = require('../../../assets/images/tab-home-compass.png');
+const IMG_PIRATE_HAT = require('../../../assets/images/watermark-pirate-hat.png');
+const IMG_PIG_FACE = require('../../../assets/images/watermark-pig-face.png');
+const IMG_CHEST = require('../../../assets/images/watermark-rewards-chest.png');
+// open — SVG, т.к. PNG-ассеты имеют белый фон (tintColor заливает весь квадрат)
+
+type WMIcon = 'coin' | 'bally' | 'flame' | 'compass' | 'chest' | 'open' | 'gamepad' | 'pig' | 'pirateHat';
+// [cx, cy, rot, icon]
+type WMark = [number, number, number, WMIcon];
+type IconWatermarksProps = {
+  bakedPngBoostOpacity?: number;
+  forceTintPng?: boolean;
+  opacity?: number;
+  opacityBottom?: number;
+  svgAccent?: string;
+  svgAccentBottom?: string;
+  tint?: string;
+  tintBottom?: string;
 };
 
-const AbstractTreasureMapBackdrop = ({ emphasis = false }: MapBackdropProps) => {
-  const orbitOpacity = emphasis ? 0.18 : 0.12;
-  const routeOpacity = emphasis ? 0.34 : 0.24;
-  const nodeOpacity = emphasis ? 0.24 : 0.17;
+const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+
+const getHexChannels = (color: string): [number, number, number] => {
+  const hex = color.replace('#', '');
+  if (hex.length !== 6) return [55, 89, 160];
+
+  return [
+    Number.parseInt(hex.slice(0, 2), 16),
+    Number.parseInt(hex.slice(2, 4), 16),
+    Number.parseInt(hex.slice(4, 6), 16),
+  ];
+};
+
+const mixHex = (from: string, to: string, amount: number) => {
+  const start = getHexChannels(from);
+  const end = getHexChannels(to);
+  const mix = clamp01(amount);
+  const channels = start.map((channel, index) =>
+    Math.round(channel + (end[index] - channel) * mix).toString(16).padStart(2, '0'),
+  );
+
+  return `#${channels.join('')}`;
+};
+
+const getWatermarkTone = (top: string, bottom: string | undefined, y: number) =>
+  bottom ? mixHex(top, bottom, clamp01((y - 40) / 760)) : top;
+
+const getWatermarkOpacity = (top: number, bottom: number | undefined, y: number) =>
+  bottom === undefined ? top : top + (bottom - top) * clamp01((y - 40) / 760);
+
+const PATTERN_ICON_ROWS: WMIcon[][] = [
+  ['bally', 'pig',       'pirateHat', 'chest',     'open',  'flame'],
+  ['gamepad', 'chest',   'bally',     'pirateHat', 'pig',   'coin'],
+  ['flame', 'compass',   'pig',       'gamepad',   'chest', 'pirateHat'],
+  ['open',  'pirateHat', 'coin',      'flame',     'compass', 'pig'],
+];
+
+const PATTERN_TILE_X = 104;
+const PATTERN_TILE_Y = 72;
+const PATTERN_ROTATION = -12;
+const PATTERN_ROW_COUNT = 14;
+const PATTERN_COL_COUNT = 6;
+const PATTERN_ROW_A_START = -44;
+const PATTERN_ROW_B_START = 8;
+
+// Сетка как в игровом bg-паттерне: 6 колонок с запасом за краями,
+// каждый следующий ряд сдвинут на полшага, поэтому появляются диагонали.
+const MARKS: WMark[] = Array.from({ length: PATTERN_ROW_COUNT }).flatMap((_, row): WMark[] => {
+  const rowIcons = PATTERN_ICON_ROWS[row % PATTERN_ICON_ROWS.length];
+  const xOffset = row % 2 === 0 ? PATTERN_ROW_A_START : PATTERN_ROW_B_START;
+  const y = -10 + row * PATTERN_TILE_Y;
+
+  return Array.from({ length: PATTERN_COL_COUNT }).map((__, col): WMark => [
+    xOffset + col * PATTERN_TILE_X,
+    y,
+    PATTERN_ROTATION,
+    rowIcons[col % rowIcons.length],
+  ]);
+});
+
+const IMG_SRC: Record<Exclude<WMIcon, 'coin' | 'flame' | 'gamepad' | 'open'>, number> = {
+  bally:   IMG_BALLY,
+  chest: IMG_CHEST,
+  compass: IMG_COMPASS,
+  pig: IMG_PIG_FACE,
+  pirateHat: IMG_PIRATE_HAT,
+};
+
+const ICON_SIZE: Record<Exclude<WMIcon, 'coin' | 'flame' | 'gamepad' | 'open'>, number> = {
+  bally:   66,
+  chest: 61,
+  compass: 62,
+  pig: 56,
+  pirateHat: 76,
+};
+
+const COIN_MARKS       = MARKS.filter(([,,, t]) => t === 'coin')      as [number, number, number, 'coin'][];
+const FLAME_MARKS      = MARKS.filter(([,,, t]) => t === 'flame')     as [number, number, number, 'flame'][];
+const GAMEPAD_MARKS    = MARKS.filter(([,,, t]) => t === 'gamepad')   as [number, number, number, 'gamepad'][];
+const OPEN_MARKS       = MARKS.filter(([,,, t]) => t === 'open')      as [number, number, number, 'open'][];
+
+const getWatermarkDebugEnabled = () =>
+  Platform.OS === 'web' &&
+  typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('watermarkGrid') === '1';
+
+const getMarkAt = (row: number, col: number) => MARKS[row * PATTERN_COL_COUNT + col];
+
+const IconWatermarks = (props: IconWatermarksProps) => (
+  <IconWatermarksLayer {...props} />
+);
+
+const IconWatermarksLayer = ({
+  bakedPngBoostOpacity = 0,
+  forceTintPng = false,
+  opacity = OP,
+  opacityBottom,
+  svgAccent = '#ECEEF6',
+  svgAccentBottom,
+  tint = WMARK_TINT,
+  tintBottom,
+}: IconWatermarksProps) => {
+  const { height, width } = useWindowDimensions();
+  const scaleX = width / 390;
+  const scaleY = height / 844;
+  const iconScale = Math.max(scaleX, scaleY);
 
   return (
-    <View style={styles.mapBackdrop} pointerEvents="none">
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {/* PNG-иконки масштабируются из той же 390x844 сетки, что и debug SVG */}
+      {MARKS.map(([cx, cy, rot, type], i) => {
+        if (type === 'coin' || type === 'flame' || type === 'gamepad' || type === 'open') return null;
+        const sz = ICON_SIZE[type] * iconScale;
+        const half = sz / 2;
+        const hasOwnWatermarkOpacity = type === 'chest' || type === 'pirateHat' || type === 'pig';
+        const useTintedPng = forceTintPng || !hasOwnWatermarkOpacity;
+        const markOpacity = getWatermarkOpacity(opacity, opacityBottom, cy);
+        const pngOpacity = forceTintPng && hasOwnWatermarkOpacity ? 1 : markOpacity;
+        const shouldBoostBakedPng = forceTintPng && hasOwnWatermarkOpacity && bakedPngBoostOpacity > 0;
+        const markTint = getWatermarkTone(tint, tintBottom, cy);
+        const left = cx * scaleX - half;
+        const top = cy * scaleY - half;
+        const imageStyle = {
+          position: 'absolute' as const,
+          width: sz,
+          height: sz,
+          left,
+          top,
+          opacity: useTintedPng ? pngOpacity : 1,
+          transform: [{ rotate: `${rot}deg` }],
+        };
+
+        if (shouldBoostBakedPng) {
+          return [
+            <Image
+              key={i}
+              source={IMG_SRC[type]}
+              tintColor={markTint}
+              style={imageStyle}
+              fadeDuration={0}
+            />,
+            <Image
+              key={`${i}-boost`}
+              source={IMG_SRC[type]}
+              tintColor={markTint}
+              style={[imageStyle, { opacity: bakedPngBoostOpacity }]}
+              fadeDuration={0}
+            />,
+          ];
+        }
+
+        return (
+          <Image
+            key={i}
+            source={IMG_SRC[type]}
+            tintColor={useTintedPng ? markTint : undefined}
+            style={imageStyle}
+            fadeDuration={0}
+          />
+        );
+      })}
+      {/* Огоньки, джойстики и открытые сундуки — SVG, чтобы не плодить отдельные ассеты */}
       <Svg
         height="100%"
+        pointerEvents="none"
         preserveAspectRatio="none"
         style={StyleSheet.absoluteFill}
         viewBox="0 0 390 844"
         width="100%">
-        <Defs>
-          <LinearGradient id="constellation-field" x1="0" x2="1" y1="0" y2="1">
-            <Stop offset="0" stopColor="#F8FAF4" />
-            <Stop offset="0.45" stopColor="#EEF4EE" />
-            <Stop offset="1" stopColor="#F8EFEA" />
-          </LinearGradient>
-          <LinearGradient id="constellation-cool-wash" x1="0" x2="1" y1="0" y2="0">
-            <Stop offset="0" stopColor="#E5EEF4" stopOpacity="0.48" />
-            <Stop offset="0.48" stopColor="#FFFFFF" stopOpacity="0" />
-            <Stop offset="1" stopColor="#F3DCD5" stopOpacity="0.34" />
-          </LinearGradient>
-        </Defs>
+        {COIN_MARKS.map(([cx, cy, rot], i) => {
+          const markTint = getWatermarkTone(tint, tintBottom, cy);
+          const markAccent = getWatermarkTone(svgAccent, svgAccentBottom, cy);
+          const markOpacity = getWatermarkOpacity(opacity, opacityBottom, cy);
 
-        <Rect fill="url(#constellation-field)" height="844" width="390" />
-        <Rect fill="url(#constellation-cool-wash)" height="844" width="390" />
+          return (
+            <G
+              key={`coin-${i}`}
+              transform={`translate(${cx} ${cy}) rotate(${rot}) scale(0.48) translate(-60 -60)`}>
+              <Circle cx={60} cy={60} fill={markTint} opacity={markOpacity} r={52} />
+              <Circle
+                cx={60}
+                cy={60}
+                fill="none"
+                r={43}
+                stroke={markAccent}
+                strokeOpacity={0.36}
+                strokeWidth={4}
+              />
+              <Path
+                d="M60 24 L82 60 L60 96 L38 60 Z"
+                fill={markAccent}
+                fillOpacity={0.24}
+                stroke={markAccent}
+                strokeOpacity={0.42}
+                strokeWidth={4}
+                strokeLinejoin="round"
+              />
+              <Ellipse cx={60} cy={60} fill={markTint} fillOpacity={markOpacity * 0.72} rx={10} ry={7} />
+            </G>
+          );
+        })}
+        {FLAME_MARKS.map(([cx, cy, rot], i) => {
+          const markTint = getWatermarkTone(tint, tintBottom, cy);
+          const markAccent = getWatermarkTone(svgAccent, svgAccentBottom, cy);
+          const markOpacity = getWatermarkOpacity(opacity, opacityBottom, cy);
 
-        <Path
-          d="M-58 70C36 14 142 20 216 82C284 139 356 146 448 108V-26H-58Z"
-          fill="#E1EBE1"
-          opacity={0.5}
-        />
-        <Path
-          d="M246 246C311 210 378 223 438 286V526C368 486 300 491 244 540C178 598 96 588 28 512C-16 463-36 406-30 340C61 374 145 363 246 246Z"
-          fill="#E8ECEF"
-          opacity={0.45}
-        />
-        <Path
-          d="M-52 651C8 600 86 599 142 652C192 699 246 709 312 675C353 654 389 657 424 686V870H-52Z"
-          fill="#F2DDD7"
-          opacity={0.44}
-        />
+          return (
+            <G key={i}
+              transform={`translate(${cx} ${cy}) rotate(${rot}) scale(0.43) translate(-86 -105)`}>
+              <Path
+                d="M79 151C47 151 23 131 23 105C23 82 38 69 58 54C74 42 81 26 89 9C109 34 116 54 112 72C119 62 124 51 127 39C142 64 149 84 149 107C149 134 127 151 95 151Z"
+                fill={markTint}
+                opacity={markOpacity}
+              />
+              <Path
+                d="M88 145C66 145 49 132 49 110C49 93 61 82 74 70C86 59 90 44 94 30C111 51 116 70 111 86C119 78 125 68 128 56C138 75 144 93 144 111C144 133 125 145 103 145Z"
+                fill={markAccent}
+                fillOpacity={0.22}
+              />
+              <Path
+                d="M80 139C65 139 54 130 54 116C54 103 64 95 72 87C80 78 83 68 84 56C98 71 105 86 103 100C108 94 111 88 113 81C120 94 123 106 123 117C123 131 110 139 93 139Z"
+                fill={markTint}
+                fillOpacity={markOpacity * 0.62}
+              />
+            </G>
+          );
+        })}
+        {GAMEPAD_MARKS.map(([cx, cy, rot], i) => {
+          const markTint = getWatermarkTone(tint, tintBottom, cy);
+          const markAccent = getWatermarkTone(svgAccent, svgAccentBottom, cy);
+          const markOpacity = getWatermarkOpacity(opacity, opacityBottom, cy);
 
-        <Path
-          d="M-52 194C46 146 151 152 238 209C309 256 370 261 444 226"
-          fill="none"
-          opacity={orbitOpacity}
-          stroke="#4F6D68"
-          strokeLinecap="round"
-          strokeWidth={1}
-        />
-        <Path
-          d="M-44 291C52 246 148 253 224 304C298 354 365 360 442 320"
-          fill="none"
-          opacity={orbitOpacity * 0.86}
-          stroke="#4F6D68"
-          strokeLinecap="round"
-          strokeWidth={1}
-        />
-        <Path
-          d="M-38 430C46 383 143 387 218 438C292 489 362 496 440 458"
-          fill="none"
-          opacity={orbitOpacity * 0.8}
-          stroke="#526078"
-          strokeLinecap="round"
-          strokeWidth={1}
-        />
-        <Path
-          d="M-42 760C47 709 152 714 232 766C302 812 368 814 442 772"
-          fill="none"
-          opacity={orbitOpacity * 0.76}
-          stroke="#9B6E62"
-          strokeLinecap="round"
-          strokeWidth={1}
-        />
+          return (
+            <G key={`gamepad-${i}`} opacity={markOpacity} fill={markTint}
+              transform={`translate(${cx} ${cy}) rotate(${rot}) scale(0.56) translate(-60 -60)`}>
+              <Path d="M23 46C18 48 15 55 14 66L12 80C11 92 18 100 28 96L43 89C47 87 51 86 56 86H64C69 86 73 87 77 89L92 96C102 100 109 92 108 80L106 66C105 55 102 48 97 46C91 43 81 44 74 48C70 50 66 51 60 51C54 51 50 50 46 48C39 44 29 43 23 46Z" />
+              <Rect x={31} y={61} width={24} height={8} rx={4} fill={markAccent} fillOpacity={0.62} />
+              <Rect x={39} y={53} width={8} height={24} rx={4} fill={markAccent} fillOpacity={0.62} />
+              <Circle cx={78} cy={60} r={5} fill={markAccent} fillOpacity={0.62} />
+              <Circle cx={90} cy={70} r={5} fill={markAccent} fillOpacity={0.62} />
+            </G>
+          );
+        })}
+        {/* ── Открытый сундук — SVG, 120×120, центр (60,60) ──────────────────── */}
+        {OPEN_MARKS.map(([cx, cy, rot], i) => {
+          const markTint = getWatermarkTone(tint, tintBottom, cy);
+          const markAccent = getWatermarkTone(svgAccent, svgAccentBottom, cy);
+          const markOpacity = getWatermarkOpacity(opacity, opacityBottom, cy);
 
-        <Path
-          d="M286 74C256 130 258 194 292 247C322 293 324 348 296 396C268 443 270 501 306 553"
-          fill="none"
-          opacity={orbitOpacity}
-          stroke="#526078"
-          strokeLinecap="round"
-          strokeWidth={1}
-        />
-        <Path
-          d="M316 72C285 136 290 198 326 250C358 296 362 351 332 404C303 454 308 505 346 554"
-          fill="none"
-          opacity={orbitOpacity * 0.72}
-          stroke="#526078"
-          strokeLinecap="round"
-          strokeWidth={1}
-        />
-
-        <Path
-          d="M58 184C94 250 145 281 210 276C264 272 292 330 340 354"
-          fill="none"
-          opacity={routeOpacity}
-          stroke="#5E7E75"
-          strokeLinecap="round"
-          strokeDasharray="2 10"
-          strokeWidth={1.9}
-        />
-        <Path
-          d="M54 646C104 607 154 604 204 636C250 666 300 661 348 620"
-          fill="none"
-          opacity={routeOpacity * 0.9}
-          stroke="#B56F5E"
-          strokeLinecap="round"
-          strokeDasharray="2 10"
-          strokeWidth={1.9}
-        />
-
-        <Path d="M82 121h34M99 104v34" opacity={0.08} stroke="#526078" strokeLinecap="round" strokeWidth={1.2} />
-        <Path d="M314 164h26M327 151v26" opacity={0.1} stroke="#5E7E75" strokeLinecap="round" strokeWidth={1.2} />
-        <Path d="M112 506h24M124 494v24" opacity={0.08} stroke="#B56F5E" strokeLinecap="round" strokeWidth={1.2} />
-        <Path d="M285 721h28M299 707v28" opacity={0.08} stroke="#526078" strokeLinecap="round" strokeWidth={1.2} />
-
-        <Circle cx={58} cy={184} fill="#5E7E75" opacity={nodeOpacity} r={6} />
-        <Circle cx={145} cy={281} fill="#526078" opacity={nodeOpacity * 0.86} r={5} />
-        <Circle cx={210} cy={276} fill="#B99B59" opacity={nodeOpacity * 0.9} r={5.5} />
-        <Circle cx={340} cy={354} fill="#B56F5E" opacity={nodeOpacity} r={6} />
-        <Circle cx={54} cy={646} fill="#526078" opacity={nodeOpacity * 0.86} r={5.5} />
-        <Circle cx={204} cy={636} fill="#5E7E75" opacity={nodeOpacity} r={5.5} />
-        <Circle cx={348} cy={620} fill="#B56F5E" opacity={nodeOpacity} r={6} />
-
-        <Circle cx={34} cy={44} fill="#2F3C45" opacity={0.026} r={1.2} />
-        <Circle cx={168} cy={54} fill="#2F3C45" opacity={0.024} r={1.1} />
-        <Circle cx={246} cy={156} fill="#2F3C45" opacity={0.024} r={1.1} />
-        <Circle cx={74} cy={354} fill="#2F3C45" opacity={0.022} r={1} />
-        <Circle cx={330} cy={482} fill="#2F3C45" opacity={0.026} r={1.2} />
-        <Circle cx={142} cy={738} fill="#2F3C45" opacity={0.024} r={1.1} />
+          return (
+            <G key={`open-${i}`} transform={`translate(${cx} ${cy}) rotate(${rot}) scale(0.54) translate(-60 -60)`}>
+              <Path
+                d="M14 56L14 92C14 96 18 96 60 96C102 96 106 96 106 92L106 56C106 46 88 40 60 40C32 40 14 46 14 56Z"
+                fill={markTint}
+                opacity={markOpacity}
+              />
+              <Path
+                d="M18 38C18 22 40 8 60 8C80 8 102 22 102 38L102 44L18 44Z"
+                fill={markTint}
+                opacity={markOpacity}
+              />
+              <Path
+                d="M28 38C28 22 46 14 60 14C74 14 92 22 92 38"
+                fill="none"
+                stroke={markAccent}
+                strokeWidth={3.5}
+                strokeLinecap="round"
+                strokeOpacity={0.24}
+              />
+              <Path
+                d="M20 56C20 48 38 44 60 44C82 44 100 48 100 56L100 60C100 52 82 48 60 48C38 48 20 52 20 60Z"
+                fill={markTint}
+                fillOpacity={0.12}
+              />
+              <Path
+                d="M18 44L102 44"
+                fill="none"
+                stroke={markAccent}
+                strokeWidth={2.5}
+                strokeOpacity={0.22}
+              />
+            </G>
+          );
+        })}
       </Svg>
     </View>
   );
 };
+
+type PatternedBackdropProps = {
+  gradientId: string;
+  stops: Array<{ color: string; offset: string }>;
+  watermarks?: IconWatermarksProps;
+};
+
+const PatternedBackdrop = ({ gradientId, stops, watermarks }: PatternedBackdropProps) => {
+  const hasArcadeGlow = gradientId === 'bg-arcade-blue';
+
+  return (
+    <View style={styles.mapBackdrop} pointerEvents="none">
+      <Svg height="100%" preserveAspectRatio="none" style={StyleSheet.absoluteFill} viewBox="0 0 390 844" width="100%">
+        <Defs>
+          <LinearGradient id={gradientId} x1="0" x2="0.25" y1="0" y2="1">
+            {stops.map((stop) => (
+              <Stop key={stop.offset} offset={stop.offset} stopColor={stop.color} />
+            ))}
+          </LinearGradient>
+          {hasArcadeGlow && (
+            <>
+              <RadialGradient id={`${gradientId}-glow`} cx="50%" cy="12%" r="68%">
+                <Stop offset="0" stopColor="#FFE08A" stopOpacity={0.58} />
+                <Stop offset="0.42" stopColor="#FFB35A" stopOpacity={0.24} />
+                <Stop offset="1" stopColor="#FFB35A" stopOpacity={0} />
+              </RadialGradient>
+              <RadialGradient id={`${gradientId}-center`} cx="52%" cy="42%" r="72%">
+                <Stop offset="0" stopColor="#FFD86A" stopOpacity={0.30} />
+                <Stop offset="1" stopColor="#FFD86A" stopOpacity={0} />
+              </RadialGradient>
+            </>
+          )}
+        </Defs>
+        <Rect fill={`url(#${gradientId})`} height="844" width="390" />
+        {hasArcadeGlow && <Rect fill={`url(#${gradientId}-glow)`} height="844" width="390" />}
+        {hasArcadeGlow && <Rect fill={`url(#${gradientId}-center)`} height="844" width="390" />}
+      </Svg>
+      <IconWatermarks {...watermarks} />
+    </View>
+  );
+};
+
+const AbstractTreasureMapBackdrop = () => (
+  <PatternedBackdrop
+    gradientId="bg-lavender"
+    stops={[
+      { offset: '0', color: '#ECEEF6' },
+      { offset: '0.48', color: '#EAEBF5' },
+      { offset: '0.78', color: '#EFE8F3' },
+      { offset: '1', color: '#F1E5F1' },
+    ]}
+  />
+);
+
+const BlueArcadeBackdrop = () => (
+  <PatternedBackdrop
+    gradientId="bg-arcade-blue"
+    stops={[
+      { offset: '0', color: '#F99438' },
+      { offset: '0.44', color: '#F17326' },
+      { offset: '0.78', color: '#D9571E' },
+      { offset: '1', color: '#B94318' },
+    ]}
+    watermarks={{
+      bakedPngBoostOpacity: 0.38,
+      forceTintPng: true,
+      opacity: 0.16,
+      opacityBottom: 0.2,
+      svgAccent: '#FFE0A8',
+      svgAccentBottom: '#FFF5D6',
+      tint: '#91320F',
+      tintBottom: '#FFF0C6',
+    }}
+  />
+);
+
+const WatermarkGridDebugOverlay = () => (
+  <View pointerEvents="none" style={styles.watermarkDebugOverlay}>
+    <Svg height="100%" preserveAspectRatio="none" style={StyleSheet.absoluteFill} viewBox="0 0 390 844" width="100%">
+      {Array.from({ length: PATTERN_ROW_COUNT }).map((_, row) => {
+        const [, y] = getMarkAt(row, 0);
+        const isShifted = row % 2 === 1;
+
+        return (
+          <Line
+            key={`row-${row}`}
+            opacity={0.42}
+            stroke={isShifted ? '#1E9E86' : '#1647B7'}
+            strokeWidth={1}
+            x1={-80}
+            x2={470}
+            y1={y}
+            y2={y}
+          />
+        );
+      })}
+      {Array.from({ length: PATTERN_ROW_COUNT - 1 }).flatMap((_, row) =>
+        Array.from({ length: PATTERN_COL_COUNT }).map((__, col) => {
+          const [x1, y1] = getMarkAt(row, col);
+          const [x2, y2] = getMarkAt(row + 1, col);
+
+          return (
+            <Line
+              key={`diag-${row}-${col}`}
+              opacity={0.68}
+              stroke="#EF5424"
+              strokeWidth={1.5}
+              x1={x1}
+              x2={x2}
+              y1={y1}
+              y2={y2}
+            />
+          );
+        }),
+      )}
+      {MARKS.map(([x, y], index) => {
+        const row = Math.floor(index / PATTERN_COL_COUNT);
+        const isShifted = row % 2 === 1;
+
+        return (
+          <G key={`point-${index}`}>
+            <Circle
+              cx={x}
+              cy={y}
+              fill="none"
+              opacity={0.38}
+              r={34}
+              stroke={isShifted ? '#1E9E86' : '#1647B7'}
+              strokeDasharray="4 5"
+              strokeWidth={1}
+            />
+            <Circle cx={x} cy={y} fill={isShifted ? '#1E9E86' : '#1647B7'} opacity={0.92} r={5.5} />
+          </G>
+        );
+      })}
+      <Rect fill="none" height={843} opacity={0.5} stroke="#12314A" strokeWidth={1} width={389} x={0.5} y={0.5} />
+    </Svg>
+  </View>
+);
 
 export const AppScreen = ({
   title,
@@ -192,11 +508,13 @@ export const AppScreen = ({
   const { pointTransactions } = useFamilyPoints();
   const isDashboard = pathname === '/parent/dashboard' || pathname === '/child/dashboard';
   const isChildDashboard = pathname === '/child/dashboard';
+  const isChildArcade = pathname.startsWith('/child');
   const isWelcome = pathname === '/';
-  const isChildPage = pathname.startsWith('/child') && pathname !== '/child/balance';
+  const isChildPage = pathname.startsWith('/child');
   const shouldShowBalancePill = isChildPage;
   const childBalance = isChildPage ? getBalance(pointTransactions, activeChildId) : 0;
   const effectiveHeaderRight = headerRight ?? (isChildPage ? <BalancePill points={childBalance} /> : undefined);
+  const showWatermarkGridDebug = getWatermarkDebugEnabled();
   const hasBottomNavigationSpace =
     bottomBar !== undefined || shouldShowBottomNavigation(pathname);
   const shouldShowBackButton =
@@ -217,8 +535,8 @@ export const AppScreen = ({
   };
 
   return (
-    <View style={[styles.screenRoot, isChildDashboard && styles.childDashboardRoot]}>
-      <AbstractTreasureMapBackdrop emphasis={isChildDashboard} />
+    <View style={[styles.screenRoot, isChildDashboard && styles.childDashboardRoot, isChildArcade && styles.arcadeScreenRoot]}>
+      {isChildArcade ? <BlueArcadeBackdrop /> : <AbstractTreasureMapBackdrop />}
       <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
         <ScrollView
           ref={scrollRef}
@@ -261,8 +579,16 @@ export const AppScreen = ({
             <View style={styles.header}>
               <View style={styles.headerRow}>
                 <View style={styles.headerCopy}>
-                  {Boolean(title) && <Text style={styles.title}>{title}</Text>}
-                  {Boolean(subtitle) && <Text style={styles.subtitle}>{subtitle}</Text>}
+                  {Boolean(title) && (
+                    <OutlineText style={[styles.title, gameText, isChildArcade && styles.arcadeTitle]}>
+                      {title}
+                    </OutlineText>
+                  )}
+                  {Boolean(subtitle) && (
+                    <Text style={[styles.subtitle, isChildArcade && styles.arcadeSubtitle]}>
+                      {subtitle}
+                    </Text>
+                  )}
                 </View>
                 {effectiveHeaderRight && <View style={styles.headerRight}>{effectiveHeaderRight}</View>}
               </View>
@@ -271,6 +597,7 @@ export const AppScreen = ({
           {children}
         </ScrollView>
       </SafeAreaView>
+      {showWatermarkGridDebug && <WatermarkGridDebugOverlay />}
       {bottomBar && <View style={styles.bottomBar}>{bottomBar}</View>}
     </View>
   );
@@ -278,13 +605,16 @@ export const AppScreen = ({
 
 const styles = StyleSheet.create({
   screenRoot: {
-    backgroundColor: FP.bg,
+    backgroundColor: '#ECEEF6',
     flex: 1,
     overflow: 'hidden',
     position: 'relative',
   },
   childDashboardRoot: {
-    backgroundColor: FP.bg,
+    backgroundColor: '#ECEEF6',
+  },
+  arcadeScreenRoot: {
+    backgroundColor: '#F17326',
   },
   safeArea: {
     backgroundColor: 'transparent',
@@ -297,6 +627,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: 0,
+  },
+  watermarkDebugOverlay: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 24,
   },
   scroll: {
     flex: 1,
@@ -382,12 +720,19 @@ const styles = StyleSheet.create({
   title: {
     color: FP.text,
     fontSize: 30,
-    fontWeight: '900',
     letterSpacing: 0,
+  },
+  arcadeTitle: {
+    color: '#FFFFFF',
   },
   subtitle: {
     color: FP.textSub,
     fontSize: 15,
     lineHeight: 22,
+  },
+  arcadeSubtitle: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    transform: [{ translateY: 4 }],
   },
 });
