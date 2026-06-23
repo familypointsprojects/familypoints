@@ -21,6 +21,7 @@ import type {
   SetTaskStatusInput,
   SubmitTaskInput,
   UnlockSkillInput,
+  UpdateChildAvatarInput,
   UpdateFamilyNameInput,
   UpdateTaskInput,
   UpdateRewardInput,
@@ -52,6 +53,7 @@ export type FamilyPointsService = {
   rejectRewardRedemption: (input: ReviewRewardRedemptionInput, context: FamilyPointsServiceContext) => Promise<FamilyPointsState>;
   fulfillRewardRedemption: (input: ReviewRewardRedemptionInput, context: FamilyPointsServiceContext) => Promise<FamilyPointsState>;
   deleteChild: (input: DeleteChildInput, context: FamilyPointsServiceContext) => Promise<FamilyPointsState>;
+  updateChildAvatar: (input: UpdateChildAvatarInput, context: FamilyPointsServiceContext) => Promise<FamilyPointsState>;
   createChild: (input: CreateChildInput, context: FamilyPointsServiceContext) => Promise<{ state: FamilyPointsState; childId: string }>;
   createParent: (input: CreateParentInput, context: FamilyPointsServiceContext) => Promise<{ state: FamilyPointsState; parentId: string }>;
   deleteParent: (input: DeleteParentInput, context: FamilyPointsServiceContext) => Promise<FamilyPointsState>;

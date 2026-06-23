@@ -1,7 +1,8 @@
 import { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { FP } from '@/constants/theme';
+import { FP, gameText } from '@/constants/theme';
+import { OutlineText } from '@/shared/ui/OutlineText';
 
 type SectionTitleProps = {
   title: string;
@@ -10,7 +11,7 @@ type SectionTitleProps = {
 
 export const SectionTitle = ({ title, action }: SectionTitleProps) => (
   <View style={styles.container}>
-    <Text style={styles.title}>{title}</Text>
+    <OutlineText style={[styles.title, gameText]}>{title}</OutlineText>
     {action}
   </View>
 );
@@ -25,7 +26,6 @@ const styles = StyleSheet.create({
   title: {
     color: FP.text,
     fontSize: 16,
-    fontWeight: '900',
     letterSpacing: 0,
   },
 });

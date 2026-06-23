@@ -182,6 +182,15 @@ export const localFamilyPointsService: FamilyPointsService = {
     };
     return persistState(nextState);
   },
+  updateChildAvatar: async (input, context) => {
+    const nextState = {
+      ...context.state,
+      children: context.state.children.map((child) =>
+        child.id === input.childId ? { ...child, avatarId: input.avatarId } : child,
+      ),
+    };
+    return persistState(nextState);
+  },
   updateFamilyName: async (input, context) => {
     const nextState = { ...context.state, familyName: input.familyName.trim() };
     return persistState(nextState);

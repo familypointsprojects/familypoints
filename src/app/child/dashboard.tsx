@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { router, useFocusEffect } from 'expo-router';
 import { Image } from 'expo-image';
 import { Animated, Platform, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { FP } from '@/constants/theme';
+import { FP, gameText } from '@/constants/theme';
 import { useLanguage } from '@/shared/i18n';
 import { useActiveChild, useFamilyPoints } from '@/shared/state';
 import { useGrowthMissions } from '@/shared/state/GrowthMissionsProvider';
@@ -13,13 +13,15 @@ import {
   AppBottomSheet,
   AppCard,
   AppScreen,
+  AvatarPickerModal,
   BalancePill,
-  LevelHeroCard,
+  QuestLevelCard,
   RocketProgressBar,
   SectionTitle,
-  StatusBadge,
 } from '@/shared/ui';
-import { IconCoin, IconOpenToyChest } from '@/shared/ui/QuestIcons';
+import { IconOpenToyChest } from '@/shared/ui/QuestIcons';
+import { StreakBurstBackground } from '@/shared/ui/StreakBurstBackground';
+import { OutlineText } from '@/shared/ui/OutlineText';
 import { getRewardTitle, getTaskTitle, getWishTitle } from '@/shared/utils/content';
 import { getFavoriteGoalForChild } from '@/shared/utils/favoriteGoals';
 import { getMissionCountdown } from '@/shared/utils/growthMissions';
@@ -72,6 +74,8 @@ const MiniIconLeaf = ({ color }: { color: string }) => (
   </Svg>
 );
 const MINI_ICONS = [MiniIconStar, MiniIconBolt, MiniIconBook, MiniIconLeaf, MiniIconStar] as const;
+
+const FIRE_OUTLINE_COLOR = '#07151A';
 
 const AnimatedStreakFire = () => {
   const flicker = useRef(new Animated.Value(0)).current;
@@ -144,6 +148,9 @@ const AnimatedStreakFire = () => {
           <Path
             d="M79 151C47 151 23 131 23 105C23 82 38 69 58 54C74 42 81 26 89 9C109 34 116 54 112 72C119 62 124 51 127 39C142 64 149 84 149 107C149 134 127 151 95 151Z"
             fill="#FF9F38"
+            stroke={FIRE_OUTLINE_COLOR}
+            strokeLinejoin="round"
+            strokeWidth={7}
           />
         </Svg>
       </Animated.View>
@@ -184,8 +191,10 @@ const ChildDashboardScreen = () => {
   const { activeChild, activeChildId, activeChildName } = useActiveChild();
   const { myInvestments, reload } = useGrowthMissions();
   const [isStreakInfoVisible, setIsStreakInfoVisible] = useState(false);
+  const [isAvatarPickerVisible, setAvatarPickerVisible] = useState(false);
   const {
     hasHydrated,
+    updateChildAvatar,
     childProgress: storedChildProgress,
     childSkillUnlocks,
     favoriteGoals,
@@ -198,7 +207,119 @@ const ChildDashboardScreen = () => {
     wishes,
   } = useFamilyPoints();
 
+  const avatarId = activeChild?.avatarId;
+  const mustChooseAvatar = hasHydrated && !!activeChildId && !avatarId;
+
   useFocusEffect(useCallback(() => { reload(); }, [reload]));
+
+  // Heavy derived state — memoized so the additional re-renders triggered by
+  // Growth Missions hydration / realtime updates don't recompute every
+  // aggregate on each render. Recomputes only when underlying data changes.
+  const derived = useMemo(() => {
+    const balance = getBalance(pointTransactions, activeChildId);
+    const potentialPoints = getPotentialPoints(tasks, taskSubmissions, activeChildId);
+    const activeChildProgress = getChildProgress(
+      { childProgress: storedChildProgress, childSkillUnlocks, tasks, taskSubmissions },
+      activeChildId,
+    );
+    const levelProgress = getChildLevelProgressFromXp(activeChildProgress.xp);
+    const streakDays = getTaskStreakDays(taskSubmissions, activeChildId);
+    const streakBonusUnlocked = streakDays >= STREAK_REWARD_BONUS_MIN_DAYS;
+    const streakBonusDaysLeft = Math.max(STREAK_REWARD_BONUS_MIN_DAYS - streakDays, 0);
+    const streakBonusText = streakBonusUnlocked
+      ? `Бонус активен: +${STREAK_REWARD_BONUS_POINTS} бал. за каждый квест`
+      : `Еще ${streakBonusDaysLeft} ${streakBonusDaysLeft === 1 ? 'день' : streakBonusDaysLeft > 1 && streakBonusDaysLeft < 5 ? 'дня' : 'дней'} до бонуса +${STREAK_REWARD_BONUS_POINTS}`;
+    const hasLegendBadge = getSkillRank(childSkillUnlocks, activeChildId, 'legend_badge') > 0;
+    const visibleWishes = getVisibleWishes(wishes, rewards, rewardRedemptions);
+    const nearestWish = getNearestWish(visibleWishes, balance);
+    const favoriteGoal = getFavoriteGoalForChild(favoriteGoals, activeChildId);
+    const favoriteReward =
+      favoriteGoal?.type === 'reward'
+        ? rewards.find((reward) =>
+            reward.id === favoriteGoal.itemId &&
+            reward.isActive !== false &&
+            isRewardAvailableForChild(reward, activeChildId),
+          )
+        : undefined;
+    const favoriteWish =
+      favoriteGoal?.type === 'wish'
+        ? visibleWishes.find(
+            (wish) => wish.id === favoriteGoal.itemId && (wish.status ?? 'pending') === 'approved',
+          )
+        : undefined;
+    const openRewardRequestIds = new Set(
+      rewardRedemptions
+        .filter(
+          (r) =>
+            r.childId === activeChildId &&
+            (r.status === 'requested' || r.status === 'approved'),
+        )
+        .map((r) => r.rewardId),
+    );
+    const dashboardGoal =
+      favoriteReward
+        ? {
+            title: getRewardTitle(favoriteReward, t),
+            price: favoriteReward.price,
+            sectionTitle: t('child.dashboard.favoriteGoal'),
+            typeLabel: t('common.rewards'),
+            rewardId: favoriteReward.id,
+            hasOpenRequest: openRewardRequestIds.has(favoriteReward.id),
+          }
+        : favoriteWish
+          ? {
+              title: getWishTitle(favoriteWish, t),
+              price: favoriteWish.price,
+              sectionTitle: t('child.dashboard.favoriteGoal'),
+              typeLabel: t('common.wishes'),
+            }
+          : nearestWish
+            ? {
+                title: getWishTitle(nearestWish, t),
+                price: nearestWish.price,
+                sectionTitle: t('common.nearestWish'),
+                typeLabel: t('common.wishlist'),
+              }
+            : undefined;
+    const activeTasks = getAvailableTasksForChild(tasks, taskSubmissions, activeChildId);
+    const totalTasksCount = getTotalAvailableTasksCount(tasks, taskSubmissions, activeChildId);
+    const totalTasksWord =
+      totalTasksCount % 10 === 1 && totalTasksCount % 100 !== 11
+        ? 'квест'
+        : [2, 3, 4].includes(totalTasksCount % 10) && ![12, 13, 14].includes(totalTasksCount % 100)
+          ? 'квеста'
+          : 'квестов';
+    const pendingDailyTasks = getDailyTasksForToday(tasks, activeChildId).filter(
+      (task) => !hasSubmittedDailyTaskToday(taskSubmissions, task.id, activeChildId),
+    );
+    const dashboardTasks = (pendingDailyTasks.length > 0 ? pendingDailyTasks : activeTasks).slice(0, 3);
+    const progress = dashboardGoal ? getProgressPercent(balance, dashboardGoal.price) : 0;
+    const isDashboardGoalReady = Boolean(dashboardGoal && progress >= 100);
+    const activeInvestments = myInvestments.filter((inv) => !inv.claimedAt);
+    const expectedPayout = activeInvestments.reduce((s, inv) => s + inv.payoutAmount, 0);
+    const totalIncoming = potentialPoints + expectedPayout;
+
+    const unlockedDailyRewards = rewards.filter(
+      (reward) =>
+        isDailyRewardAvailableToday(reward, activeChildId) &&
+        !openRewardRequestIds.has(reward.id) &&
+        getDailyRewardLockReason(reward, balance, tasks, taskSubmissions, activeChildId) === null,
+    );
+
+    return {
+      balance, potentialPoints, activeChildProgress, levelProgress, streakDays,
+      streakBonusUnlocked, streakBonusDaysLeft, streakBonusText, hasLegendBadge,
+      visibleWishes, nearestWish, favoriteGoal, favoriteReward, favoriteWish,
+      openRewardRequestIds, dashboardGoal, activeTasks, totalTasksCount,
+      totalTasksWord, pendingDailyTasks, dashboardTasks, progress,
+      isDashboardGoalReady, activeInvestments, expectedPayout, totalIncoming,
+      unlockedDailyRewards,
+    };
+  }, [
+    pointTransactions, activeChildId, tasks, taskSubmissions, storedChildProgress,
+    childSkillUnlocks, wishes, rewards, rewardRedemptions, favoriteGoals,
+    myInvestments, t,
+  ]);
 
   if (!hasHydrated) {
     return (
@@ -211,89 +332,12 @@ const ChildDashboardScreen = () => {
     );
   }
 
-  const balance = getBalance(pointTransactions, activeChildId);
-  const potentialPoints = getPotentialPoints(tasks, taskSubmissions, activeChildId);
-  const activeChildProgress = getChildProgress(
-    { childProgress: storedChildProgress, childSkillUnlocks, tasks, taskSubmissions },
-    activeChildId,
-  );
-  const levelProgress = getChildLevelProgressFromXp(activeChildProgress.xp);
-  const streakDays = getTaskStreakDays(taskSubmissions, activeChildId);
-  const streakBonusUnlocked = streakDays >= STREAK_REWARD_BONUS_MIN_DAYS;
-  const streakBonusDaysLeft = Math.max(STREAK_REWARD_BONUS_MIN_DAYS - streakDays, 0);
-  const streakBonusText = streakBonusUnlocked
-    ? `Бонус активен: +${STREAK_REWARD_BONUS_POINTS} бал. за каждый квест`
-    : `Еще ${streakBonusDaysLeft} ${streakBonusDaysLeft === 1 ? 'день' : streakBonusDaysLeft > 1 && streakBonusDaysLeft < 5 ? 'дня' : 'дней'} до бонуса +${STREAK_REWARD_BONUS_POINTS}`;
-  const hasLegendBadge = getSkillRank(childSkillUnlocks, activeChildId, 'legend_badge') > 0;
-  const visibleWishes = getVisibleWishes(wishes, rewards, rewardRedemptions);
-  const nearestWish = getNearestWish(visibleWishes, balance);
-  const favoriteGoal = getFavoriteGoalForChild(favoriteGoals, activeChildId);
-  const favoriteReward =
-    favoriteGoal?.type === 'reward'
-      ? rewards.find((reward) =>
-          reward.id === favoriteGoal.itemId &&
-          reward.isActive !== false &&
-          isRewardAvailableForChild(reward, activeChildId),
-        )
-      : undefined;
-  const favoriteWish =
-    favoriteGoal?.type === 'wish'
-      ? visibleWishes.find(
-          (wish) => wish.id === favoriteGoal.itemId && (wish.status ?? 'pending') === 'approved',
-        )
-      : undefined;
-  const openRewardRequestIds = new Set(
-    rewardRedemptions
-      .filter(
-        (r) =>
-          r.childId === activeChildId &&
-          (r.status === 'requested' || r.status === 'approved'),
-      )
-      .map((r) => r.rewardId),
-  );
-  const dashboardGoal =
-    favoriteReward
-      ? {
-          title: getRewardTitle(favoriteReward, t),
-          price: favoriteReward.price,
-          sectionTitle: t('child.dashboard.favoriteGoal'),
-          typeLabel: t('common.rewards'),
-          rewardId: favoriteReward.id,
-          hasOpenRequest: openRewardRequestIds.has(favoriteReward.id),
-        }
-      : favoriteWish
-        ? {
-            title: getWishTitle(favoriteWish, t),
-            price: favoriteWish.price,
-            sectionTitle: t('child.dashboard.favoriteGoal'),
-            typeLabel: t('common.wishes'),
-          }
-        : nearestWish
-          ? {
-              title: getWishTitle(nearestWish, t),
-              price: nearestWish.price,
-              sectionTitle: t('common.nearestWish'),
-              typeLabel: t('common.wishlist'),
-            }
-          : undefined;
-  const activeTasks = getAvailableTasksForChild(tasks, taskSubmissions, activeChildId);
-  const totalTasksCount = getTotalAvailableTasksCount(tasks, taskSubmissions, activeChildId);
-  const pendingDailyTasks = getDailyTasksForToday(tasks, activeChildId).filter(
-    (task) => !hasSubmittedDailyTaskToday(taskSubmissions, task.id, activeChildId),
-  );
-  const dashboardTasks = (pendingDailyTasks.length > 0 ? pendingDailyTasks : activeTasks).slice(0, 3);
-  const progress = dashboardGoal ? getProgressPercent(balance, dashboardGoal.price) : 0;
-  const isDashboardGoalReady = Boolean(dashboardGoal && progress >= 100);
-  const activeInvestments = myInvestments.filter((inv) => !inv.claimedAt);
-  const expectedPayout = activeInvestments.reduce((s, inv) => s + inv.payoutAmount, 0);
-  const totalIncoming = potentialPoints + expectedPayout;
-
-  const unlockedDailyRewards = rewards.filter(
-    (reward) =>
-      isDailyRewardAvailableToday(reward, activeChildId) &&
-      !openRewardRequestIds.has(reward.id) &&
-      getDailyRewardLockReason(reward, balance, tasks, taskSubmissions, activeChildId) === null,
-  );
+  const {
+    balance, potentialPoints, activeChildProgress, levelProgress, streakDays,
+    streakBonusUnlocked, streakBonusDaysLeft, streakBonusText, hasLegendBadge,
+    dashboardGoal, totalTasksCount, totalTasksWord, pendingDailyTasks,
+    dashboardTasks, progress, isDashboardGoalReady, unlockedDailyRewards,
+  } = derived;
 
   return (
     <AppScreen
@@ -334,23 +378,21 @@ const ChildDashboardScreen = () => {
         accessibilityRole="button"
         onPress={() => setIsStreakInfoVisible(true)}
         style={({ pressed }) => [styles.balanceCard, pressed && { opacity: 0.88 }]}>
-        {/* Layer 1 — glows, clipped inside card, zIndex 0 */}
-        <View style={[StyleSheet.absoluteFill, styles.balanceGlowLayer]} pointerEvents="none">
-          <View style={styles.balanceGlow1} />
-          <View style={styles.balanceGlow2} />
+        <View pointerEvents="none" style={styles.balanceBurst}>
+          <StreakBurstBackground radius={1} />
         </View>
+        <View pointerEvents="none" style={styles.balanceHighlight} />
+        <View pointerEvents="none" style={styles.balanceBottomBevel} />
 
-        {/* Layer 2 — all content + mascot in ONE wrapper with zIndex 1
-        Wrapping together forces them above the absolute glow layer on iOS */}
         <View style={styles.balanceContent}>
           <View style={styles.balanceLeft}>
             <View style={styles.balanceStreak}>
               <AnimatedStreakFire />
               <View style={styles.balanceStreakCopy}>
-                <Text style={styles.balanceStreakKicker}>Серия дней</Text>
-                <Text style={styles.balanceStreakText}>
+                <OutlineText style={styles.balanceStreakKicker}>Серия дней</OutlineText>
+                <OutlineText style={styles.balanceStreakText}>
                   {streakDays} {streakDays === 1 ? 'день' : streakDays > 1 && streakDays < 5 ? 'дня' : 'дней'} подряд
-                </Text>
+                </OutlineText>
                 <Text style={styles.balanceStreakSub}>{streakBonusText}</Text>
               </View>
             </View>
@@ -370,25 +412,38 @@ const ChildDashboardScreen = () => {
         </View>
       </Pressable>
 
-      <LevelHeroCard
-        avatarColor={activeChild?.avatarColor}
-        avatarLabel={activeChildName || t('common.child')}
+      <QuestLevelCard
+        avatarId={avatarId}
+        rankLabel={hasLegendBadge ? t('child.level.legendStatus') : levelProgress.rank}
+        levelValue={levelProgress.level}
+        progress={levelProgress.progressPercent}
         detailLabel={
           levelProgress.isMaxLevel
             ? t('child.level.maxed')
-            : t('child.level.toLevel', { level: levelProgress.level + 1 })
+            : `${t('child.level.toLevel', { level: levelProgress.level + 1 })} · ${t('child.level.skillPoints', {
+                count: activeChildProgress.unspentSkillPoints,
+              })}`
         }
-        levelLabel={t('child.level.levelShort', { level: levelProgress.level })}
-        onLevelPress={() => router.push('/child/achievements' as never)}
-        progress={levelProgress.progressPercent}
-        showGlow
-        rankLabel={hasLegendBadge ? t('child.level.legendStatus') : levelProgress.rank}
-        skillLabel={t('child.level.skillPoints', { count: activeChildProgress.unspentSkillPoints })}
+        onPress={() => router.push('/child/achievements' as never)}
         xpLabel={
           levelProgress.isMaxLevel
             ? t('child.level.maxXpSummary', { total: levelProgress.totalXp })
             : `${levelProgress.currentLevelXp} / ${levelProgress.nextLevelXp} XP`
         }
+      />
+
+      <AvatarPickerModal
+        visible={mustChooseAvatar || isAvatarPickerVisible}
+        mandatory={mustChooseAvatar}
+        currentId={avatarId}
+        title={mustChooseAvatar ? 'Выбери свой аватар' : 'Сменить аватар'}
+        subtitle={mustChooseAvatar ? 'Он появится на твоей карточке уровня' : undefined}
+        onConfirm={(id) => {
+          if (activeChildId) {
+            updateChildAvatar({ childId: activeChildId, avatarId: id });
+          }
+        }}
+        onClose={() => setAvatarPickerVisible(false)}
       />
 
       {dashboardGoal && (
@@ -410,8 +465,8 @@ const ChildDashboardScreen = () => {
           }}
           style={({ pressed }) => [dashboardGoal.rewardId && pressed && styles.goalCardPressed]}>
           <AppCard style={styles.goalCard}>
-            <View pointerEvents="none" style={styles.goalGlowCyan} />
-            <View pointerEvents="none" style={styles.goalGlowLime} />
+            <View pointerEvents="none" style={styles.goalHighlight} />
+            <View pointerEvents="none" style={styles.goalBottomBevel} />
             <View style={styles.goalHeader}>
               <Text style={styles.goalKicker}>{dashboardGoal.sectionTitle}</Text>
               <View style={styles.goalBadge}>
@@ -447,13 +502,22 @@ const ChildDashboardScreen = () => {
         </Pressable>
       )}
 
-      <AppCard>
+      <AppCard style={styles.dashboardTaskPanel}>
+        <View pointerEvents="none" style={styles.dashboardPanelHighlight} />
+        <View pointerEvents="none" style={styles.dashboardPanelBottom} />
         <SectionTitle
           title={pendingDailyTasks.length > 0 ? t('child.tasks.todayTitle') : t('common.availableTasks')}
           action={
-            totalTasksCount > 0
-              ? <StatusBadge label={`${totalTasksCount} ${t('child.dashboard.openTasks')}`} tone="muted" />
-              : undefined
+            totalTasksCount > 0 ? (
+              <View style={styles.questCountBadge}>
+                <View pointerEvents="none" style={styles.questCountHighlight} />
+                <View style={styles.questCountInner}>
+                  <OutlineText style={styles.questCountText} outlineWidth={1.5} bottomDepth={2}>
+                    {`${totalTasksCount} ${totalTasksWord}`}
+                  </OutlineText>
+                </View>
+              </View>
+            ) : undefined
           }
         />
         {dashboardTasks.map((task, i) => {
@@ -474,10 +538,7 @@ const ChildDashboardScreen = () => {
               <Text style={styles.taskTitle} numberOfLines={1}>
                 {getTaskTitle(task, t)}
               </Text>
-              <View style={styles.taskPointsPill}>
-                <IconCoin size={18} />
-                <Text style={styles.taskPointsText}>+{task.points}</Text>
-              </View>
+              <BalancePill compact points={task.points} />
             </Pressable>
           );
         })}
@@ -534,9 +595,9 @@ export default ChildDashboardScreen;
 
 const styles = StyleSheet.create({
   balance: {
+    ...gameText,
     color: FP.white,
     fontSize: 46,
-    fontWeight: '900',
     lineHeight: 52,
   },
   headerBalanceAction: {
@@ -544,49 +605,48 @@ const styles = StyleSheet.create({
   },
   // ── Balance card ──
   balanceCard: {
-    backgroundColor: '#2A1068',
-    borderColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 24,
-    borderWidth: 1,
+    backgroundColor: '#13B7EF',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 3,
     overflow: 'visible',
     position: 'relative',
+    transform: [{ skewX: '-3deg' }],
     ...Platform.select({
-      ios: { shadowColor: '#1A0840', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.30, shadowRadius: 22 },
+      ios: { shadowColor: '#061426', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.32, shadowRadius: 0 },
       android: { elevation: 7 },
-      web: { boxShadow: '0 10px 28px rgba(26,8,64,0.30)' },
+      web: { boxShadow: '4px 4px 0 #061426' },
     }) as ViewStyle,
   },
-  // ── Balance glow ──
-  balanceGlowLayer: {
-    borderRadius: 24,
+  balanceBurst: {
+    borderRadius: 1,
+    bottom: 0,
+    left: 0,
     overflow: 'hidden',
+    position: 'absolute',
+    right: 0,
+    top: 0,
     zIndex: 0,
   },
-  balanceGlow1: {
-    backgroundColor: 'rgba(140, 60, 255, 0.55)',
-    borderRadius: 999,
-    height: 180,
+  balanceHighlight: {
+    backgroundColor: 'rgba(255,255,255,0.42)',
+    height: 3,
+    left: 14,
     position: 'absolute',
-    right: 10,
-    top: -60,
-    width: 180,
-    ...Platform.select({
-      web: { filter: 'blur(40px)' },
-    }) as ViewStyle,
+    right: 96,
+    top: 8,
+    zIndex: 0,
   },
-  balanceGlow2: {
-    backgroundColor: 'rgba(60, 120, 255, 0.35)',
-    borderRadius: 999,
-    bottom: -50,
-    height: 130,
-    left: 40,
+  balanceBottomBevel: {
+    backgroundColor: 'rgba(58,18,6,0.5)',
+    bottom: 0,
+    height: 7,
+    left: 0,
     position: 'absolute',
-    width: 130,
-    ...Platform.select({
-      web: { filter: 'blur(32px)' },
-    }) as ViewStyle,
+    right: 0,
+    zIndex: 0,
   },
-  // ── Balance content (text + mascot) above glow layer ──
+  // ── Balance content (text + mascot) ──
   balanceContent: {
     alignItems: 'center',
     flex: 1,
@@ -595,6 +655,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 10,
     position: 'relative',
+    transform: [{ skewX: '3deg' }],
     zIndex: 1,
   },
   balanceLeft: {
@@ -603,24 +664,24 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   balanceLabel: {
+    ...gameText,
     color: 'rgba(255,255,255,0.50)',
     fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
   },
   balancePending: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderRadius: 99,
+    backgroundColor: '#29334F',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 3,
     marginTop: 4,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   balancePendingText: {
-    color: FP.lime,
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 11,
-    fontWeight: '800',
   },
   balanceStreak: {
     alignItems: 'center',
@@ -647,20 +708,18 @@ const styles = StyleSheet.create({
     width: 44,
   },
   balanceStreakKicker: {
-    color: 'rgba(255,255,255,0.58)',
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
   },
   balanceStreakText: {
+    ...gameText,
     color: FP.white,
     fontSize: 20,
-    fontWeight: '900',
     lineHeight: 23,
   },
   balanceStreakSub: {
-    color: 'rgba(255,255,255,0.70)',
+    color: '#EAF7FF',
     fontSize: 11,
     fontWeight: '800',
     lineHeight: 14,
@@ -674,62 +733,63 @@ const styles = StyleSheet.create({
     width: 162,
   },
   title: {
-    color: FP.text,
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 20,
-    fontWeight: '900',
   },
   goalActionButton: {
     marginTop: 4,
   },
   goalBadge: {
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderColor: 'rgba(255,255,255,0.12)',
-    borderRadius: 99,
-    borderWidth: 1,
+    backgroundColor: '#FFC400',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 3,
     paddingHorizontal: 9,
     paddingVertical: 4,
   },
   goalBadgeText: {
-    color: 'rgba(255,255,255,0.70)',
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 11,
-    fontWeight: '900',
   },
   goalCard: {
-    backgroundColor: FP.primary,
-    borderColor: 'rgba(191,215,245,0.26)',
-    borderRadius: 22,
+    backgroundColor: '#30364F',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 4,
     gap: 3,
     overflow: 'hidden',
     paddingHorizontal: 13,
     paddingVertical: 8,
     position: 'relative',
     ...Platform.select({
-      ios: { shadowColor: FP.primary, shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.20, shadowRadius: 28 },
+      ios: { shadowColor: '#061426', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.30, shadowRadius: 0 },
       android: { elevation: 6 },
-      web: { boxShadow: '0 14px 32px rgba(22,71,183,0.22)' },
+      web: { boxShadow: '4px 4px 0 #061426' },
     }) as ViewStyle,
   },
   goalCardPressed: {
     opacity: 0.9,
     transform: [{ scale: 0.99 }],
   },
-  goalGlowCyan: {
-    backgroundColor: 'rgba(16,199,232,0.18)',
-    borderRadius: 180,
-    height: 260,
+  goalHighlight: {
+    backgroundColor: 'rgba(255,255,255,0.34)',
+    height: 3,
+    left: 12,
     position: 'absolute',
-    right: -122,
-    top: -102,
-    width: 260,
+    right: 74,
+    top: 7,
+    zIndex: 0,
   },
-  goalGlowLime: {
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderRadius: 92,
-    height: 112,
+  goalBottomBevel: {
+    backgroundColor: '#0A2854',
+    bottom: 0,
+    height: 8,
+    left: 0,
     position: 'absolute',
-    right: -12,
-    top: -52,
-    width: 112,
+    right: 0,
+    zIndex: 0,
   },
   goalHeader: {
     alignItems: 'center',
@@ -740,10 +800,10 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   goalKicker: {
+    ...gameText,
     color: FP.white,
     flex: 1,
     fontSize: 14,
-    fontWeight: '900',
   },
   goalMeta: {
     color: 'rgba(255,255,255,0.62)',
@@ -754,10 +814,9 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   goalTitle: {
+    ...gameText,
     color: FP.white,
     fontSize: 21,
-    fontWeight: '900',
-    letterSpacing: -0.3,
     lineHeight: 24,
     position: 'relative',
     zIndex: 1,
@@ -777,9 +836,9 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   modalBonusTitle: {
-    color: FP.primaryDark,
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '900',
   },
   modalButton: {
     marginTop: 2,
@@ -797,11 +856,9 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   modalKicker: {
-    color: '#7A8CA0',
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
   },
   modalRule: {
     color: '#4B6072',
@@ -819,25 +876,26 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   modalTitle: {
-    color: '#10233F',
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 23,
-    fontWeight: '900',
     lineHeight: 27,
   },
   // ── Daily reward banner ──────────────────────────────────────────────────────
   dailyBanner: {
     alignItems: 'center',
-    backgroundColor: '#FFF7E0',
-    borderColor: FP.accent,
-    borderRadius: 18,
-    borderWidth: 2,
+    backgroundColor: '#FFC400',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 4,
     flexDirection: 'row',
     gap: 12,
+    overflow: 'hidden',
     padding: 14,
     ...(Platform.select({
-      ios: { shadowColor: FP.accentDark, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 14 },
+      ios: { shadowColor: '#061426', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.30, shadowRadius: 0 },
       android: { elevation: 3 },
-      web: { boxShadow: '0 6px 16px rgba(200,140,0,0.18)' },
+      web: { boxShadow: '4px 4px 0 #061426, inset 0 3px 0 #FFC928' },
     }) as ViewStyle),
   },
   dailyBannerIcon: {
@@ -851,28 +909,29 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   dailyBannerTitle: {
-    color: FP.accentDark,
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '900',
-    letterSpacing: -0.2,
   },
   dailyBannerSub: {
-    color: '#8B6200',
+    color: '#5B3300',
     fontSize: 13,
     fontWeight: '600',
   },
   dailyBannerChevron: {
     alignItems: 'center',
-    backgroundColor: FP.accent,
-    borderRadius: 99,
+    backgroundColor: '#F36B1D',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 3,
     height: 28,
     justifyContent: 'center',
     width: 28,
   },
   dailyBannerChevronText: {
+    ...gameText,
     color: '#fff',
     fontSize: 20,
-    fontWeight: '900',
     lineHeight: 26,
     textAlign: 'center',
   },
@@ -886,47 +945,91 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 11,
+    position: 'relative',
     paddingVertical: 8,
+    zIndex: 1,
   },
   taskRowBorder: {
-    borderTopColor: FP.border,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255,255,255,0.18)',
+    borderTopWidth: 2,
   },
   taskRowPressed: {
     opacity: 0.55,
   },
   taskIconBox: {
     alignItems: 'center',
-    borderRadius: 10,
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 3,
     flexShrink: 0,
     height: 36,
     justifyContent: 'center',
     width: 36,
   },
   taskTitle: {
-    color: FP.text,
+    ...gameText,
+    color: '#FFFFFF',
     flex: 1,
     fontSize: 15,
-    fontWeight: '800',
   },
-  taskPointsPill: {
-    alignItems: 'center',
-    backgroundColor: '#FFF7D7',
-    borderColor: '#F4D06F',
-    borderWidth: 1,
-    borderRadius: 99,
-    flexDirection: 'row',
-    flexShrink: 0,
-    gap: 5,
-    minWidth: 58,
-    paddingHorizontal: 7,
+  questCountBadge: {
+    backgroundColor: '#17222F',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 3,
+    overflow: 'hidden',
+    paddingHorizontal: 12,
     paddingVertical: 5,
+    transform: [{ skewX: '-8deg' }],
   },
-  taskPointsText: {
-    color: FP.accentText,
+  questCountHighlight: {
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    height: 2,
+    left: 7,
+    position: 'absolute',
+    right: 7,
+    top: 3,
+  },
+  questCountInner: {
+    transform: [{ skewX: '8deg' }],
+  },
+  questCountText: {
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: '900',
     lineHeight: 16,
+  },
+  dashboardTaskPanel: {
+    backgroundColor: '#29334F',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 4,
+    overflow: 'hidden',
+    position: 'relative',
+    ...Platform.select({
+      ios: { shadowColor: '#061426', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.30, shadowRadius: 0 },
+      android: { elevation: 4 },
+      web: { boxShadow: '4px 4px 0 #061426' },
+    }) as ViewStyle,
+  },
+  dashboardPanelHighlight: {
+    backgroundColor: 'rgba(255,255,255,0.32)',
+    height: 3,
+    left: 14,
+    position: 'absolute',
+    right: 80,
+    top: 7,
+    zIndex: 0,
+  },
+  dashboardPanelBottom: {
+    backgroundColor: '#061426',
+    bottom: 0,
+    height: 7,
+    left: 0,
+    opacity: 0.45,
+    position: 'absolute',
+    right: 0,
+    zIndex: 0,
   },
   settingsLink: {
     alignItems: 'center',
@@ -949,11 +1052,9 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   incomingTitle: {
-    color: FP.lime,
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   incomingRow: {
     alignItems: 'center',
@@ -980,9 +1081,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   incomingAmount: {
-    color: FP.lime,
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '800',
   },
   incomingAmountReady: {
     color: FP.mint,
@@ -1002,8 +1103,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   incomingTotalValue: {
+    ...gameText,
     color: FP.white,
     fontSize: 18,
-    fontWeight: '900',
   },
 });

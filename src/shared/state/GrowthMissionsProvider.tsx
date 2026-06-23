@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -38,6 +39,11 @@ export const GrowthMissionsProvider = ({ children }: PropsWithChildren) => {
 
   const familyIdRef = useRef('');
   const childIdRef  = useRef('');
+  // Timestamp of the last successful load. Used to throttle focus-triggered
+  // reloads so that rapidly switching between tabs doesn't refetch projects /
+  // investments on every navigation (a major source of page-switch lag).
+  const lastLoadAtRef = useRef(0);
+  const RELOAD_THROTTLE_MS = 15_000;
 
   const loadProjects = useCallback(async (fid: string, cid?: string) => {
     const data = await supabaseGrowthMissionsService.fetchProjects(fid, cid);
@@ -162,6 +168,7 @@ export const GrowthMissionsProvider = ({ children }: PropsWithChildren) => {
     } catch (e) {
       console.error('[GrowthMissions] hydrate error:', e instanceof Error ? e.message : e);
     } finally {
+      lastLoadAtRef.current = Date.now();
       setHasHydrated(true);
     }
   }, [session, loadProjects, loadInvestments]);
@@ -170,17 +177,26 @@ export const GrowthMissionsProvider = ({ children }: PropsWithChildren) => {
     hydrate();
   }, [hydrate]);
 
-  const reload = useCallback(async () => {
+  const reload = useCallback(async (options?: { force?: boolean }) => {
     // For quick reload (focus events), re-use already-resolved IDs to avoid
     // redundant table lookups. Full re-hydration happens when session changes.
     const fid = familyIdRef.current;
     const cid = childIdRef.current;
+
+    // Throttle focus-driven reloads: if data was loaded very recently, skip the
+    // network round-trip (and the hasHydrated flicker) entirely. Explicit
+    // actions can pass { force: true } to bypass this.
+    if (!options?.force && fid && Date.now() - lastLoadAtRef.current < RELOAD_THROTTLE_MS) {
+      return;
+    }
+
     if (fid) {
       setHasHydrated(false);
       await Promise.all([
         loadProjects(fid, cid || undefined),
         cid ? loadInvestments(cid, { autoClaimReady: true }) : Promise.resolve(),
       ]);
+      lastLoadAtRef.current = Date.now();
       setHasHydrated(true);
     } else {
       setHasHydrated(false);
@@ -252,13 +268,21 @@ export const GrowthMissionsProvider = ({ children }: PropsWithChildren) => {
     [session, loadInvestments, reloadFamilyPointsState],
   );
 
+  const value = useMemo<GrowthMissionsContextValue>(
+    () => ({
+      hasHydrated, projects, myInvestments,
+      createMission, updateMission, archiveMission,
+      deposit, claim, reload,
+    }),
+    [
+      hasHydrated, projects, myInvestments,
+      createMission, updateMission, archiveMission,
+      deposit, claim, reload,
+    ],
+  );
+
   return (
-    <GrowthMissionsContext.Provider
-      value={{
-        hasHydrated, projects, myInvestments,
-        createMission, updateMission, archiveMission,
-        deposit, claim, reload,
-      }}>
+    <GrowthMissionsContext.Provider value={value}>
       {children}
     </GrowthMissionsContext.Provider>
   );

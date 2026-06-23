@@ -17,6 +17,8 @@ export type ChildProfile = {
   name: string;
   role: 'child';
   avatarColor: string;
+  /** Id of the in-app avatar character chosen by the child (see shared/ui AvatarHeads). */
+  avatarId?: string;
 };
 
 export type FamilyMemberRole = 'parent' | 'child';

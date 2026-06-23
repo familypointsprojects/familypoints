@@ -4,13 +4,14 @@ import 'react-native-url-polyfill/auto';
 import { router, Stack, usePathname } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { useFonts } from 'expo-font';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '@/shared/auth';
-import { FP } from '@/constants/theme';
+import { fonts, FP } from '@/constants/theme';
 import { LanguageProvider } from '@/shared/i18n';
 import { FamilyPointsProvider } from '@/shared/state';
 import { GrowthMissionsProvider } from '@/shared/state/GrowthMissionsProvider';
@@ -93,6 +94,7 @@ const RootNavigation = () => {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const showBottomNavigation = shouldShowBottomNavigation(pathname);
+  const isChildArcade = pathname.startsWith('/child');
 
   return (
     <View style={styles.root}>
@@ -139,7 +141,7 @@ const RootNavigation = () => {
       {showBottomNavigation && (
         <View
           pointerEvents="box-none"
-          style={[styles.bottomNavigation, { bottom: Math.max(insets.bottom, 14) }]}>
+          style={[styles.bottomNavigation, { bottom: isChildArcade ? 0 : Math.max(insets.bottom, 14) }]}>
           <AppBottomNavigation />
         </View>
       )}
@@ -147,23 +149,33 @@ const RootNavigation = () => {
   );
 };
 
-const RootLayout = () => (
-  <GestureHandlerRootView style={styles.gestureRoot}>
-    <BottomSheetModalProvider>
-      <LanguageProvider>
-        <AuthProvider>
-          <FamilyPointsProvider>
-            <GrowthMissionsProvider>
-              <AuthRouteGuard />
-              <DeepLinkHandler />
-              <RootNavigation />
-            </GrowthMissionsProvider>
-          </FamilyPointsProvider>
-        </AuthProvider>
-      </LanguageProvider>
-    </BottomSheetModalProvider>
-  </GestureHandlerRootView>
-);
+const RootLayout = () => {
+  const [fontsLoaded] = useFonts({
+    [fonts.game]: require('@/assets/fonts/FranxurterTotallyFat.ttf'),
+  });
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  return (
+    <GestureHandlerRootView style={styles.gestureRoot}>
+      <BottomSheetModalProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <FamilyPointsProvider>
+              <GrowthMissionsProvider>
+                <AuthRouteGuard />
+                <DeepLinkHandler />
+                <RootNavigation />
+              </GrowthMissionsProvider>
+            </FamilyPointsProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </BottomSheetModalProvider>
+    </GestureHandlerRootView>
+  );
+};
 
 export default RootLayout;
 

@@ -21,7 +21,7 @@ export const IconAlert: React.FC<IconProps> = ({ size = 18 }) => (
 export const IconMap: React.FC<IconProps> = ({ size = 26 }) => (
   <Image
     contentFit="contain"
-    source={require('@/assets/images/tab-quests-map.png')}
+    source={require('@/assets/images/icons/treasure-map.png')}
     style={{ width: size, height: size }}
   />
 );
@@ -55,7 +55,7 @@ export const IconShield: React.FC<IconProps> = ({ size = 26 }) => (
 export const IconCoin: React.FC<IconProps> = ({ size = 26 }) => (
   <Image
     contentFit="contain"
-    source={require('@/assets/images/coin.png')}
+    source={require('@/assets/images/icons/coin.png')}
     style={{ width: size, height: size }}
   />
 );
@@ -63,7 +63,7 @@ export const IconCoin: React.FC<IconProps> = ({ size = 26 }) => (
 export const IconChest: React.FC<IconProps> = ({ size = 26 }) => (
   <Image
     contentFit="contain"
-    source={require('@/assets/images/tab-rewards-chest.png')}
+    source={require('@/assets/images/icons/treasure-chest.png')}
     style={{ width: size, height: size }}
   />
 );
@@ -128,7 +128,7 @@ export const IconFlag: React.FC<IconProps> = ({ size = 26 }) => (
 export const IconCompass: React.FC<IconProps> = ({ size = 26 }) => (
   <Image
     contentFit="contain"
-    source={require('@/assets/images/tab-home-compass.png')}
+    source={require('@/assets/images/icons/compass.png')}
     style={{ width: size, height: size }}
   />
 );

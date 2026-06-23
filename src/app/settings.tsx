@@ -6,13 +6,26 @@ import { useAuth } from '@/shared/auth';
 import { useLanguage } from '@/shared/i18n';
 import { familyPointsDataSource, isFamilyPointsBackendConfigured } from '@/shared/services/familyPoints';
 import { isSupabaseConfigured, getSupabaseClient } from '@/shared/services/supabase';
-import { useFamilyPoints } from '@/shared/state';
-import { AppButton, AppCard, AppScreen, AppTextInput, LanguageToggle, SectionTitle, StatusBadge } from '@/shared/ui';
+import { useActiveChild, useFamilyPoints } from '@/shared/state';
+import {
+  AppButton,
+  AppCard,
+  AppScreen,
+  AppTextInput,
+  AvatarHead,
+  AvatarPickerModal,
+  LanguageToggle,
+  SectionTitle,
+  StatusBadge,
+} from '@/shared/ui';
 
 const SettingsScreen = () => {
   const { t } = useLanguage();
   const { session, signOut, deleteAccount } = useAuth();
-  const { familyName, updateFamilyName, activeFamilyId } = useFamilyPoints();
+  const { familyName, updateFamilyName, activeFamilyId, updateChildAvatar } = useFamilyPoints();
+  const { activeChild, activeChildId } = useActiveChild();
+  const avatarId = activeChild?.avatarId;
+  const [isAvatarPickerVisible, setAvatarPickerVisible] = useState(false);
 
   const [isEditingFamily, setIsEditingFamily] = useState(false);
   const [editedFamilyName, setEditedFamilyName] = useState('');
@@ -73,6 +86,22 @@ const SettingsScreen = () => {
         <SectionTitle title={t('common.language')} />
         <LanguageToggle />
       </AppCard>
+
+      {activeChildId ? (
+        <AppCard>
+          <SectionTitle title="Аватар" />
+          <View style={styles.row}>
+            <View style={styles.avatarPreview}>
+              <AvatarHead id={avatarId} size={64} />
+            </View>
+            <AppButton
+              title="Сменить аватар"
+              variant="secondary"
+              onPress={() => setAvatarPickerVisible(true)}
+            />
+          </View>
+        </AppCard>
+      ) : null}
       {activeFamilyId && (
         <AppCard>
           <SectionTitle title="Семья" />
@@ -172,6 +201,19 @@ const SettingsScreen = () => {
           />
         </View>
       </AppCard>
+
+      <AvatarPickerModal
+        visible={isAvatarPickerVisible}
+        currentId={avatarId}
+        title="Сменить аватар"
+        confirmLabel="Сохранить"
+        onConfirm={(id) => {
+          if (activeChildId) {
+            updateChildAvatar({ childId: activeChildId, avatarId: id });
+          }
+        }}
+        onClose={() => setAvatarPickerVisible(false)}
+      />
     </AppScreen>
   );
 };
@@ -202,6 +244,14 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: '900',
+  },
+  avatarPreview: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#10233F',
   },
   meta: {
     color: '#6B7B86',

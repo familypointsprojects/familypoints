@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyQuest — карточка задания (формат референса)</title>
+<style>
+  @font-face{
+    font-family:'FranxurterTotallyFat';
+    src:url('../assets/fonts/FranxurterTotallyFat.ttf') format('truetype');
+    font-display:swap;
+  }
+  :root{
+    --ink:#0A2350; --ink2:#0A1A2F;
+    --blueTop:#3397EC; --blueBot:#2477CF;
+    --rim:#9FD6FB;
+    --bar:#16407A;            /* плашка снизу */
+    --track:#0E2A55;          /* трек прогресса */
+    --fill1:#CDEBFC; --fill2:#9AD6F7;
+    --gold1:#FFD75A; --gold2:#F7B721; --goldDark:#C8861A;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:24px;padding:46px 18px;
+    background:
+      repeating-linear-gradient(45deg,rgba(255,255,255,.035) 0 2px,transparent 2px 26px),
+      radial-gradient(circle at 50% 0%,#6a45c0,#3a2378 70%);
+    font-family:system-ui,sans-serif;
+  }
+  .gt{
+    font-family:'FranxurterTotallyFat',sans-serif;text-transform:uppercase;color:#fff;
+    letter-spacing:.5px;-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;
+    text-shadow:0 4px 0 var(--ink);
+  }
+
+  /* ───────── CARD ───────── */
+  .card{
+    width:600px;max-width:100%;position:relative;
+    border-radius:22px;padding:13px;
+    background:linear-gradient(180deg,var(--blueTop),var(--blueBot));
+    border:3px solid var(--rim);
+    box-shadow:0 10px 0 #15396f, 0 22px 36px rgba(7,18,38,.45), inset 0 2px 0 rgba(255,255,255,.25);
+  }
+  .top{display:flex;align-items:stretch;gap:14px;min-height:190px;margin-bottom:13px}
+
+  /* пустой слот под персонажа (место сохранено) */
+  .hero{
+    flex:0 0 232px;position:relative;border-radius:16px;
+    border:2px dashed rgba(255,255,255,.4);
+    display:grid;place-items:center;color:rgba(255,255,255,.55);
+    font-family:'FranxurterTotallyFat',sans-serif;font-size:14px;text-transform:uppercase;
+    letter-spacing:.5px;text-align:center;line-height:1.3;
+  }
+  .title{flex:1;align-self:center;font-size:38px;line-height:1.02;padding-right:6px}
+
+  /* ───────── FOOTER ───────── */
+  .footer{
+    display:flex;align-items:center;gap:11px;
+    background:var(--bar);border:3px solid var(--ink);border-radius:16px;
+    padding:9px 12px;box-shadow:inset 0 3px 0 rgba(255,255,255,.10);
+  }
+
+  /* карточка уровня слева (вместо иконки) */
+  .lvl{
+    flex:0 0 auto;width:56px;height:54px;border-radius:13px;
+    background:linear-gradient(180deg,var(--gold1),var(--gold2));
+    border:3px solid var(--ink);box-shadow:0 4px 0 var(--goldDark);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;
+  }
+  .lvl .lab{font-family:'FranxurterTotallyFat',sans-serif;font-size:10px;color:#7A4B00;
+    letter-spacing:.5px;text-transform:uppercase}
+  .lvl .num{font-family:'FranxurterTotallyFat',sans-serif;font-size:26px;color:#5A3800;
+    -webkit-text-stroke:0;text-shadow:0 2px 0 rgba(255,255,255,.45)}
+
+  /* прогресс-бар в стиле референса */
+  .prog{position:relative;flex:1;height:40px;border-radius:20px;overflow:hidden;
+    background:var(--track);border:3px solid var(--ink);
+    box-shadow:inset 0 3px 6px rgba(0,0,0,.5)}
+  .progFill{position:absolute;left:0;top:0;bottom:0;width:33.33%;border-radius:17px;
+    background:linear-gradient(180deg,var(--fill1),var(--fill2));
+    box-shadow:inset 0 3px 0 rgba(255,255,255,.65)}
+  .progText{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'FranxurterTotallyFat',sans-serif;font-size:20px;color:#fff;letter-spacing:.5px;
+    -webkit-text-stroke:2px var(--ink);paint-order:stroke fill;z-index:2}
+  /* шеврон-направление в конце трека */
+  .chev{position:absolute;right:12px;top:50%;transform:translateY(-50%);z-index:1;
+    display:flex;opacity:.55}
+  .chev svg{width:13px;height:18px;margin-left:-5px}
+
+  /* награда справа — без иконки */
+  .reward{flex:0 0 auto;padding:0 6px 0 2px;font-family:'FranxurterTotallyFat',sans-serif;
+    font-size:30px;color:#fff;-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;
+    text-shadow:0 3px 0 var(--ink)}
+</style>
+</head>
+<body>
+
+  <div class="card">
+    <div class="top">
+      <div class="hero">место<br>под арт</div>
+      <div class="gt title">Пройди уровень<br>в бой с боссом</div>
+    </div>
+    <div class="footer">
+      <div class="lvl"><span class="lab">Ур.</span><span class="num">3</span></div>
+      <div class="prog">
+        <div class="progFill"></div>
+        <div class="progText">1 / 3</div>
+        <div class="chev">
+          <svg viewBox="0 0 12 18" fill="none" stroke="#BfE0FB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,2 9,9 2,16"/></svg>
+          <svg viewBox="0 0 12 18" fill="none" stroke="#BfE0FB" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,2 9,9 2,16"/></svg>
+        </div>
+      </div>
+      <div class="reward">100</div>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -31,6 +31,7 @@ import {
   SegmentedControlOption,
   StatusBadge,
 } from '@/shared/ui';
+import { gameText } from '@/constants/theme';
 import { getRewardTitle, getWishTitle } from '@/shared/utils/content';
 import {
   getFavoriteGoalForChild,
@@ -668,9 +669,9 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   balance: {
-    color: '#12314A',
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 42,
-    fontWeight: '900',
   },
   dailyRewardCard: {
     borderColor: '#F5B225',
@@ -712,9 +713,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   celebrationReward: {
-    color: '#FBEBC4',
+    ...gameText,
+    color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: '900',
     textAlign: 'center',
   },
   celebrationSubtitle: {
@@ -724,9 +725,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   celebrationTitle: {
+    ...gameText,
     color: '#FFFFFF',
     fontSize: 22,
-    fontWeight: '900',
     textAlign: 'center',
   },
   favoriteCard: {
@@ -805,10 +806,10 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   title: {
-    color: '#12314A',
+    ...gameText,
+    color: '#FFFFFF',
     flex: 1,
     fontSize: 18,
-    fontWeight: '900',
   },
   titleGroup: {
     flex: 1,

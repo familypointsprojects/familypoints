@@ -1,13 +1,25 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { FP } from '@/constants/theme';
 import { useLanguage } from '@/shared/i18n';
+import {
+  genderFromAvatarId,
+  questEpicLevelConfig,
+  questifyTask,
+  QUEST_EPIC_LEVELS,
+  type QuestEpicLevel,
+} from '@/shared/services/questify';
 import { useFamilyPoints } from '@/shared/state';
 import type { DayOfWeek } from '@/shared/types/family';
 import { AppButton, AppCard, AppScreen, AppTextInput, ParentChildFilter, SegmentedControl, StatusBadge } from '@/shared/ui';
 import { getTaskPointSuggestions } from '@/shared/utils/pricingGuidance';
+
+const EPIC_LEVELS: { label: string; value: QuestEpicLevel }[] = QUEST_EPIC_LEVELS.map((value) => ({
+  label: questEpicLevelConfig[value].label,
+  value,
+}));
 
 const ALL_DAYS: { key: DayOfWeek; label: string }[] = [
   { key: 'monday', label: 'Пн' },
@@ -169,8 +181,14 @@ const CreateTaskScreen = () => {
   const [message, setMessage] = useState('');
   const [messageTone, setMessageTone] = useState<'success' | 'warning'>('success');
   const [isSaving, setIsSaving] = useState(false);
+  const [epicLevel, setEpicLevel] = useState<QuestEpicLevel>('epic');
+  const [isQuestifying, setIsQuestifying] = useState(false);
+  const [questPreview, setQuestPreview] = useState<
+    { title: string; description: string; doneCriteria: string } | null
+  >(null);
 
   const isValid = title.trim().length > 0 && description.trim().length > 0 && Number(points) > 0;
+  const canQuestify = title.trim().length > 0 || description.trim().length > 0;
   const visibleTemplates = TASK_TEMPLATES.filter((template) => template.category === selectedTemplateCategory);
   const pointSuggestions = getTaskPointSuggestions({ title, description, isDaily });
 
@@ -187,6 +205,42 @@ const CreateTaskScreen = () => {
     setAvailableDays((prev) =>
       prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
     );
+  };
+
+  const handleQuestify = async () => {
+    if (!canQuestify || isQuestifying) return;
+    setIsQuestifying(true);
+    setQuestPreview(null);
+    setMessage('');
+    try {
+      const selectedChild = selectedChildId ? children.find((c) => c.id === selectedChildId) : undefined;
+      const result = await questifyTask({
+        title,
+        description,
+        epicLevel,
+        childName: selectedChild?.name,
+        isDaily,
+        gender: genderFromAvatarId(selectedChild?.avatarId),
+      });
+      setQuestPreview({
+        title: result.title,
+        description: result.description,
+        doneCriteria: result.doneCriteria,
+      });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setMessageTone('warning');
+      setMessage(errorMessage);
+    } finally {
+      setIsQuestifying(false);
+    }
+  };
+
+  const applyQuestPreview = () => {
+    if (!questPreview) return;
+    setTitle(questPreview.title);
+    setDescription(questPreview.description);
+    setQuestPreview(null);
   };
 
   const handleSubmit = async () => {
@@ -299,6 +353,55 @@ const CreateTaskScreen = () => {
               </Text>
             </Pressable>
           ))}
+        </View>
+
+        <View style={styles.questifyBlock}>
+          <Text style={styles.questifyLabel}>✨ Превратить в квест</Text>
+          <SegmentedControl<QuestEpicLevel>
+            options={EPIC_LEVELS}
+            value={epicLevel}
+            onChange={setEpicLevel}
+          />
+          <Text style={styles.questifySubtitle}>{questEpicLevelConfig[epicLevel].subtitle}</Text>
+          <Pressable
+            accessibilityRole="button"
+            disabled={!canQuestify || isQuestifying}
+            onPress={handleQuestify}
+            style={({ pressed }) => [
+              styles.questifyButton,
+              (!canQuestify || isQuestifying) && styles.questifyButtonDisabled,
+              pressed && styles.questifyButtonPressed,
+            ]}>
+            {isQuestifying ? (
+              <ActivityIndicator color={FP.white} />
+            ) : (
+              <Text style={styles.questifyButtonText}>✨ Превратить в квест</Text>
+            )}
+          </Pressable>
+
+          {questPreview && (
+            <View style={styles.previewCard}>
+              <Text style={styles.previewHeading}>МИССИЯ ГОТОВА</Text>
+              <Text style={styles.previewTitle}>{questPreview.title}</Text>
+              <Text style={styles.previewDescription}>{questPreview.description}</Text>
+              <Text style={styles.previewDoneLabel}>Готово, когда</Text>
+              <Text style={styles.previewDone}>{questPreview.doneCriteria}</Text>
+              <View style={styles.previewActions}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={applyQuestPreview}
+                  style={({ pressed }) => [styles.previewApply, pressed && styles.questifyButtonPressed]}>
+                  <Text style={styles.previewApplyText}>Применить</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setQuestPreview(null)}
+                  style={({ pressed }) => [styles.previewCancel, pressed && styles.questifyButtonPressed]}>
+                  <Text style={styles.previewCancelText}>Отмена</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
         </View>
 
         <ParentChildFilter
@@ -447,6 +550,116 @@ const styles = StyleSheet.create({
   },
   suggestionNoteSelected: {
     color: '#EAF8F4',
+  },
+  questifyBlock: {
+    backgroundColor: FP.primaryLight,
+    borderColor: FP.primaryBorder,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 10,
+    padding: 12,
+  },
+  questifyLabel: {
+    color: FP.primaryDark,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  questifySubtitle: {
+    color: FP.textSub,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: -4,
+    textAlign: 'center',
+  },
+  questifyButton: {
+    alignItems: 'center',
+    backgroundColor: FP.purple,
+    borderRadius: 10,
+    justifyContent: 'center',
+    minHeight: 46,
+    paddingHorizontal: 16,
+  },
+  questifyButtonDisabled: {
+    opacity: 0.5,
+  },
+  questifyButtonPressed: {
+    opacity: 0.8,
+  },
+  questifyButtonText: {
+    color: FP.white,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  previewCard: {
+    backgroundColor: FP.white,
+    borderColor: FP.primaryBorder,
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 6,
+    padding: 12,
+  },
+  previewHeading: {
+    color: FP.purple,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  previewTitle: {
+    color: FP.text,
+    fontSize: 16,
+    fontWeight: '900',
+    lineHeight: 21,
+  },
+  previewDescription: {
+    color: FP.textSub,
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  previewDoneLabel: {
+    color: FP.textSub,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+    marginTop: 4,
+    textTransform: 'uppercase',
+  },
+  previewDone: {
+    color: FP.text,
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  previewActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+  },
+  previewApply: {
+    alignItems: 'center',
+    backgroundColor: FP.primaryDark,
+    borderRadius: 8,
+    flex: 1,
+    paddingVertical: 10,
+  },
+  previewApplyText: {
+    color: FP.white,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  previewCancel: {
+    alignItems: 'center',
+    backgroundColor: FP.muted,
+    borderColor: FP.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    paddingVertical: 10,
+  },
+  previewCancelText: {
+    color: FP.textSub,
+    fontSize: 14,
+    fontWeight: '800',
   },
   daysLabel: {
     color: FP.textSub,

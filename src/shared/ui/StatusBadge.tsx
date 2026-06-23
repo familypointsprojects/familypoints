@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { FP } from '@/constants/theme';
+import { FP, gameText } from '@/constants/theme';
 
 type StatusTone = 'success' | 'warning' | 'muted' | 'danger';
 
@@ -20,7 +20,7 @@ export const StatusBadge = ({ label, tone = 'muted' }: StatusBadgeProps) => {
   const { bg, color } = toneStyles[tone];
   return (
     <View style={[styles.badge, { backgroundColor: bg }]}>
-      <Text style={[styles.text, { color }]}>{label}</Text>
+      <Text style={[styles.text, gameText, { color }]}>{label}</Text>
     </View>
   );
 };
@@ -36,6 +36,5 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 12,
-    fontWeight: '900',
   },
 });

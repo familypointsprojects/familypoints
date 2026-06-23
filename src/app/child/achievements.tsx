@@ -105,6 +105,7 @@ const ChildAchievementsScreen = () => {
             : t('child.level.toLevel', { level: levelProgress.level + 1 })
         }
         levelLabel={t('child.level.levelShort', { level: levelProgress.level })}
+        levelValue={levelProgress.level}
         progress={levelProgress.progressPercent}
         rankLabel={hasLegendBadge ? t('child.level.legendStatus') : levelProgress.rank}
         skillLabel={t('child.level.skillPoints', { count: progress.unspentSkillPoints })}

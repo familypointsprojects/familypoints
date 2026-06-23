@@ -1,772 +1,739 @@
-import { Fragment, useCallback, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { Image } from 'expo-image';
+import { Platform, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import Svg, { Circle, Path, Polygon, Polyline, Rect } from 'react-native-svg';
 
-import { FP } from '@/constants/theme';
 import { TranslationKey, useLanguage } from '@/shared/i18n';
+import { gameText } from '@/constants/theme';
 import { useActiveChild, useFamilyPoints } from '@/shared/state';
-import { useGrowthMissions } from '@/shared/state/GrowthMissionsProvider';
-import { PointTransactionType } from '@/shared/types/family';
-import {
-  AppCard,
-  AppScreen,
-  EmptyState,
-  PointsBadge,
-  RocketProgressBar,
-  SectionTitle,
-  SegmentedControl,
-  SegmentedControlOption,
-  StatusBadge,
-} from '@/shared/ui';
-import { getRewardTitle, getTaskTitle, getTransactionTitle, getWishTitle } from '@/shared/utils/content';
-import { getFavoriteGoalForChild } from '@/shared/utils/favoriteGoals';
-import { getMissionCountdown } from '@/shared/utils/growthMissions';
-import { getBalance, getPotentialPoints, getProgressPercent } from '@/shared/utils/points';
+import { Reward } from '@/shared/types/family';
+import { AppScreen } from '@/shared/ui';
+import { IconChest, IconCoin } from '@/shared/ui/QuestIcons';
+import { getRewardTitle, getTransactionTitle } from '@/shared/utils/content';
+import { getBalance } from '@/shared/utils/points';
 import { isRewardAvailableForChild } from '@/shared/utils/rewards';
-import { findTask, getAvailableTasksForChild, getDailyTasksForToday, hasSubmittedDailyTaskToday } from '@/shared/utils/tasks';
-import { getVisibleWishes } from '@/shared/utils/wishes';
 
-type ChildBalanceTab = 'balance' | 'taskHistory';
-type InvestmentSummaryTone = 'invested' | 'expected' | 'profit';
+const NEXT_REWARD_TARGET = 200;
+const IMG_PIGGY_MASCOT = require('@/assets/images/piggy-bank-mascot.png');
 
-type InvestmentSummaryItem = {
-  label: string;
-  tone: InvestmentSummaryTone;
-  value: string;
+const HISTORY_ACCENTS = [
+  { body: '#29334F', tab: '#35D638', icon: '#35D638', fg: '#063522' },
+  { body: '#30364F', tab: '#FFC400', icon: '#FFC400', fg: '#5B3300' },
+  { body: '#29334F', tab: '#C229E8', icon: '#C229E8', fg: '#FFFFFF' },
+  { body: '#30364F', tab: '#19B8F2', icon: '#19B8F2', fg: '#061426' },
+] as const;
+
+const SHOP_ACCENTS = [
+  { header: '#F36B1D', body: '#13B7EF', icon: '#FFC400', fg: '#041426', bottom: '#0D79B6' },
+  { header: '#C229E8', body: '#30364F', icon: '#19B8F2', fg: '#FFFFFF', bottom: '#24293F' },
+] as const;
+
+const PlateShape = ({
+  fill,
+  points,
+  stroke = '#061426',
+  topLine,
+}: {
+  fill: string;
+  points: string;
+  stroke?: string;
+  topLine?: string;
+}) => (
+  <Svg pointerEvents="none" preserveAspectRatio="none" style={StyleSheet.absoluteFill} viewBox="0 0 100 100">
+    <Polygon fill={fill} points={points} stroke={stroke} strokeLinejoin="round" strokeWidth={5} />
+    {topLine && <Polyline fill="none" points={topLine} stroke="rgba(255,255,255,0.32)" strokeLinecap="round" strokeWidth={3} />}
+  </Svg>
+);
+
+const formatDateKey = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
 };
 
-const transactionLabelKeys: Record<PointTransactionType, TranslationKey> = {
-  earn: 'transactionType.earn',
-  skill_bonus: 'transactionType.skill_bonus',
-  spend: 'transactionType.spend',
-  penalty: 'transactionType.penalty',
-  manual_adjustment: 'transactionType.manual_adjustment',
-  investment_deposit: 'transactionType.investment_deposit',
-  investment_payout: 'transactionType.investment_payout',
+const formatRelativeDate = (
+  dateValue: string,
+  locale: string,
+  t: (key: TranslationKey) => string,
+): string => {
+  const date = new Date(dateValue);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  if (formatDateKey(date) === formatDateKey(today)) {
+    return t('child.balance.today');
+  }
+
+  if (formatDateKey(date) === formatDateKey(yesterday)) {
+    return t('child.balance.yesterday');
+  }
+
+  return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(date);
 };
 
+const MedalIcon = () => (
+  <View style={styles.medalOuter}>
+    <View style={styles.medalInner}>
+      <IconCoin size={54} />
+    </View>
+  </View>
+);
 
-const formatDate = (dateValue: string, locale: string): string =>
-  new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(dateValue));
+const SectionHeader = ({ icon, title }: { icon: 'history' | 'shop'; title: string }) => (
+  <View style={styles.sectionRow}>
+    <View style={[styles.sectionIcon, icon === 'shop' && styles.sectionIconShop]}>
+      {icon === 'history' ? (
+        <Svg width={17} height={17} viewBox="0 0 24 24">
+          <Path
+            d="M7 6h10M7 12h10M7 18h6"
+            fill="none"
+            stroke="#041426"
+            strokeLinecap="round"
+            strokeWidth={3}
+          />
+        </Svg>
+      ) : (
+        <IconChest size={19} />
+      )}
+    </View>
+    <Text style={styles.sectionTitle}>{title}</Text>
+  </View>
+);
 
-const getInvestmentSummaryToneStyle = (
-  tone: InvestmentSummaryTone,
-): 'statInvested' | 'statExpected' | 'statProfit' => {
-  if (tone === 'invested') {
-    return 'statInvested';
-  }
+const ProgressBar = ({ progress }: { progress: number }) => (
+  <View style={styles.progressTrack}>
+    <View style={[styles.progressFill, { width: `${progress}%` }]} />
+    <View pointerEvents="none" style={styles.progressShine} />
+  </View>
+);
 
-  if (tone === 'expected') {
-    return 'statExpected';
-  }
+const HistoryIcon = ({ index }: { index: number }) => {
+  const accent = HISTORY_ACCENTS[index % HISTORY_ACCENTS.length];
 
-  return 'statProfit';
+  return (
+    <View style={[styles.historyIcon, { backgroundColor: accent.icon, borderColor: '#061426' }]}>
+      <Svg width={22} height={22} viewBox="0 0 24 24">
+        <Path
+          d="M12 3l2.4 5.2 5.6.7-4.1 3.8 1.1 5.5L12 15.5 7 18.2l1.1-5.5L4 8.9l5.6-.7z"
+          fill="#061426"
+          stroke={accent.fg}
+          strokeLinejoin="round"
+          strokeWidth={1.5}
+        />
+      </Svg>
+    </View>
+  );
+};
+
+const ShopIcon = ({ reward, index }: { index: number; reward: Reward }) => {
+  const accent = SHOP_ACCENTS[index % SHOP_ACCENTS.length];
+  const isScreenTime = reward.type === 'screen_time';
+
+  return (
+    <View style={[styles.shopIconBox, { backgroundColor: accent.icon, borderColor: '#061426' }]}>
+      {isScreenTime ? (
+        <Svg width={34} height={34} viewBox="0 0 48 48">
+          <Rect x={8} y={12} width={32} height={21} rx={5} fill="#FFFFFF" stroke={accent.fg} strokeWidth={3} />
+          <Path d="M19 39h10M24 33v6" stroke={accent.fg} strokeLinecap="round" strokeWidth={3} />
+          <Circle cx={18} cy={22} r={2.5} fill="#061426" />
+          <Circle cx={26} cy={22} r={2.5} fill="#061426" />
+          <Path d="M18 27c3 3 9 3 12 0" fill="none" stroke={accent.fg} strokeLinecap="round" strokeWidth={2.5} />
+        </Svg>
+      ) : (
+        <Svg width={34} height={34} viewBox="0 0 48 48">
+          <Path
+            d="M13 20h22l-3 19H16z"
+            fill="#FFFFFF"
+            stroke={accent.fg}
+            strokeLinejoin="round"
+            strokeWidth={3}
+          />
+          <Path d="M16 20c1-7 15-7 16 0" fill="none" stroke={accent.fg} strokeLinecap="round" strokeWidth={3} />
+          <Path d="M18 27h12" stroke="#061426" strokeLinecap="round" strokeWidth={3} />
+        </Svg>
+      )}
+    </View>
+  );
 };
 
 const ChildBalanceScreen = () => {
   const { language, t } = useLanguage();
   const { activeChildId } = useActiveChild();
-  const { pointTransactions, taskSubmissions, tasks, rewards, rewardRedemptions, wishes, favoriteGoals } = useFamilyPoints();
-  const { myInvestments, reload } = useGrowthMissions();
-  const [activeTab, setActiveTab] = useState<ChildBalanceTab>('balance');
-
-  useFocusEffect(useCallback(() => { reload(); }, [reload]));
-
-  const childTransactions = pointTransactions.filter((tx) => tx.childId === activeChildId);
-  const balance = getBalance(pointTransactions, activeChildId);
-  const potentialPoints = getPotentialPoints(tasks, taskSubmissions, activeChildId);
+  const { pointTransactions, rewards, rewardRedemptions } = useFamilyPoints();
   const locale = language === 'ru' ? 'ru' : 'en';
-
-  // Stats — exclude investment flows from earned/spent
-  const totalEarned = childTransactions
-    .filter((tx) => tx.points > 0 && tx.type !== 'investment_payout')
-    .reduce((s, tx) => s + tx.points, 0);
-  const totalSpent = Math.abs(childTransactions
-    .filter((tx) => tx.points < 0 && tx.type !== 'investment_deposit')
-    .reduce((s, tx) => s + tx.points, 0));
-  const activeInv = myInvestments.filter((inv) => !inv.claimedAt);
-  const claimedInv = myInvestments.filter((inv) => inv.claimedAt);
-  const activeInvestmentAmount = activeInv.reduce((s, inv) => s + inv.amount, 0);
-  const activeExpectedPayout = activeInv.reduce((s, inv) => s + inv.payoutAmount, 0);
-  const activeExpectedProfit = activeInv.reduce(
-    (sum, inv) => sum + Math.max(inv.payoutAmount - inv.amount, 0),
-    0,
-  );
-  const pastInvestmentProfit = claimedInv.reduce(
-    (sum, inv) => sum + Math.max(inv.payoutAmount - inv.amount, 0),
-    0,
-  );
-  const investmentSummaryItems: InvestmentSummaryItem[] = [
-    ...(activeInvestmentAmount > 0
-      ? [{
-        label: t('missions.statInvested'),
-        tone: 'invested' as const,
-        value: `🔒 ${activeInvestmentAmount}`,
-      }]
-      : []),
-    ...(activeExpectedProfit > 0
-      ? [{
-        label: t('missions.statActiveProfit'),
-        tone: 'expected' as const,
-        value: `+${activeExpectedProfit}`,
-      }]
-      : []),
-    ...(pastInvestmentProfit > 0
-      ? [{
-        label: t('missions.statPastProfit'),
-        tone: 'profit' as const,
-        value: `+${pastInvestmentProfit}`,
-      }]
-      : []),
-  ];
-
-  // Focus goal
-  const visibleWishes = getVisibleWishes(wishes, rewards, rewardRedemptions);
-  const favoriteGoal = getFavoriteGoalForChild(favoriteGoals, activeChildId);
-  const focusReward = favoriteGoal?.type === 'reward'
-    ? rewards.find((r) =>
-        r.id === favoriteGoal.itemId &&
-        r.isActive !== false &&
-        isRewardAvailableForChild(r, activeChildId),
-      )
-    : undefined;
-  const focusWish = favoriteGoal?.type === 'wish'
-    ? visibleWishes.find((w) => w.id === favoriteGoal.itemId && (w.status ?? 'pending') === 'approved')
-    : undefined;
-  const focusGoal = focusReward
-    ? { title: getRewardTitle(focusReward, t), price: focusReward.price }
-    : focusWish
-      ? { title: getWishTitle(focusWish, t), price: focusWish.price }
-      : undefined;
-  const goalProgress = focusGoal ? getProgressPercent(balance, focusGoal.price) : 0;
-  const goalRemaining = focusGoal ? Math.max(focusGoal.price - balance, 0) : 0;
-  const availableTasks = getAvailableTasksForChild(tasks, taskSubmissions, activeChildId);
-  const pendingDailyTasks = getDailyTasksForToday(tasks, activeChildId).filter(
-    (task) => !hasSubmittedDailyTaskToday(taskSubmissions, task.id, activeChildId),
-  );
-  const availableTasksPoints = [...availableTasks, ...pendingDailyTasks].reduce((s, task) => s + task.points, 0);
-  const goalRemainingAfterAvailable = focusGoal ? Math.max(focusGoal.price - balance - availableTasksPoints, 0) : 0;
-
-  // Submissions
-  const mySubmissions = taskSubmissions
-    .filter((s) => s.childId === activeChildId)
+  const balance = getBalance(pointTransactions, activeChildId);
+  const progress = Math.min(Math.round((balance / NEXT_REWARD_TARGET) * 100), 100);
+  const nextRewardRemaining = Math.max(NEXT_REWARD_TARGET - balance, 0);
+  const childTransactions = pointTransactions
+    .filter((transaction) => transaction.childId === activeChildId && transaction.points > 0)
     .slice()
-    .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-  const pendingSubmissions = mySubmissions.filter((s) => s.status === 'pending');
-  const reviewedSubmissions = mySubmissions.filter((s) => s.status !== 'pending');
-
-  const tabOptions: SegmentedControlOption<ChildBalanceTab>[] = [
-    { label: t('child.balance.tabPoints'), value: 'balance' },
-    { label: t('child.balance.tabQuests'), value: 'taskHistory' },
-  ];
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 4);
+  const openRequestIds = new Set(
+    rewardRedemptions
+      .filter((redemption) =>
+        redemption.childId === activeChildId &&
+        (redemption.status === 'requested' || redemption.status === 'approved'))
+      .map((redemption) => redemption.rewardId),
+  );
+  const spendSuggestions = rewards
+    .filter((reward) =>
+      reward.isActive !== false &&
+      isRewardAvailableForChild(reward, activeChildId) &&
+      !openRequestIds.has(reward.id))
+    .slice(0, 2);
 
   return (
-    <AppScreen title={t('child.balanceAndHistory.title')} subtitle={t('child.balanceAndHistory.subtitle')}>
+    <AppScreen
+      title={t('child.balanceAndHistory.title')}
+      subtitle={t('child.balanceAndHistory.subtitle')}>
+      <View style={styles.balancePanelShell}>
+        <View pointerEvents="none" style={styles.balancePanelBacking} />
+        <View style={styles.balancePanel}>
+          <PlateShape
+            fill="#13B7EF"
+            points="0,0 96,0 100,100 0,100"
+            topLine="12,8 66,8"
+          />
+          <View pointerEvents="none" style={styles.balanceBottomBevel} />
+          <View style={styles.balanceHead}>
+            <MedalIcon />
+            <View style={styles.balanceCopy}>
+              <Text style={styles.balanceNumber}>{balance}</Text>
+              <Text style={styles.balanceLabel}>{t('child.balance.yourPoints')}</Text>
+            </View>
+            <View style={styles.piggyStage}>
+              <View style={styles.piggyShadow} />
+              <Image
+                contentFit="contain"
+                source={IMG_PIGGY_MASCOT}
+                style={styles.piggyMascot}
+              />
+            </View>
+          </View>
 
-      {/* ── Balance card ── */}
-      <AppCard>
-        <SectionTitle title={t('common.currentBalance')} />
+          <View style={styles.nextRewardRow}>
+            <Text style={styles.nextRewardText}>
+              {t('child.balance.nextReward', { points: String(nextRewardRemaining) })}
+            </Text>
+            <View style={styles.percentPill}>
+              <Text style={styles.percentText}>{progress}%</Text>
+            </View>
+          </View>
+          <ProgressBar progress={progress} />
+        </View>
+      </View>
 
-        <Text style={styles.balance}>
-          {balance} {t('common.pointsShort')}
-        </Text>
+      <SectionHeader icon="history" title={t('child.balance.pointsHistory')} />
+      <View style={styles.historyList}>
+        {childTransactions.map((transaction, index) => {
+          const accent = HISTORY_ACCENTS[index % HISTORY_ACCENTS.length];
 
-        {/* "Ждёт тебя" block — only when there's something incoming */}
-        {(potentialPoints > 0 || activeInv.length > 0) && (() => {
-          const totalIncoming = potentialPoints + activeExpectedPayout;
           return (
-            <View style={styles.incomingBox}>
-              <Text style={styles.incomingTitle}>{t('missions.incomingTitle')}</Text>
-
-              {potentialPoints > 0 && (
-                <View style={styles.incomingRow}>
-                  <Text style={styles.incomingIcon}>⏳</Text>
-                  <Text style={styles.incomingLabel}>{t('child.balance.onReview')}</Text>
-                  <Text style={styles.incomingAmount}>+{potentialPoints} {t('common.pointsShort')}</Text>
-                </View>
-              )}
-
-              {activeInv.map((inv) => {
-                const { days, hours, minutes, ready } = getMissionCountdown(inv.maturesAt);
-                return (
-                  <View key={inv.id} style={styles.incomingRow}>
-                    <Text style={styles.incomingIcon}>{ready ? '🎉' : '🔒'}</Text>
-                    <View style={styles.incomingLabelCol}>
-                      <Text style={styles.incomingLabel}>{inv.projectTitle}</Text>
-                      <Text style={styles.incomingMeta}>
-                        {ready
-                          ? t('missions.dashboard.ready')
-                          : days > 0 || hours > 0
-                            ? t('missions.dashboard.matureIn', { days: String(days), hours: String(hours) })
-                            : t('missions.dashboard.matureInMinutes', { minutes: String(minutes) })}
-                      </Text>
-                    </View>
-                    <Text style={[styles.incomingAmount, ready && styles.incomingAmountReady]}>
-                      +{inv.payoutAmount} {t('common.pointsShort')}
-                    </Text>
-                  </View>
-                );
-              })}
-
-              <View style={styles.incomingTotal}>
-                <Text style={styles.incomingTotalLabel}>{t('missions.incomingTotal')}</Text>
-                <Text style={styles.incomingTotalValue}>
-                  {balance + totalIncoming} {t('common.pointsShort')}
+            <View key={transaction.id} style={[styles.historyRow, { backgroundColor: accent.body }]}>
+              <View pointerEvents="none" style={styles.historyTopHighlight} />
+              <View pointerEvents="none" style={styles.historyBottomBevel} />
+              <View pointerEvents="none" style={[styles.historyLeftTab, { backgroundColor: accent.tab }]} />
+              <HistoryIcon index={index} />
+              <View style={styles.historyCopy}>
+                <Text style={styles.historyTitle} numberOfLines={1}>
+                  {getTransactionTitle(transaction, t)}
+                </Text>
+                <Text style={styles.historyMeta}>
+                  {formatRelativeDate(transaction.createdAt, locale, t)}
+                </Text>
+              </View>
+              <View style={styles.historyAmountPill}>
+                <View pointerEvents="none" style={styles.priceTopHighlight} />
+                <View pointerEvents="none" style={styles.priceBottomBevel} />
+                <IconCoin size={17} />
+                <Text style={styles.historyAmountText}>
+                  +{transaction.points} {t('common.pointsShort')}
                 </Text>
               </View>
             </View>
           );
-        })()}
+        })}
+      </View>
 
-        {/* Stats row 1: earned / spent / pending */}
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>+{totalEarned}</Text>
-            <Text style={styles.statLabel}>{t('child.balance.earned')}</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, totalSpent > 0 && styles.statSpent]}>−{totalSpent}</Text>
-            <Text style={styles.statLabel}>{t('child.balance.spent')}</Text>
-          </View>
-          {pendingSubmissions.length > 0 && (
-            <>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={[styles.statValue, styles.statPending]}>+{potentialPoints}</Text>
-                <Text style={styles.statLabel}>{t('child.balance.pendingTasks')}</Text>
-              </View>
-            </>
-          )}
-        </View>
-
-        {/* Stats row 2: investment stats (only if any investment activity) */}
-        {investmentSummaryItems.length > 0 && (
-          <View style={[styles.statsRow, styles.statsRowInvest]}>
-            {investmentSummaryItems.map((item, index) => (
-              <Fragment key={item.label}>
-                {index > 0 && <View style={styles.statDivider} />}
-                <View style={styles.statItem}>
-                  <Text style={[styles.statValue, styles[getInvestmentSummaryToneStyle(item.tone)]]}>
-                    {item.value}
-                  </Text>
-                  <Text style={styles.statLabel}>{item.label}</Text>
-                </View>
-              </Fragment>
-            ))}
-          </View>
-        )}
-      </AppCard>
-
-      {/* ── Focus goal progress ── */}
-      {focusGoal && (
-        <AppCard>
-          <SectionTitle title={t('child.balance.goalProgress')} />
-          <Text style={styles.goalTitle} numberOfLines={1}>{focusGoal.title}</Text>
-          <RocketProgressBar progress={goalProgress} />
-          <View style={styles.goalMeta}>
-            <Text style={styles.goalPercent}>{goalProgress}%</Text>
-            {goalRemaining > 0 && (
-              <Text style={styles.goalRemaining}>
-                {goalRemaining} {t('common.pointsShort')} {t('child.balance.remaining')}
-              </Text>
-            )}
-          </View>
-
-          {availableTasksPoints > 0 && (
-            <View style={styles.questHint}>
-              <Text style={styles.questHintText}>
-                {goalRemainingAfterAvailable === 0
-                  ? `⭐ ${t('child.balance.questReady', { points: availableTasksPoints })}`
-                  : `🗺️ ${t('child.balance.questHint', { points: availableTasksPoints })}`}
-              </Text>
+      <SectionHeader icon="shop" title={t('child.balance.spendTitle')} />
+      <View style={styles.shopGrid}>
+        {spendSuggestions.map((reward, index) => (
+          <Pressable
+            accessibilityRole="button"
+            key={reward.id}
+            onPress={() => router.replace('/child/rewards')}
+            style={({ pressed }) => [
+              styles.shopCard,
+              pressed && styles.pressedCard,
+            ]}>
+            <PlateShape
+              fill={SHOP_ACCENTS[index % SHOP_ACCENTS.length].body}
+              points="0,0 96,0 100,100 0,100"
+              topLine="12,8 76,8"
+            />
+            <View
+              pointerEvents="none"
+              style={[styles.shopBottomBevel, { backgroundColor: SHOP_ACCENTS[index % SHOP_ACCENTS.length].bottom }]}
+            />
+            <View style={[styles.shopHeaderStrip, { backgroundColor: SHOP_ACCENTS[index % SHOP_ACCENTS.length].header }]}>
+              <Text style={styles.shopHeaderText}>{index === 0 ? 'ХИТ' : 'ПРИЗ'}</Text>
             </View>
-          )}
-        </AppCard>
-      )}
-
-      <SegmentedControl options={tabOptions} value={activeTab} onChange={setActiveTab} />
-
-      {/* ── Balance tab: transaction history ── */}
-      {activeTab === 'balance' && (
-        <>
-          {childTransactions.length === 0 && pendingSubmissions.length === 0 && (
-            <EmptyState
-              title={t('child.balance.emptyTitle')}
-              message={t('child.balance.emptyMessage')}
-            />
-          )}
-
-          {/* Pending submissions — not yet approved */}
-          {pendingSubmissions.map((submission) => {
-            const task = findTask(tasks, submission.taskId);
-            const taskTitle = task ? getTaskTitle(task, t) : t('child.taskDetails.notFoundTitle');
-            return (
-              <AppCard key={`pending-${submission.id}`}>
-                <View style={styles.header}>
-                  <View style={styles.textGroup}>
-                    <Text style={styles.title}>{taskTitle}</Text>
-                    <Text style={styles.meta}>{formatDate(submission.submittedAt, locale)}</Text>
-                  </View>
-                  <View style={styles.txPendingCol}>
-                    <Text style={styles.txPendingAmount}>
-                      +{task?.points ?? '?'} {t('common.pointsShort')}
-                    </Text>
-                    <Text style={styles.txPendingLabel}>{t('child.balance.onReview')}</Text>
-                  </View>
-                </View>
-              </AppCard>
-            );
-          })}
-
-          {/* Confirmed transactions */}
-          {childTransactions.map((transaction) => {
-            const isPositive = transaction.points > 0;
-            const sign = isPositive ? '+' : '';
-            const isDeposit = transaction.type === 'investment_deposit';
-            const isPayout  = transaction.type === 'investment_payout';
-            const typeLabel = t(transactionLabelKeys[transaction.type]);
-
-            // For deposit transactions — find linked investment for countdown
-            const linkedInv = isDeposit
-              ? myInvestments.find((inv) => inv.depositTxId === transaction.id)
-              : null;
-            const matureCountdown = linkedInv && !linkedInv.claimedAt ? (() => {
-              return getMissionCountdown(linkedInv.maturesAt);
-            })() : null;
-            return (
-              <AppCard key={transaction.id} style={isDeposit ? styles.depositCard : isPayout ? styles.payoutCard : undefined}>
-                <View style={styles.header}>
-                  <View style={styles.textGroup}>
-                    <Text style={styles.title}>{getTransactionTitle(transaction, t)}</Text>
-                    <View style={styles.metaRow}>
-                      <Text style={styles.meta}>{formatDate(transaction.createdAt, locale)}</Text>
-                      {(isDeposit || isPayout) && (
-                        <View style={[styles.typeBadge, isPayout ? styles.typeBadgePayout : styles.typeBadgeDeposit]}>
-                          <Text style={[styles.typeBadgeText, isPayout ? styles.typeBadgeTextPayout : styles.typeBadgeTextDeposit]}>
-                            {isPayout ? '🎉 ' : '🔒 '}{typeLabel}
-                          </Text>
-                        </View>
-                      )}
-                      {matureCountdown && linkedInv && (
-                        <View style={[styles.typeBadge, matureCountdown.ready ? styles.typeBadgePayout : styles.typeBadgeDeposit]}>
-                          <Text style={[styles.typeBadgeText, matureCountdown.ready ? styles.typeBadgeTextPayout : styles.typeBadgeTextDeposit]}>
-                            {matureCountdown.ready
-                              ? `🎉 ${t('missions.payoutLabel', { payout: String(linkedInv.payoutAmount) })}`
-                              : `→ ${linkedInv.payoutAmount} ${t('common.pointsShort')} ${
-                                matureCountdown.days > 0 || matureCountdown.hours > 0
-                                  ? t('missions.dashboard.matureIn', {
-                                      days: String(matureCountdown.days),
-                                      hours: String(matureCountdown.hours),
-                                    })
-                                  : t('missions.dashboard.matureInMinutes', {
-                                      minutes: String(matureCountdown.minutes),
-                                    })
-                              }`}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                  <Text style={[
-                    styles.txAmount,
-                    isPayout ? styles.txPayout :
-                    isDeposit ? styles.txDeposit :
-                    isPositive ? styles.txPositive : styles.txNegative,
-                  ]}>
-                    {sign}{transaction.points} {t('common.pointsShort')}
-                  </Text>
-                </View>
-              </AppCard>
-            );
-          })}
-        </>
-      )}
-
-      {/* ── Task history tab ── */}
-      {activeTab === 'taskHistory' && (
-        <>
-          {mySubmissions.length === 0 && (
-            <EmptyState
-              title={t('child.history.emptyTitle')}
-              message={t('child.history.emptyMessage')}
-            />
-          )}
-
-          {pendingSubmissions.length > 0 && (
-            <>
-              <SectionTitle title={t('common.pending')} />
-              {pendingSubmissions.map((submission) => {
-                const task = findTask(tasks, submission.taskId);
-                const taskTitle = task ? getTaskTitle(task, t) : t('child.taskDetails.notFoundTitle');
-
-                return (
-                  <AppCard key={submission.id}>
-                    <View style={styles.header}>
-                      <View style={styles.textGroup}>
-                        <Text style={styles.title}>{taskTitle}</Text>
-                        <Text style={styles.meta}>{formatDate(submission.submittedAt, locale)}</Text>
-                        {Boolean(submission.proofNote) && (
-                          <Text style={styles.proof}>{submission.proofNote}</Text>
-                        )}
-                      </View>
-                      <View style={styles.rightCol}>
-                        {task && <PointsBadge points={task.points} />}
-                        <StatusBadge label={t('common.waitingForApproval')} tone="warning" />
-                      </View>
-                    </View>
-                  </AppCard>
-                );
-              })}
-            </>
-          )}
-
-          {reviewedSubmissions.length > 0 && (
-            <>
-              <SectionTitle title={t('common.history')} />
-              {reviewedSubmissions.map((submission) => {
-                const task = findTask(tasks, submission.taskId);
-                const taskTitle = task ? getTaskTitle(task, t) : t('child.taskDetails.notFoundTitle');
-                const isApproved = submission.status === 'approved';
-                const statusLabel = isApproved ? t('common.approved') : t('common.rejected');
-                const statusTone = isApproved ? 'success' : ('danger' as const);
-
-                return (
-                  <AppCard key={submission.id}>
-                    <View style={styles.header}>
-                      <View style={styles.textGroup}>
-                        <Text style={styles.title}>{taskTitle}</Text>
-                        <Text style={styles.meta}>{formatDate(submission.submittedAt, locale)}</Text>
-                        {Boolean(submission.proofNote) && (
-                          <Text style={styles.proof}>{submission.proofNote}</Text>
-                        )}
-                      </View>
-                      <View style={styles.rightCol}>
-                        {task && isApproved && <PointsBadge points={task.points} />}
-                        <StatusBadge label={statusLabel} tone={statusTone} />
-                      </View>
-                    </View>
-                  </AppCard>
-                );
-              })}
-            </>
-          )}
-        </>
-      )}
+            <ShopIcon reward={reward} index={index} />
+            <Text style={styles.shopTitle} numberOfLines={2}>
+              {getRewardTitle(reward, t)}
+            </Text>
+            <View style={styles.shopFooter}>
+              <View style={styles.priceBadge}>
+                <View pointerEvents="none" style={styles.priceTopHighlight} />
+                <View pointerEvents="none" style={styles.priceBottomBevel} />
+                <IconCoin size={17} />
+                <Text style={styles.priceText}>{reward.price} {t('common.pointsShort')}</Text>
+              </View>
+              <View style={styles.shopButton}>
+                <Text style={styles.shopButtonText}>{t('child.balance.shopButton')}</Text>
+              </View>
+            </View>
+          </Pressable>
+        ))}
+      </View>
     </AppScreen>
   );
 };
 
 export default ChildBalanceScreen;
 
+const raisedShadow = Platform.select({
+  ios: {
+    shadowColor: '#061426',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 0.30,
+    shadowRadius: 0,
+  },
+  android: { elevation: 4 },
+  web: { boxShadow: '4px 4px 0 #061426' },
+}) as ViewStyle;
+
 const styles = StyleSheet.create({
-  // Balance card
-  balanceRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
+  balancePanelShell: {
+    paddingBottom: 5,
+    paddingRight: 4,
+    position: 'relative',
   },
-  balance: {
-    color: FP.text,
-    fontSize: 42,
-    fontWeight: '900',
-  },
-  pendingBadge: {
-    backgroundColor: FP.accentLight,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  pendingText: {
-    color: FP.accentText,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  projectedText: {
-    color: FP.textSub,
-    fontSize: 13,
-    fontWeight: '600',
-    marginTop: -4,
-  },
-  investHint: {
-    color: FP.accentText,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  // Incoming block
-  incomingBox: {
-    backgroundColor: FP.primaryLight,
-    borderRadius: 12,
-    gap: 8,
-    padding: 12,
-  },
-  incomingTitle: {
-    color: FP.primaryDark,
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  incomingRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  incomingIcon: {
-    fontSize: 16,
-    width: 22,
-    textAlign: 'center',
-  },
-  incomingLabelCol: {
-    flex: 1,
-    gap: 1,
-  },
-  incomingLabel: {
-    color: FP.text,
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  incomingMeta: {
-    color: FP.textSub,
-    fontSize: 12,
-  },
-  incomingAmount: {
-    color: FP.primaryDark,
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  incomingAmountReady: {
-    color: FP.primary,
-  },
-  incomingTotal: {
-    alignItems: 'center',
-    borderTopColor: FP.primaryBorder,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 8,
-    marginTop: 2,
-  },
-  incomingTotalLabel: {
-    color: FP.primaryDark,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  incomingTotalValue: {
-    color: FP.primaryDark,
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  statsRow: {
-    borderTopColor: FP.border,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    marginTop: 8,
-    paddingTop: 12,
-    gap: 0,
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-    gap: 2,
-  },
-  statDivider: {
-    backgroundColor: FP.border,
-    width: 1,
-  },
-  statValue: {
-    color: FP.text,
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  statLabel: {
-    color: FP.textSub,
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  statSpent: {
-    color: FP.red,
-  },
-  statPending: {
-    color: FP.accentText,
-  },
-  statsRowInvest: {
-    borderTopColor: FP.accentLight,
-    backgroundColor: FP.accentLight,
-    borderRadius: 10,
-    marginTop: 4,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderTopWidth: 0,
-  },
-  statInvested: {
-    color: FP.accentText,
-  },
-  statExpected: {
-    color: FP.accentDark,
-  },
-  statPayout: {
-    color: FP.primary,
-  },
-  statProfit: {
-    color: FP.primaryDark,
-  },
-  // Goal progress
-  goalTitle: {
-    color: FP.text,
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  progressTrack: {
-    backgroundColor: FP.tan,
-    borderRadius: 8,
-    height: 10,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    backgroundColor: FP.primary,
-    height: 10,
-    borderRadius: 8,
-  },
-  progressAvailable: {
+  balancePanelBacking: {
+    backgroundColor: '#061426',
+    bottom: 1,
+    left: 4,
     position: 'absolute',
-    top: 0,
+    right: 0,
+    top: 5,
+    transform: [{ skewX: '-2deg' }],
+  },
+  balancePanel: {
+    gap: 13,
+    overflow: 'visible',
+    padding: 17,
+    position: 'relative',
+  },
+  balanceBottomBevel: {
+    backgroundColor: '#0D79B6',
     bottom: 0,
-    backgroundColor: FP.primaryLight,
-    borderRightWidth: 1.5,
-    borderRightColor: FP.primary,
+    height: 7,
+    left: 0,
+    position: 'absolute',
+    right: 3,
+    transform: [{ skewX: '-1deg' }],
+    zIndex: 2,
   },
-  goalMeta: {
+  balanceHead: {
     alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  goalPercent: {
-    color: FP.primary,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  goalRemaining: {
-    color: FP.textSub,
-    fontSize: 13,
-  },
-  questHint: {
-    backgroundColor: FP.primaryLight,
-    borderRadius: 8,
-    marginTop: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  questHintText: {
-    color: FP.primary,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  questHintSuccess: {
-    backgroundColor: FP.primary,
-  },
-  questHintSuccessText: {
-    color: FP.white,
-  },
-  // Pending transaction
-  txPendingCol: {
-    alignItems: 'flex-end',
-    alignSelf: 'center',
-    gap: 2,
-  },
-  txPendingAmount: {
-    color: FP.textSub,
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  txPendingLabel: {
-    color: FP.accentText,
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  // Transaction amount
-  txAmount: {
-    fontSize: 18,
-    fontWeight: '900',
-    alignSelf: 'center',
-  },
-  txPositive: {
-    color: FP.primary,
-  },
-  txNegative: {
-    color: FP.red,
-  },
-  txDeposit: {
-    color: FP.accentDark,
-  },
-  txPayout: {
-    color: FP.primary,
-  },
-  // Investment transaction cards
-  depositCard: {
-    borderLeftWidth: 3,
-    borderLeftColor: FP.accent,
-  },
-  payoutCard: {
-    borderLeftWidth: 3,
-    borderLeftColor: FP.primary,
-  },
-  metaRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  typeBadge: {
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  typeBadgeDeposit: {
-    backgroundColor: FP.accentLight,
-  },
-  typeBadgePayout: {
-    backgroundColor: FP.primaryLight,
-  },
-  typeBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  typeBadgeTextDeposit: {
-    color: FP.accentText,
-  },
-  typeBadgeTextPayout: {
-    color: FP.primaryDark,
-  },
-  // Cards
-  header: {
-    alignItems: 'flex-start',
     flexDirection: 'row',
     gap: 12,
-    justifyContent: 'space-between',
+    zIndex: 3,
   },
-  rightCol: {
-    alignItems: 'flex-end',
-    gap: 6,
+  medalOuter: {
+    alignItems: 'center',
+    backgroundColor: '#FFC400',
+    borderColor: '#061426',
+    borderRadius: 29,
+    borderWidth: 4,
+    height: 78,
+    justifyContent: 'center',
+    position: 'relative',
+    width: 78,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#061426',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.34,
+        shadowRadius: 0,
+      },
+      android: { elevation: 4 },
+      web: { boxShadow: '0 3px 0 #C98A00' },
+    }) as ViewStyle,
   },
-  textGroup: {
+  medalInner: {
+    alignItems: 'center',
+    backgroundColor: '#FFF2BE',
+    borderColor: '#061426',
+    borderRadius: 24,
+    borderWidth: 2,
+    height: 62,
+    justifyContent: 'center',
+    width: 62,
+  },
+  balanceCopy: {
     flex: 1,
-    gap: 4,
+    minWidth: 0,
   },
-  title: {
-    color: FP.text,
-    fontSize: 17,
-    fontWeight: '900',
+  piggyStage: {
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    justifyContent: 'flex-end',
+    marginRight: -8,
+    marginTop: -10,
+    position: 'relative',
+    width: 76,
   },
-  meta: {
-    color: FP.textSub,
+  piggyMascot: {
+    height: 90,
+    width: 82,
+    zIndex: 2,
+  },
+  piggyShadow: {
+    backgroundColor: 'rgba(4,20,38,0.26)',
+    borderRadius: 999,
+    bottom: 0,
+    height: 16,
+    position: 'absolute',
+    width: 58,
+    zIndex: 1,
+  },
+  balanceNumber: {
+    ...gameText,
+    color: '#FFFFFF',
+    fontSize: 50,
+    lineHeight: 54,
+  },
+  balanceLabel: {
+    ...gameText,
+    color: '#FFFFFF',
+    fontSize: 16,
+    marginTop: 2,
+  },
+  nextRewardRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'space-between',
+    zIndex: 3,
+  },
+  nextRewardText: {
+    color: '#EAF7FF',
+    flex: 1,
     fontSize: 14,
+    fontWeight: '800',
+    lineHeight: 19,
   },
-  proof: {
-    color: FP.text,
-    fontSize: 14,
+  percentPill: {
+    backgroundColor: '#FFC400',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 3,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  percentText: {
+    ...gameText,
+    color: '#FFFFFF',
+    fontSize: 12,
+  },
+  progressTrack: {
+    backgroundColor: '#0D2D5F',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 2,
+    height: 18,
+    overflow: 'hidden',
+    position: 'relative',
+    zIndex: 3,
+  },
+  progressFill: {
+    backgroundColor: '#C229E8',
+    borderRadius: 1,
+    bottom: 2,
+    left: 2,
+    position: 'absolute',
+    top: 2,
+  },
+  progressShine: {
+    backgroundColor: 'rgba(255,255,255,0.38)',
+    height: 4,
+    left: 12,
+    position: 'absolute',
+    right: 12,
+    top: 3,
+  },
+  sectionRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 2,
+  },
+  sectionIcon: {
+    alignItems: 'center',
+    backgroundColor: '#19B8F2',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 2,
+    height: 30,
+    justifyContent: 'center',
+    width: 30,
+  },
+  sectionIconShop: {
+    backgroundColor: '#FFC400',
+    borderColor: '#061426',
+  },
+  sectionTitle: {
+    ...gameText,
+    color: '#FFFFFF',
+    fontSize: 18,
+  },
+  historyList: {
+    gap: 9,
+  },
+  historyRow: {
+    alignItems: 'center',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 4,
+    flexDirection: 'row',
+    gap: 10,
+    minHeight: 68,
+    overflow: 'hidden',
+    padding: 10,
+    paddingLeft: 18,
+    position: 'relative',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#061426',
+        shadowOffset: { width: 4, height: 4 },
+        shadowOpacity: 0.30,
+        shadowRadius: 0,
+      },
+      android: { elevation: 2 },
+      web: { boxShadow: '4px 4px 0 #061426' },
+    }) as ViewStyle,
+  },
+  historyTopHighlight: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    height: 3,
+    left: 18,
+    position: 'absolute',
+    right: 96,
+    top: 6,
+    zIndex: 2,
+  },
+  historyBottomBevel: {
+    backgroundColor: '#061426',
+    bottom: 0,
+    height: 6,
+    left: 0,
+    opacity: 0.36,
+    position: 'absolute',
+    right: 0,
+    zIndex: 2,
+  },
+  historyLeftTab: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    top: 0,
+    width: 11,
+    zIndex: 2,
+  },
+  historyIcon: {
+    alignItems: 'center',
+    borderRadius: 3,
+    borderWidth: 3,
+    height: 42,
+    justifyContent: 'center',
+    width: 42,
+    zIndex: 4,
+  },
+  historyCopy: {
+    flex: 1,
+    minWidth: 0,
+    zIndex: 4,
+  },
+  historyTitle: {
+    ...gameText,
+    color: '#FFFFFF',
+    fontSize: 15,
     lineHeight: 20,
+  },
+  historyMeta: {
+    color: '#BDE4FF',
+    fontSize: 13,
+    fontWeight: '800',
+    marginTop: 1,
+  },
+  historyAmountPill: {
+    alignItems: 'center',
+    backgroundColor: '#FFC400',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 3,
+    flexDirection: 'row',
+    gap: 4,
+    minHeight: 34,
+    overflow: 'hidden',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    transform: [{ skewX: '-3deg' }],
+    zIndex: 4,
+    ...Platform.select({
+      ios: { shadowColor: '#061426', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.26, shadowRadius: 0 },
+      android: { elevation: 2 },
+      web: { boxShadow: '0 3px 0 #C98A00' },
+    }) as ViewStyle,
+  },
+  historyAmountText: {
+    ...gameText,
+    color: '#FFFFFF',
+    fontSize: 13,
+    transform: [{ skewX: '3deg' }],
+  },
+  priceTopHighlight: {
+    backgroundColor: 'rgba(255,255,255,0.42)',
+    height: 3,
+    left: 7,
+    position: 'absolute',
+    right: 9,
+    top: 4,
+    zIndex: 0,
+  },
+  priceBottomBevel: {
+    backgroundColor: '#C98A00',
+    bottom: 0,
+    height: 5,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    zIndex: 0,
+  },
+  shopGrid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  shopCard: {
+    flex: 1,
+    gap: 9,
+    minHeight: 190,
+    overflow: 'visible',
+    padding: 11,
+    paddingTop: 42,
+    position: 'relative',
+    ...raisedShadow,
+  },
+  shopBottomBevel: {
+    bottom: 0,
+    height: 8,
+    left: 0,
+    position: 'absolute',
+    right: 5,
+    transform: [{ skewX: '-2deg' }],
+    zIndex: 2,
+  },
+  shopHeaderStrip: {
+    alignItems: 'center',
+    borderBottomColor: '#061426',
+    borderBottomWidth: 4,
+    height: 32,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    transform: [{ skewX: '-2deg' }],
+    zIndex: 2,
+  },
+  shopHeaderText: {
+    ...gameText,
+    color: '#FFFFFF',
+    fontSize: 12,
+  },
+  pressedCard: {
+    opacity: 0.82,
+    transform: [{ translateY: 2 }, { scale: 0.992 }],
+  },
+  shopIconBox: {
+    alignItems: 'center',
+    borderRadius: 3,
+    borderWidth: 3,
+    height: 56,
+    justifyContent: 'center',
+    width: '100%',
+    zIndex: 3,
+  },
+  shopTitle: {
+    ...gameText,
+    color: '#FFFFFF',
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 19,
+    zIndex: 3,
+  },
+  shopFooter: {
+    gap: 8,
+    zIndex: 3,
+  },
+  priceBadge: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#FFC400',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 3,
+    flexDirection: 'row',
+    gap: 4,
+    minHeight: 32,
+    overflow: 'hidden',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    transform: [{ skewX: '-3deg' }],
+  },
+  priceText: {
+    ...gameText,
+    color: '#FFFFFF',
+    fontSize: 12,
+    transform: [{ skewX: '3deg' }],
+  },
+  shopButton: {
+    alignItems: 'center',
+    backgroundColor: '#FFC400',
+    borderColor: '#061426',
+    borderRadius: 3,
+    borderWidth: 3,
+    minHeight: 34,
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#061426',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.36,
+        shadowRadius: 0,
+      },
+      android: { elevation: 3 },
+      web: { boxShadow: 'inset 0 2px 0 #FFC928, 0 3px 0 #C98A00' },
+    }) as ViewStyle,
+  },
+  shopButtonText: {
+    ...gameText,
+    color: '#FFFFFF',
+    fontSize: 13,
   },
 });

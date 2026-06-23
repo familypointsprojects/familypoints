@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Watermark Pattern Grid Debug</title>
+  <style>
+    :root {
+      --bg: #eceef6;
+      --ink: #12314a;
+      --grid-a: rgba(22, 71, 183, .32);
+      --grid-b: rgba(30, 158, 134, .32);
+      --diag: rgba(239, 84, 36, .52);
+      --point: #1647b7;
+      --point-b: #1e9e86;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #f5f7fb;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 28px;
+    }
+
+    .wrap {
+      align-items: flex-start;
+      display: flex;
+      gap: 28px;
+    }
+
+    .phone {
+      background: var(--bg);
+      border: 1px solid rgba(18, 49, 74, .16);
+      border-radius: 30px;
+      box-shadow: 0 18px 50px rgba(18, 49, 74, .16);
+      height: 844px;
+      overflow: hidden;
+      position: relative;
+      width: 390px;
+    }
+
+    svg {
+      display: block;
+      height: 100%;
+      width: 100%;
+    }
+
+    .panel {
+      max-width: 360px;
+      padding-top: 12px;
+    }
+
+    h1 {
+      font-size: 26px;
+      line-height: 1.1;
+      margin: 0 0 14px;
+    }
+
+    p {
+      color: #586b7f;
+      font-size: 15px;
+      line-height: 1.45;
+      margin: 0 0 14px;
+    }
+
+    .legend {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .legend div {
+      align-items: center;
+      display: flex;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .swatch {
+      border-radius: 4px;
+      display: inline-block;
+      height: 12px;
+      width: 34px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="phone">
+      <svg id="grid" viewBox="0 0 390 844" aria-label="Watermark pattern grid debug"></svg>
+    </div>
+    <section class="panel">
+      <h1>Сетка водяных знаков</h1>
+      <p>
+        Это текущая геометрия, по которой я раскладываю знаки: два чередующихся ряда,
+        сдвиг на полшага и диагональные направляющие между точками.
+      </p>
+      <p>
+        Параметры: шаг X = 104, шаг Y = 72, сдвиг ряда B = 52, поворот иконок = -12°.
+        Крайние точки специально выходят за экран, чтобы фон выглядел как обрезанный тайл.
+      </p>
+      <div class="legend">
+        <div><span class="swatch" style="background:var(--grid-a)"></span>ряд A</div>
+        <div><span class="swatch" style="background:var(--grid-b)"></span>ряд B, сдвинут на 1/2 шага</div>
+        <div><span class="swatch" style="background:var(--diag)"></span>диагональные дорожки паттерна</div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const svg = document.getElementById('grid');
+    const NS = 'http://www.w3.org/2000/svg';
+
+    const width = 390;
+    const height = 844;
+    const tileX = 104;
+    const tileY = 72;
+    const rowCount = 14;
+    const colCount = 6;
+    const rowAStart = -44;
+    const rowBStart = 8;
+
+    const points = Array.from({ length: rowCount }).flatMap((_, row) => {
+      const startX = row % 2 === 0 ? rowAStart : rowBStart;
+      const y = -10 + row * tileY;
+      return Array.from({ length: colCount }).map((__, col) => ({
+        col,
+        row,
+        x: startX + col * tileX,
+        y,
+      }));
+    });
+
+    const el = (tag, attrs = {}) => {
+      const node = document.createElementNS(NS, tag);
+      Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
+      svg.appendChild(node);
+      return node;
+    };
+
+    el('rect', { x: 0, y: 0, width, height, fill: '#eceef6' });
+
+    points.forEach((point) => {
+      const isB = point.row % 2 === 1;
+      el('line', {
+        x1: -80,
+        y1: point.y,
+        x2: width + 80,
+        y2: point.y,
+        stroke: isB ? 'rgba(30,158,134,.22)' : 'rgba(22,71,183,.22)',
+        'stroke-width': 1,
+      });
+    });
+
+    for (let row = 0; row < rowCount - 1; row += 1) {
+      for (let col = 0; col < colCount; col += 1) {
+        const a = points.find((point) => point.row === row && point.col === col);
+        const b = points.find((point) => point.row === row + 1 && point.col === col);
+        if (!a || !b) continue;
+        el('line', {
+          x1: a.x,
+          y1: a.y,
+          x2: b.x,
+          y2: b.y,
+          stroke: 'rgba(239,84,36,.52)',
+          'stroke-width': 1.4,
+        });
+      }
+    }
+
+    points.forEach((point) => {
+      const isB = point.row % 2 === 1;
+      el('circle', {
+        cx: point.x,
+        cy: point.y,
+        r: 5.5,
+        fill: isB ? '#1e9e86' : '#1647b7',
+        opacity: .88,
+      });
+      el('circle', {
+        cx: point.x,
+        cy: point.y,
+        r: 34,
+        fill: 'none',
+        stroke: isB ? 'rgba(30,158,134,.22)' : 'rgba(22,71,183,.22)',
+        'stroke-width': 1,
+        'stroke-dasharray': '4 5',
+      });
+    });
+
+    el('rect', {
+      x: .5,
+      y: .5,
+      width: width - 1,
+      height: height - 1,
+      fill: 'none',
+      stroke: 'rgba(18,49,74,.32)',
+      'stroke-width': 1,
+    });
+  </script>
+</body>
+</html>

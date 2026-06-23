@@ -44,6 +44,7 @@ export const mapChildRowToChildProfile = (row: ChildRow): ChildProfile => ({
   name: row.display_name,
   role: 'child',
   avatarColor: row.avatar_color,
+  avatarId: row.avatar_id ?? undefined,
 });
 
 export const mapFamilyRowToFamily = (

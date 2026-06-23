@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1080" height="1920"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 1080, H = 1920;
+
+// ── Цвет силуэтов — такой же тёмно-синий как иконки в аппке ─────────────────
+const TINT = 'rgba(55, 90, 160, 1)';
+
+// ── Загрузка PNG-иконок из проекта ──────────────────────────────────────────
+const imgs = {};
+const SRC = {
+  coin:    'assets/images/coin.png',
+  chest:   'assets/images/tab-rewards-chest.png',
+  piggy:   'assets/images/piggy-bank-mascot.png',
+  compass: 'assets/images/tab-home-compass.png',
+  map:     'assets/images/tab-quests-map.png',
+};
+
+let pending = Object.keys(SRC).length;
+for (const [key, src] of Object.entries(SRC)) {
+  const img = new Image();
+  img.onload = () => { imgs[key] = img; if (--pending === 0) drawAll(); };
+  img.onerror = () => { if (--pending === 0) drawAll(); }; // graceful skip
+  img.src = src;
+}
+
+// ── Отрисовать PNG как тёмно-синий силуэт ────────────────────────────────────
+function stampImg(key, x, y, size, angle, alpha) {
+  const img = imgs[key];
+  if (!img) return;
+  const tmp = document.createElement('canvas');
+  tmp.width = size; tmp.height = size;
+  const tc = tmp.getContext('2d');
+  tc.drawImage(img, 0, 0, size, size);
+  tc.globalCompositeOperation = 'source-in';
+  tc.fillStyle = TINT;
+  tc.fillRect(0, 0, size, size);
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.drawImage(tmp, -size/2, -size/2);
+  ctx.restore();
+}
+
+// ── SVG-пути из исходников аппки ─────────────────────────────────────────────
+
+// ОГОНЁК (из StreakWidget.tsx) — три слоя, все заливаем одним тёмным
+function drawFlame() {
+  ctx.beginPath();
+  // outer (оранжевый слой)
+  const p1 = new Path2D('M79 151C47 151 23 131 23 105C23 82 38 69 58 54C74 42 81 26 89 9C109 34 116 54 112 72C119 62 124 51 127 39C142 64 149 84 149 107C149 134 127 151 95 151Z');
+  ctx.fill(p1);
+  // middle
+  const p2 = new Path2D('M80 146C58 146 45 133 45 115C45 101 53 91 65 80C74 71 79 59 81 47C95 63 101 79 98 94C105 86 109 78 111 70C122 85 127 99 127 115C127 134 112 146 80 146Z');
+  ctx.fill(p2);
+  // inner purple tip
+  const p3 = new Path2D('M91 147C73 147 61 136 61 121C61 107 69 96 81 82C91 96 103 108 107 122C112 136 103 147 91 147Z');
+  ctx.fill(p3);
+}
+
+// ЗВЕЗДА (из tasks.tsx — IconStar, viewBox 0 0 32 32)
+function drawStar() {
+  ctx.save();
+  ctx.scale(4, 4); // масштаб 32→128px
+  const p = new Path2D('M16 4l3 9 9 3-9 3-3 11-3-11-9-3 9-3z');
+  ctx.fill(p);
+  ctx.restore();
+}
+
+// МОЛНИЯ (из tasks.tsx — IconBolt, viewBox 0 0 32 32)
+function drawBolt() {
+  ctx.save();
+  ctx.scale(4, 4);
+  const p = new Path2D('M18 4L10 18h8l-4 10 12-14h-8z');
+  ctx.fill(p);
+  ctx.restore();
+}
+
+// ЩИТ+ЗВЕЗДА (из QuestIcons.tsx — IconShield, viewBox 0 0 120 120)
+function drawShield() {
+  ctx.save();
+  const sc = 1.1;
+  ctx.scale(sc, sc);
+  const p1 = new Path2D('M60 12 L100 24 L100 60 Q100 92 60 108 Q20 92 20 60 L20 24 Z');
+  ctx.fill(p1);
+  // звезда внутри — вырез (silhouette: оставим заполненным)
+  const p2 = new Path2D('M60 36 L67 53 L86 55 L72 67 L77 86 L60 76 L43 86 L48 67 L34 55 L53 53 Z');
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.fillStyle = 'rgba(0,0,0,1)';
+  ctx.fill(p2);
+  ctx.restore();
+  ctx.restore();
+}
+
+// СЕМЬЯ / СЕРДЦЕ (из QuestIcons.tsx — IconFamily, viewBox 0 0 120 120)
+function drawFamily() {
+  ctx.save();
+  const sc = 1.0;
+  ctx.scale(sc, sc);
+  // сердце
+  const ph = new Path2D('M60 14 C53 6 38 8 38 22 C38 34 60 44 60 44 C60 44 82 34 82 22 C82 8 67 6 60 14 Z');
+  ctx.fill(ph);
+  // три фигурки
+  ctx.beginPath(); ctx.arc(28, 62, 11, 0, Math.PI*2); ctx.fill();
+  const pl = new Path2D('M12 108 Q12 82 28 82 Q44 82 44 108 Z');
+  ctx.fill(pl);
+  ctx.beginPath(); ctx.arc(92, 62, 11, 0, Math.PI*2); ctx.fill();
+  const pr = new Path2D('M76 108 Q76 82 92 82 Q108 82 108 108 Z');
+  ctx.fill(pr);
+  ctx.beginPath(); ctx.arc(60, 74, 9, 0, Math.PI*2); ctx.fill();
+  const pc = new Path2D('M47 108 Q47 88 60 88 Q73 88 73 108 Z');
+  ctx.fill(pc);
+  ctx.restore();
+}
+
+// ── Утилита для SVG-иконок ────────────────────────────────────────────────────
+function stamp(drawFn, x, y, scale, angle, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  ctx.scale(scale, scale);
+  ctx.translate(-60, -80); // центрировать ~120x160 viewBox
+  ctx.fillStyle = TINT;
+  ctx.strokeStyle = TINT;
+  drawFn();
+  ctx.restore();
+}
+
+// ── Основная отрисовка ────────────────────────────────────────────────────────
+function drawAll() {
+  // Фон — светло-кремовый/лавандовый как в аппке
+  const bg = ctx.createLinearGradient(0, 0, W * 0.3, H);
+  bg.addColorStop(0,    '#eef4fb');
+  bg.addColorStop(0.35, '#f3eff8');
+  bg.addColorStop(0.7,  '#f7f0ec');
+  bg.addColorStop(1,    '#f0eef8');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Лёгкий радиальный отблеск
+  const glow = ctx.createRadialGradient(W*0.6, H*0.25, 0, W*0.6, H*0.25, W*0.9);
+  glow.addColorStop(0, 'rgba(180,210,255,0.18)');
+  glow.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  // ── PNG иконки из аппки ───────────────────────────────────────────────────
+  // [key, x, y, size, angle, alpha]
+  const pngIcons = [
+    // крупные
+    ['chest',   W*0.14, H*0.07,  230,  0.15,  0.065],
+    ['coin',    W*0.83, H*0.06,  200,  0.35,  0.065],
+    ['piggy',   W*0.80, H*0.23,  220, -0.18,  0.065],
+    ['compass', W*0.86, H*0.43,  210,  0.22,  0.065],
+    ['map',     W*0.18, H*0.54,  220, -0.12,  0.065],
+    ['coin',    W*0.72, H*0.58,  240,  0.20,  0.065],
+    ['chest',   W*0.12, H*0.74,  200, -0.20,  0.065],
+    ['piggy',   W*0.80, H*0.86,  190,  0.18,  0.065],
+    ['compass', W*0.18, H*0.89,  200, -0.10,  0.065],
+    ['map',     W*0.60, H*0.91,  190,  0.28,  0.065],
+    // средние
+    ['coin',    W*0.44, H*0.18,  140,  0.80,  0.07 ],
+    ['map',     W*0.64, H*0.48,  130,  0.40,  0.07 ],
+    ['compass', W*0.38, H*0.60,  130, -0.75,  0.065],
+    ['coin',    W*0.16, H*0.67,  120,  0.55,  0.07 ],
+    ['chest',   W*0.52, H*0.76,  120,  0.90,  0.065],
+    // мелкие
+    ['coin',    W*0.62, H*0.07,   90, -0.20,  0.075],
+    ['piggy',   W*0.50, H*0.04,   85, -0.40,  0.07 ],
+    ['map',     W*0.04, H*0.48,   85,  0.90,  0.07 ],
+    ['coin',    W*0.96, H*0.54,   85, -0.30,  0.075],
+    ['chest',   W*0.96, H*0.34,   88,  0.60,  0.07 ],
+    ['compass', W*0.34, H*0.04,   80,  0.30,  0.075],
+  ];
+  pngIcons.forEach(([k,x,y,s,a,al]) => stampImg(k,x,y,s,a,al));
+
+  // ── SVG иконки ────────────────────────────────────────────────────────────
+  // Огонёк viewBox 160×160, центр 80,105 → translate(-80,-105)
+  function stampFlame(x,y,sc,ang,al) {
+    ctx.save();
+    ctx.globalAlpha = al;
+    ctx.translate(x,y);
+    ctx.rotate(ang);
+    ctx.scale(sc,sc);
+    ctx.translate(-80,-105);
+    ctx.fillStyle = TINT;
+    drawFlame();
+    ctx.restore();
+  }
+  // Звезда viewBox 32×32, центр 16,11
+  function stampStar(x,y,sc,ang,al) {
+    ctx.save();
+    ctx.globalAlpha = al;
+    ctx.translate(x,y);
+    ctx.rotate(ang);
+    ctx.scale(sc,sc);
+    ctx.translate(-64,-44);
+    ctx.fillStyle = TINT;
+    drawStar();
+    ctx.restore();
+  }
+  // Молния viewBox 32×32, центр 16,16
+  function stampBolt(x,y,sc,ang,al) {
+    ctx.save();
+    ctx.globalAlpha = al;
+    ctx.translate(x,y);
+    ctx.rotate(ang);
+    ctx.scale(sc,sc);
+    ctx.translate(-64,-64);
+    ctx.fillStyle = TINT;
+    drawBolt();
+    ctx.restore();
+  }
+  // Щит viewBox 120×120, центр 60,60
+  function stampShield(x,y,sc,ang,al) {
+    ctx.save();
+    ctx.globalAlpha = al;
+    ctx.translate(x,y);
+    ctx.rotate(ang);
+    ctx.scale(sc,sc);
+    ctx.translate(-66,-66);
+    ctx.fillStyle = TINT;
+    drawShield();
+    ctx.restore();
+  }
+  // Семья viewBox 120×120, центр 60,60
+  function stampFamily(x,y,sc,ang,al) {
+    ctx.save();
+    ctx.globalAlpha = al;
+    ctx.translate(x,y);
+    ctx.rotate(ang);
+    ctx.scale(sc,sc);
+    ctx.translate(-60,-60);
+    ctx.fillStyle = TINT;
+    drawFamily();
+    ctx.restore();
+  }
+
+  // Огоньки
+  stampFlame(W*0.08, H*0.30,  1.2,  0.10,  0.065);
+  stampFlame(W*0.88, H*0.70,  1.0, -0.30,  0.065);
+  stampFlame(W*0.44, H*0.96,  0.8,  0.50,  0.07 );
+  stampFlame(W*0.55, H*0.37,  0.7, -0.60,  0.07 );
+  stampFlame(W*0.07, H*0.19,  0.5,  0.70,  0.075);
+
+  // Звёзды
+  stampStar(W*0.84, H*0.06,  1.0,  0.40,  0.07 );
+  stampStar(W*0.50, H*0.71,  0.9,  0.55,  0.065);
+  stampStar(W*0.28, H*0.43,  0.7,  1.10,  0.07 );
+  stampStar(W*0.72, H*0.77,  0.6,  0.90,  0.07 );
+  stampStar(W*0.34, H*0.04,  0.55, 0.30,  0.08 );
+  stampStar(W*0.90, H*0.14,  0.45,-0.50,  0.08 );
+
+  // Молнии
+  stampBolt(W*0.30, H*0.15,  1.0,  0.20,  0.065);
+  stampBolt(W*0.68, H*0.35,  0.85,-0.40,  0.07 );
+  stampBolt(W*0.92, H*0.60,  0.75, 0.60,  0.07 );
+  stampBolt(W*0.20, H*0.80,  0.65,-0.25,  0.075);
+
+  // Щиты
+  stampShield(W*0.06, H*0.65,  1.0,  0.85,  0.065);
+  stampShield(W*0.76, H*0.50,  0.75, 0.40,  0.07 );
+  stampShield(W*0.48, H*0.28,  0.65,-0.30,  0.07 );
+
+  // Семьи
+  stampFamily(W*0.54, H*0.84,  0.9, -0.15,  0.065);
+  stampFamily(W*0.22, H*0.40,  0.7,  0.35,  0.07 );
+
+  // ── Виньетка по краям ────────────────────────────────────────────────────
+  const vig = ctx.createRadialGradient(W/2,H/2,H*0.28,W/2,H/2,H*0.82);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(180,180,210,0.18)');
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, W, H);
+}
+</script>
+</body>
+</html>

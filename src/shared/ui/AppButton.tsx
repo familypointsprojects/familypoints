@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, TextStyle, ViewStyle } from 'react-native';
 import { View } from 'react-native';
 
-import { FP } from '@/constants/theme';
+import { FP, gameText } from '@/constants/theme';
+import { OutlineText } from '@/shared/ui/OutlineText';
 
 type AppButtonVariant = 'primary' | 'secondary' | 'accent' | 'danger' | 'ghost';
 
@@ -40,10 +41,10 @@ const containerStyles: Record<AppButtonVariant, ViewStyle> = {
 
 const textStyles: Record<AppButtonVariant, TextStyle> = {
   primary:   { color: FP.white },
-  secondary: { color: FP.primary },
-  accent:    { color: FP.ink2 },
+  secondary: { color: FP.white },
+  accent:    { color: FP.white },
   danger:    { color: FP.white },
-  ghost:     { color: FP.primary },
+  ghost:     { color: FP.white },
 };
 
 export const AppButton = ({
@@ -68,9 +69,9 @@ export const AppButton = ({
     ]}>
     <View style={styles.contentRow}>
       {leftIcon}
-      <Text style={[styles.text, textStyles[variant], disabled && styles.disabledText]}>
+      <OutlineText style={[styles.text, gameText, textStyles[variant], disabled && styles.disabledText]}>
         {title}
-      </Text>
+      </OutlineText>
     </View>
     {Boolean(subtitle) && (
       <Text style={[styles.subtitle, textStyles[variant], disabled && styles.disabledText]}>
@@ -97,7 +98,6 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 15,
-    fontWeight: '900',
     textAlign: 'center',
   },
   subtitle: {

@@ -42,6 +42,7 @@ import {
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const CLOSE_THRESHOLD = 80;
 const IMG_PIRATE_GUIDE = require('@/assets/images/pirate-variants/generated-pack/flat-pirate-16-reading-map.png');
+const IMG_DAILY_CALENDAR = require('@/assets/images/icons/calendar.png');
 
 type Tab = 'available' | 'pending';
 
@@ -267,9 +268,7 @@ const TaskCard = ({ task, index, featured, done, pending, rejected, onPress }: T
         <View pointerEvents="none" style={[styles.taskCardLeftBorder, { backgroundColor: outlineColor }]} />
         {featured && (
           <View pointerEvents="none" style={styles.dailyQuestBadge}>
-            <Svg width={16} height={16} viewBox="0 0 32 32">
-              <Path d="M18 4L10 18h8l-4 10 12-14h-8z" fill={FP.orange} strokeWidth={0} />
-            </Svg>
+            <Image contentFit="contain" source={IMG_DAILY_CALENDAR} style={styles.dailyQuestIcon} />
           </View>
         )}
         {/* Full-height color block */}
@@ -451,17 +450,18 @@ const ChildTasksScreen = () => {
         <>
           <View style={styles.dailyGuidePanel}>
             <View style={styles.dailyGuideCopy}>
-              <View style={styles.sectionRow}>
-                <View style={styles.boltBadge}>
-                  <Svg width={14} height={14} viewBox="0 0 32 32">
-                    <Path d="M18 4L10 18h8l-4 10 12-14h-8z" fill={FP.orange} strokeWidth={0} />
-                  </Svg>
+              <View style={styles.dailyGuideBarWrap}>
+                <View style={styles.dailyGuideBar}>
+                  <View pointerEvents="none" style={styles.dailyGuideInset1} />
+                  <View pointerEvents="none" style={styles.dailyGuideInset2} />
+                  <View style={styles.dailyGuideBarContent}>
+                    <OutlineText style={[styles.sectionTitle, styles.dailyGuideTitle]}>{t('child.tasks.todayTitle')}</OutlineText>
+                  </View>
                 </View>
-                <OutlineText style={[styles.sectionTitle, styles.dailyGuideTitle]}>{t('child.tasks.todayTitle')}</OutlineText>
               </View>
+              <Image contentFit="contain" source={IMG_DAILY_CALENDAR} style={styles.dailyHeaderIcon} />
             </View>
             <View style={styles.pirateStage}>
-              <View style={styles.pirateShadow} />
               <Image
                 contentFit="contain"
                 source={IMG_PIRATE_GUIDE}
@@ -604,28 +604,56 @@ const styles = StyleSheet.create({
   // Section headers
   dailyGuidePanel: {
     alignItems: 'center',
-    backgroundColor: '#343A55',
-    borderColor: '#061426',
-    borderRadius: 3,
-    borderWidth: 4,
     flexDirection: 'row',
-    gap: 8,
     minHeight: 44,
     overflow: 'visible',
-    paddingHorizontal: 10,
-    paddingRight: 100,
     paddingVertical: 5,
     position: 'relative',
-    ...(Platform.select({
-      ios: { shadowColor: '#061426', shadowOffset: { width: 4, height: 4 }, shadowOpacity: 0.30, shadowRadius: 0 },
-      android: { elevation: 4 },
-      web: { boxShadow: 'inset 0 3px 0 #19B8F2, 4px 4px 0 #061426' },
-    }) as ViewStyle),
   },
   dailyGuideCopy: {
+    alignSelf: 'center',
     flex: 1,
     minWidth: 0,
+    paddingLeft: 22,
+    position: 'relative',
     zIndex: 2,
+  },
+  dailyGuideBarWrap: {
+    transform: [{ skewX: '-8deg' }],
+  },
+  dailyGuideBar: {
+    backgroundColor: '#1B2A3D',
+    borderColor: '#0A1626',
+    borderWidth: 2,
+    justifyContent: 'center',
+    minHeight: 40,
+    overflow: 'hidden',
+    paddingLeft: 31,
+    paddingRight: 20,
+    paddingVertical: 5,
+  },
+  dailyGuideInset1: {
+    borderColor: 'rgba(0,0,0,0.18)',
+    borderLeftWidth: 0,
+    borderWidth: 6,
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  dailyGuideInset2: {
+    borderColor: 'rgba(0,0,0,0.30)',
+    borderLeftWidth: 0,
+    borderWidth: 2,
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  dailyGuideBarContent: {
+    transform: [{ skewX: '8deg' }],
   },
   pirateStage: {
     alignItems: 'center',
@@ -641,31 +669,13 @@ const styles = StyleSheet.create({
     width: 92,
     zIndex: 2,
   },
-  pirateShadow: {
-    backgroundColor: 'rgba(4,20,38,0.30)',
-    borderRadius: 999,
-    bottom: 4,
-    height: 16,
+  dailyHeaderIcon: {
+    height: 56,
+    left: -11,
     position: 'absolute',
-    width: 62,
-    zIndex: 1,
-  },
-  sectionRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: -2,
-    marginTop: 2,
-  },
-  boltBadge: {
-    alignItems: 'center',
-    backgroundColor: '#FFC400',
-    borderColor: '#061426',
-    borderRadius: 3,
-    borderWidth: 3,
-    height: 28,
-    justifyContent: 'center',
-    width: 28,
+    top: -8,
+    width: 56,
+    zIndex: 5,
   },
   sectionTitle: {
     ...gameText,
@@ -715,18 +725,16 @@ const styles = StyleSheet.create({
     zIndex: 3,
   },
   dailyQuestBadge: {
-    alignItems: 'center',
-    backgroundColor: '#FFC400',
-    borderColor: '#061426',
-    borderRadius: 3,
-    borderWidth: 3,
-    height: 30,
-    justifyContent: 'center',
+    height: 32,
     position: 'absolute',
     right: 12,
-    top: 10,
-    width: 30,
+    top: 9,
+    width: 32,
     zIndex: 6,
+  },
+  dailyQuestIcon: {
+    height: '100%',
+    width: '100%',
   },
   // Full-height color block on the left
   taskColorBlock: {

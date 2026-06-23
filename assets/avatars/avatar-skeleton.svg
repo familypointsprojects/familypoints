@@ -1,0 +1,48 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="skBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9E80FF"/>
+      <stop offset="1" stop-color="#6E4DE0"/>
+    </linearGradient>
+    <radialGradient id="skVig" cx="0.5" cy="0.4" r="0.78">
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#3B2A8A" stop-opacity="0.55"/>
+    </radialGradient>
+    <radialGradient id="skEye" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#7BF3FF"/>
+      <stop offset="0.55" stop-color="#10C7E8"/>
+      <stop offset="1" stop-color="#0A2030"/>
+    </radialGradient>
+  </defs>
+  <rect x="2" y="2" width="196" height="196" rx="32" fill="url(#skBg)"/>
+  <rect x="2" y="2" width="196" height="196" rx="32" fill="url(#skVig)"/>
+  <!-- crossbones -->
+  <g stroke="#10233F" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M44 150 L156 196 M156 150 L44 196" stroke="#E8E3F2" stroke-width="13"/>
+    <g fill="#E8E3F2">
+      <circle cx="44" cy="150" r="9"/><circle cx="44" cy="196" r="9"/>
+      <circle cx="156" cy="150" r="9"/><circle cx="156" cy="196" r="9"/>
+    </g>
+  </g>
+  <g stroke="#10233F" stroke-width="5" stroke-linejoin="round">
+    <!-- skull -->
+    <path d="M54 92 Q54 50 100 50 Q146 50 146 92 Q146 118 130 126 L130 140 Q130 150 118 150 L82 150 Q70 150 70 140 L70 126 Q54 118 54 92 Z" fill="#F3F1FA"/>
+    <!-- jaw -->
+    <path d="M82 148 Q82 166 100 166 Q118 166 118 148 Z" fill="#F3F1FA"/>
+  </g>
+  <!-- eye sockets -->
+  <ellipse cx="80" cy="96" rx="16" ry="18" fill="#1A1430"/>
+  <ellipse cx="120" cy="96" rx="16" ry="18" fill="#1A1430"/>
+  <circle cx="80" cy="97" r="8.5" fill="url(#skEye)"/>
+  <circle cx="120" cy="97" r="8.5" fill="url(#skEye)"/>
+  <circle cx="82" cy="94" r="2.6" fill="#ffffff"/>
+  <circle cx="122" cy="94" r="2.6" fill="#ffffff"/>
+  <!-- nose -->
+  <path d="M100 110 L92 126 Q100 132 108 126 Z" fill="#1A1430"/>
+  <!-- teeth -->
+  <g stroke="#10233F" stroke-width="3.5">
+    <rect x="80" y="140" width="40" height="16" rx="4" fill="#ffffff"/>
+    <line x1="93.3" y1="140" x2="93.3" y2="156"/>
+    <line x1="106.6" y1="140" x2="106.6" y2="156"/>
+  </g>
+</svg>

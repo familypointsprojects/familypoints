@@ -148,6 +148,11 @@ export type CreateChildInput = {
   familyName?: string;
 };
 
+export type UpdateChildAvatarInput = {
+  childId: string;
+  avatarId: string;
+};
+
 export type CreateParentInput = {
   name: string;
   hasFullPermissions: boolean;

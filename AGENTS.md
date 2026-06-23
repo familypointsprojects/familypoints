@@ -77,6 +77,10 @@ Main MVP entities:
 - Use explicit role clarity: parent actions and child actions should not be visually or verbally ambiguous.
 - Favor practical mobile layouts, strong primary CTAs, clear empty states, and visible feedback for loading, success, rejection, and errors.
 
+### Watermark Background Pattern
+
+When creating EasyQuest-style background watermarks, first use the documented grid logic in `design/watermark-pattern-grid-logic.md`. Do not place icons by eye. Use the `?watermarkGrid=1` debug overlay, keep all icons and debug points in the same `390 x 844` coordinate system, and fix visual drift with per-icon offsets or trimmed assets rather than random point movement.
+
 ## Local Designer Skills And Commands
 
 Reusable designer skills live in `.codex/skills/`. Command-style prompt shortcuts live in `.codex/commands/`. For quick slash-menu access, install or enable the local `easyquest-designers` plugin from the personal Codex marketplace.

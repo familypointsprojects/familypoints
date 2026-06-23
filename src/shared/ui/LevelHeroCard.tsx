@@ -1,12 +1,13 @@
 import { Platform, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
-import { FP } from '@/constants/theme';
+import { FP, gameText } from '@/constants/theme';
 
 type LevelHeroCardProps = {
   avatarColor?: string;
   avatarLabel: string;
   detailLabel?: string;
   levelLabel: string;
+  levelValue?: number;
   onLevelPress?: () => void;
   progress: number;
   rankLabel: string;
@@ -22,6 +23,7 @@ export const LevelHeroCard = ({
   avatarLabel,
   detailLabel,
   levelLabel,
+  levelValue,
   onLevelPress,
   progress,
   rankLabel,
@@ -30,6 +32,8 @@ export const LevelHeroCard = ({
   xpLabel,
 }: LevelHeroCardProps) => {
   const progressWidth = `${clampProgress(progress)}%` as `${number}%`;
+  const levelText =
+    levelValue != null ? String(levelValue) : levelLabel.replace(/\D/g, '') || levelLabel;
 
   return (
     <View style={styles.wrap}>
@@ -49,7 +53,6 @@ export const LevelHeroCard = ({
             <Text style={styles.rank} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
               {rankLabel}
             </Text>
-            <Text style={styles.xpText}>{xpLabel}</Text>
           </View>
 
           <View style={styles.sideCopy}>
@@ -58,8 +61,27 @@ export const LevelHeroCard = ({
           </View>
         </View>
 
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: progressWidth }]} />
+        <View style={styles.progressRow}>
+          <View style={styles.levelBadge}>
+            <Text style={styles.levelBadgeText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+              {levelText}
+            </Text>
+          </View>
+
+          <View style={styles.progressBarWrap}>
+            <View style={styles.progressTrack}>
+              <View style={styles.progressTrackInner} />
+              <View style={[styles.progressFill, { width: progressWidth }]}>
+                <View pointerEvents="none" style={styles.progressShade} />
+              </View>
+            </View>
+
+            <View pointerEvents="none" style={styles.progressLabelOverlay}>
+              <Text style={styles.progressLabelText} numberOfLines={1}>
+                {xpLabel}
+              </Text>
+            </View>
+          </View>
         </View>
       </Pressable>
     </View>
@@ -134,25 +156,18 @@ const styles = StyleSheet.create({
     width: 42,
   },
   avatarText: {
+    ...gameText,
     color: FP.white,
     fontSize: 20,
-    fontWeight: '900',
   },
   mainCopy: {
     flex: 1,
     minWidth: 0,
   },
   rank: {
+    ...gameText,
     color: FP.white,
     fontSize: 21,
-    fontWeight: '900',
-    letterSpacing: -0.3,
-  },
-  xpText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '900',
-    marginTop: 3,
   },
   sideCopy: {
     alignItems: 'flex-end',
@@ -160,33 +175,104 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   skillText: {
+    ...gameText,
     color: 'rgba(255,255,255,0.50)',
     fontSize: 12,
-    fontWeight: '900',
     textAlign: 'right',
   },
   detailText: {
+    ...gameText,
     color: 'rgba(255,255,255,0.66)',
     fontSize: 12,
-    fontWeight: '900',
     textAlign: 'right',
   },
-  progressTrack: {
-    backgroundColor: 'rgba(13,31,72,0.44)',
-    borderColor: 'rgba(255,255,255,0.16)',
-    borderRadius: 999,
-    borderWidth: 1,
-    height: 10,
-    marginLeft: 54,
-    marginTop: 8,
-    overflow: 'hidden',
-    padding: 1,
+  progressRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginTop: 10,
     position: 'relative',
     zIndex: 1,
   },
+  // белый «жетон» уровня с толстой чёрной обводкой, налегает на левый край бара
+  levelBadge: {
+    alignItems: 'center',
+    backgroundColor: FP.white,
+    borderColor: '#000000',
+    borderRadius: 12,
+    borderWidth: 3,
+    flexShrink: 0,
+    height: 38,
+    justifyContent: 'center',
+    marginRight: -13,
+    width: 38,
+    zIndex: 3,
+  },
+  levelBadgeText: {
+    ...gameText,
+    color: FP.ink,
+    fontSize: 18,
+    textShadowColor: 'transparent',
+    textShadowOffset: { width: 0, height: 0 },
+  },
+  progressBarWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    position: 'relative',
+    zIndex: 1,
+  },
+  progressLabelOverlay: {
+    alignItems: 'center',
+    bottom: 0,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 2,
+  },
+  progressLabelText: {
+    ...gameText,
+    color: FP.white,
+    fontSize: 13,
+    letterSpacing: 0.5,
+    textShadowColor: '#000000',
+    textShadowOffset: { width: 0, height: 1.5 },
+    textShadowRadius: 0,
+  },
+  // косой желоб (параллелограмм) с лёгким скруглением углов и чёрной обводкой
+  progressTrack: {
+    backgroundColor: '#0C2233',
+    borderColor: '#000000',
+    borderRadius: 8,
+    borderWidth: 2,
+    height: 30,
+    overflow: 'hidden',
+    position: 'relative',
+    transform: [{ skewX: '-20deg' }],
+  },
+  progressTrackInner: {
+    backgroundColor: 'rgba(13,31,72,0.35)',
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  // заливка жёлто-оранжевая; передняя кромка параллельна косым концам трека
   progressFill: {
     backgroundColor: FP.accent,
-    borderRadius: 999,
     height: '100%',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  // нижняя оранжевая зона для градиента золото -> оранж
+  progressShade: {
+    backgroundColor: FP.orange,
+    bottom: 0,
+    height: '48%',
+    left: 0,
+    opacity: 0.85,
+    position: 'absolute',
+    right: 0,
   },
 });

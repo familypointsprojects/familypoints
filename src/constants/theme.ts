@@ -5,7 +5,7 @@
 
 import '@/global.css';
 
-import { Platform } from 'react-native';
+import { Platform, TextStyle } from 'react-native';
 
 export const Colors = {
   light: {
@@ -74,6 +74,21 @@ export const FP = {
   gradStart:    '#1647B7',
   gradEnd:      '#0B2B70',
 } as const;
+
+export const fonts = {
+  // Игровой шрифт (Franxurter Totally Fat, с кириллицей).
+  game: 'FranxurterTotallyFat',
+} as const;
+
+export const gameText: TextStyle = {
+  fontFamily: fonts.game,
+  color: '#FFFFFF',
+  letterSpacing: 0.5,
+  textTransform: 'uppercase',
+  textShadowColor: 'rgba(3, 12, 26, 0.6)',
+  textShadowOffset: { width: 0, height: 2 },
+  textShadowRadius: 0,
+};
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 

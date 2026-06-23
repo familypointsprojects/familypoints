@@ -1,7 +1,6 @@
 import { ComponentType } from 'react';
+import { usePathname } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { GlassView } from 'expo-glass-effect';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   IconAlert,
@@ -14,7 +13,7 @@ import {
   IconSettings,
   IconShield,
 } from '@/shared/ui/QuestIcons';
-import { FP } from '@/constants/theme';
+import { FP, gameText } from '@/constants/theme';
 
 export type BottomActionIcon =
   | 'children'
@@ -72,21 +71,18 @@ const iconSizeByType = {
 } satisfies Record<BottomActionIcon, number>;
 
 export const BottomActionBar = ({ items }: BottomActionBarProps) => {
-  const insets = useSafeAreaInsets();
+  const pathname = usePathname();
+  const isChildArcade = pathname.startsWith('/child');
 
   return (
-    <View style={styles.root}>
-      <View style={styles.shadowShell}>
-        <GlassView
-          colorScheme="light"
-          glassEffectStyle="regular"
-          tintColor="rgba(241, 246, 253, 0.9)"
-          style={styles.bar}>
-          <View pointerEvents="none" style={styles.glassRim} />
-          <View pointerEvents="none" style={styles.innerTopHighlight} />
-          {items.map((item) => {
+    <View style={[styles.root, isChildArcade && styles.rootArcade]}>
+      <View style={[styles.shadowShell, isChildArcade && styles.shadowShellArcade]}>
+        <View style={[styles.bar, isChildArcade && styles.barArcade]}>
+          {items.map((item, index) => {
             const Icon = iconByType[item.icon];
             const iconSize = iconSizeByType[item.icon];
+            const isFirst = index === 0;
+            const isLast = index === items.length - 1;
 
             return (
               <Pressable
@@ -94,13 +90,28 @@ export const BottomActionBar = ({ items }: BottomActionBarProps) => {
                 hitSlop={4}
                 key={item.key}
                 onPress={item.onPress}
-                style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}>
+                style={({ pressed }) => [
+                  styles.item,
+                  isChildArcade && styles.itemArcade,
+                  isChildArcade && item.isActive && styles.itemActiveArcade,
+                  isChildArcade && isFirst && styles.itemFirstArcade,
+                  isChildArcade && isLast && styles.itemLastArcade,
+                  pressed && styles.itemPressed,
+                ]}>
                 <View style={styles.iconWrap}>
-                  <View style={[styles.iconBox, item.isActive && styles.iconBoxActive]}>
+                  <View style={[
+                    styles.iconBox,
+                    isChildArcade && styles.iconBoxArcade,
+                    item.isActive && styles.iconBoxActive,
+                    isChildArcade && item.isActive && styles.iconBoxActiveArcade,
+                  ]}>
                     <Icon size={iconSize} />
                     {Boolean(item.badgeCount) && (
-                      <View style={styles.badge}>
-                        <Text style={styles.badgeText}>{item.badgeCount}</Text>
+                      <View style={[styles.badge, isChildArcade && styles.badgeArcade]}>
+                        {isChildArcade && <View pointerEvents="none" style={styles.badgeArcadeBottom} />}
+                        <Text style={[styles.badgeText, gameText, isChildArcade && styles.badgeTextArcade]}>
+                          {item.badgeCount}
+                        </Text>
                       </View>
                     )}
                     {item.attention && (
@@ -111,7 +122,13 @@ export const BottomActionBar = ({ items }: BottomActionBarProps) => {
                   </View>
                 </View>
                 <Text
-                  style={[styles.label, item.isActive && styles.labelActive]}
+                  style={[
+                    styles.label,
+                    gameText,
+                    isChildArcade && styles.labelArcade,
+                    item.isActive && styles.labelActive,
+                    isChildArcade && item.isActive && styles.labelActiveArcade,
+                  ]}
                   numberOfLines={1}
                   adjustsFontSizeToFit
                   minimumFontScale={0.72}>
@@ -120,7 +137,7 @@ export const BottomActionBar = ({ items }: BottomActionBarProps) => {
               </Pressable>
             );
           })}
-        </GlassView>
+        </View>
       </View>
     </View>
   );
@@ -130,73 +147,100 @@ const styles = StyleSheet.create({
   root: {
     backgroundColor: 'transparent',
     paddingHorizontal: 14,
-    paddingTop: 6,
+    paddingTop: 8,
     width: '100%',
+  },
+  rootArcade: {
+    paddingHorizontal: 0,
+    paddingTop: 0,
   },
   shadowShell: {
     alignSelf: 'center',
-    borderRadius: 30,
+    borderRadius: 3,
     elevation: 24,
     maxWidth: 520,
     shadowColor: '#0D2440',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.22,
-    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 7 },
+    shadowOpacity: 0.20,
+    shadowRadius: 22,
     width: '100%',
+  },
+  shadowShellArcade: {
+    borderRadius: 0,
+    maxWidth: '100%',
+    shadowColor: '#061426',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.22,
+    shadowRadius: 0,
   },
   bar: {
     alignItems: 'center',
-    backgroundColor: 'rgba(246, 249, 253, 0.97)',
-    borderRadius: 30,
+    backgroundColor: 'rgba(248, 251, 255, 0.98)',
+    borderRadius: 3,
+    borderColor: 'rgba(127, 159, 222, 0.55)',
+    borderWidth: 2,
     flexDirection: 'row',
     gap: 3,
     justifyContent: 'space-between',
-    minHeight: 68,
+    minHeight: 74,
     overflow: 'hidden',
-    paddingHorizontal: 11,
-    paddingVertical: 7,
+    paddingHorizontal: 9,
+    paddingVertical: 8,
     width: '100%',
   },
-  glassRim: {
-    borderBottomColor: 'rgba(75, 62, 48, 0.11)',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    borderBottomWidth: 1,
-    borderLeftColor: 'rgba(75, 62, 48, 0.08)',
-    borderLeftWidth: 1,
-    borderRightColor: 'rgba(75, 62, 48, 0.08)',
-    borderRightWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.32)',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    borderTopWidth: 1,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-  },
-  innerTopHighlight: {
-    backgroundColor: 'rgba(255, 255, 255, 0.60)',
-    height: 1,
-    left: 18,
-    position: 'absolute',
-    right: 18,
-    top: 1,
+  barArcade: {
+    backgroundColor: '#181821',
+    borderColor: '#061426',
+    borderRadius: 0,
+    borderWidth: 4,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    gap: 0,
+    minHeight: 86,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    shadowColor: '#061426',
   },
   iconBox: {
     alignItems: 'center',
-    height: 40,
+    borderColor: 'transparent',
+    borderRadius: 2,
+    borderWidth: 2,
+    height: 46,
     justifyContent: 'center',
-    width: 40,
+    width: 48,
+  },
+  iconBoxArcade: {
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
+    borderWidth: 0,
+    height: 42,
+    overflow: 'visible',
+    position: 'relative',
+    width: 56,
   },
   iconBoxActive: {
-    transform: [{ translateY: -1 }, { scale: 1.015 }],
+    backgroundColor: '#E7F0FF',
+    borderColor: FP.primary,
+    shadowColor: FP.primaryDark,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.20,
+    shadowRadius: 0,
+    transform: [{ translateY: -3 }, { scale: 1.035 }],
+  },
+  iconBoxActiveArcade: {
+    backgroundColor: 'transparent',
+    borderColor: 'transparent',
+    shadowColor: '#061426',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    transform: [{ translateY: 0 }, { scale: 1 }],
   },
   badge: {
     alignItems: 'center',
-    backgroundColor: '#FF3B30',
-    borderColor: '#FFFFFF',
+    backgroundColor: '#FF2F2F',
+    borderColor: '#061426',
     borderRadius: 9,
     borderWidth: 2,
     height: 18,
@@ -207,11 +251,36 @@ const styles = StyleSheet.create({
     right: -4,
     top: -2,
   },
+  badgeArcade: {
+    backgroundColor: '#31D63D',
+    borderColor: '#061426',
+    borderRadius: 11,
+    borderWidth: 3,
+    height: 22,
+    minWidth: 22,
+    overflow: 'hidden',
+    paddingHorizontal: 3,
+    right: -7,
+    top: -5,
+  },
+  badgeArcadeBottom: {
+    backgroundColor: '#159B27',
+    bottom: 0,
+    height: 4,
+    left: 0,
+    opacity: 0.75,
+    position: 'absolute',
+    right: 0,
+  },
   badgeText: {
     color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: '900',
     lineHeight: 12,
+  },
+  badgeTextArcade: {
+    fontSize: 12,
+    lineHeight: 14,
+    zIndex: 2,
   },
   attentionBadge: {
     position: 'absolute',
@@ -225,7 +294,7 @@ const styles = StyleSheet.create({
   },
   iconWrap: {
     alignItems: 'center',
-    height: 39,
+    height: 46,
     justifyContent: 'center',
     position: 'relative',
     width: '100%',
@@ -239,19 +308,50 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     zIndex: 1,
   },
+  itemArcade: {
+    alignSelf: 'stretch',
+    backgroundColor: '#2A252E',
+    borderLeftColor: '#111018',
+    borderLeftWidth: 3,
+    borderRightColor: '#3A3440',
+    borderRightWidth: 1,
+    gap: 0,
+    justifyContent: 'center',
+    minHeight: 78,
+    paddingHorizontal: 1,
+    paddingTop: 7,
+    paddingBottom: 6,
+  },
+  itemActiveArcade: {
+    backgroundColor: '#326BFF',
+    borderLeftColor: '#071426',
+    borderRightColor: '#071426',
+  },
+  itemFirstArcade: {
+    borderLeftWidth: 0,
+  },
+  itemLastArcade: {
+    borderRightWidth: 0,
+  },
   itemPressed: {
     opacity: 0.74,
     transform: [{ translateY: 1 }],
   },
   label: {
-    color: '#8295A8',
+    color: '#64748B',
     fontSize: 10,
-    fontWeight: '800',
     lineHeight: 12,
     textAlign: 'center',
     width: '100%',
   },
+  labelArcade: {
+    color: '#FFFFFF',
+    fontSize: 10,
+  },
   labelActive: {
-    color: FP.primary,
+    color: '#FFFFFF',
+  },
+  labelActiveArcade: {
+    color: '#FFFFFF',
   },
 });

@@ -45,6 +45,7 @@ import type {
   SetRewardActiveInput,
   SetTaskStatusInput,
   UnlockSkillInput,
+  UpdateChildAvatarInput,
   UpdateFamilyNameInput,
   UpdateParentInput,
   UpdateRewardInput,
@@ -80,6 +81,7 @@ type FamilyPointsContextValue = FamilyPointsState & {
   rejectRewardRedemption: (redemptionId: string) => void;
   fulfillRewardRedemption: (redemptionId: string) => void;
   deleteChild: (input: DeleteChildInput) => void;
+  updateChildAvatar: (input: UpdateChildAvatarInput) => Promise<void>;
   createChild: (input: CreateChildInput) => Promise<string>;
   createParent: (input: CreateParentInput) => Promise<string>;
   deleteParent: (input: DeleteParentInput) => void;
@@ -318,6 +320,12 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
 
   // Central reload helper — shared by polling, realtime and foreground handlers
   const reloadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Tracks whether the Supabase Realtime channel is currently subscribed.
+  // While it is, polling stays idle so we don't double-load on every change.
+  const realtimeConnectedRef = useRef(false);
+  // Minimum coalescing window: bursts of triggers (polling + realtime +
+  // foreground) collapse into a single loadState instead of one load per event.
+  const MIN_RELOAD_DELAY = 250;
   const scheduleReload = useCallback(
     (delay = 300) => {
       if (!session) return;
@@ -331,7 +339,7 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
             }
           })
           .catch((error: unknown) => console.warn('Re-hydrate failed', error));
-      }, delay);
+      }, Math.max(delay, MIN_RELOAD_DELAY));
     },
     [mergeOptimisticState, session],
   );
@@ -345,12 +353,16 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
     return () => subscription.remove();
   }, [session, scheduleReload]);
 
-  // Polling — reliable fallback while app is active
+  // Polling — fallback only. Realtime handles live updates; this just covers
+  // the case where the channel failed to connect. Runs infrequently and stays
+  // idle entirely while Realtime is subscribed.
   useEffect(() => {
     if (!session || familyPointsDataSource !== 'supabase') return;
     const interval = setInterval(() => {
-      if (AppState.currentState === 'active') scheduleReload(0);
-    }, 3_000);
+      if (AppState.currentState !== 'active') return;
+      if (realtimeConnectedRef.current) return;
+      scheduleReload(0);
+    }, 30_000);
     return () => clearInterval(interval);
   }, [session, scheduleReload]);
 
@@ -378,12 +390,14 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
         ),
       client.channel(channelName),
     ).subscribe((status) => {
-      if (status === 'CHANNEL_ERROR') {
-        console.warn('Realtime channel error — polling will cover updates');
+      realtimeConnectedRef.current = status === 'SUBSCRIBED';
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        console.warn('Realtime channel unavailable — polling will cover updates');
       }
     });
 
     return () => {
+      realtimeConnectedRef.current = false;
       client.removeChannel(channel);
     };
   }, [session, scheduleReload]);
@@ -688,6 +702,8 @@ export const FamilyPointsProvider = ({ children }: PropsWithChildren) => {
         runServiceAction(() => familyPointsService.deleteParent(input, serviceContext)),
       updateParent: (input) =>
         runServiceAction(() => familyPointsService.updateParent(input, serviceContext)),
+      updateChildAvatar: (input) =>
+        runServiceAction(() => familyPointsService.updateChildAvatar(input, serviceContext)),
       updateFamilyName: (input) =>
         runServiceAction(() => familyPointsService.updateFamilyName(input, serviceContext)),
       reloadState: reloadFamilyPointsState,

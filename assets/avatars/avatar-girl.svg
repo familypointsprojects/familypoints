@@ -1,0 +1,43 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="girlBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FF93BE"/>
+      <stop offset="1" stop-color="#FF4F91"/>
+    </linearGradient>
+    <radialGradient id="girlVig" cx="0.5" cy="0.4" r="0.78">
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#B81E5C" stop-opacity="0.5"/>
+    </radialGradient>
+  </defs>
+  <rect x="2" y="2" width="196" height="196" rx="32" fill="url(#girlBg)"/>
+  <rect x="2" y="2" width="196" height="196" rx="32" fill="url(#girlVig)"/>
+  <g stroke="#10233F" stroke-width="5" stroke-linejoin="round">
+    <!-- shoulders -->
+    <path d="M50 200 Q54 156 100 156 Q146 156 150 200 Z" fill="#7557FF"/>
+    <!-- hair back -->
+    <ellipse cx="100" cy="94" rx="58" ry="60" fill="#7A4A2B"/>
+    <!-- pigtails -->
+    <circle cx="46" cy="106" r="21" fill="#8A5631"/>
+    <circle cx="154" cy="106" r="21" fill="#8A5631"/>
+    <circle cx="57" cy="92" r="7.5" fill="#F7B721"/>
+    <circle cx="143" cy="92" r="7.5" fill="#F7B721"/>
+    <!-- face -->
+    <path d="M58 92 Q58 54 100 54 Q142 54 142 92 Q142 128 100 136 Q58 128 58 92 Z" fill="#FFD9B5"/>
+    <!-- bangs -->
+    <path d="M57 92 Q58 56 100 56 Q142 56 143 92 Q132 72 116 77 Q108 62 100 77 Q92 62 84 77 Q68 72 57 92 Z" fill="#7A4A2B"/>
+  </g>
+  <!-- cheeks -->
+  <circle cx="75" cy="110" r="9" fill="#FF7DA8" opacity="0.65"/>
+  <circle cx="125" cy="110" r="9" fill="#FF7DA8" opacity="0.65"/>
+  <!-- eyes -->
+  <g stroke="#10233F" stroke-width="4.5">
+    <ellipse cx="82" cy="98" rx="11" ry="13.5" fill="#ffffff"/>
+    <ellipse cx="118" cy="98" rx="11" ry="13.5" fill="#ffffff"/>
+  </g>
+  <circle cx="84" cy="100" r="6.2" fill="#3A2A1A"/>
+  <circle cx="116" cy="100" r="6.2" fill="#3A2A1A"/>
+  <circle cx="86.3" cy="97" r="2.3" fill="#ffffff"/>
+  <circle cx="118.3" cy="97" r="2.3" fill="#ffffff"/>
+  <!-- smile -->
+  <path d="M84 117 Q100 130 116 117" fill="none" stroke="#10233F" stroke-width="5" stroke-linecap="round"/>
+</svg>

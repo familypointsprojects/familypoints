@@ -1444,6 +1444,19 @@ export const supabaseFamilyPointsService: FamilyPointsService = {
 
     return reloadState();
   },
+  updateChildAvatar: async (input, context) => {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase
+      .from('children')
+      .update({ avatar_id: input.avatarId, updated_at: new Date().toISOString() })
+      .eq('id', input.childId);
+
+    if (error) {
+      throwSupabaseError('update child avatar', error.message);
+    }
+
+    return reloadState(context.session);
+  },
   approveWish: async (input, context) => {
     const supabase = getSupabaseClient();
     const userId = await getRequiredCurrentUserId();

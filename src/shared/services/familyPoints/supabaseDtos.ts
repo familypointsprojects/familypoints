@@ -39,6 +39,7 @@ export type ChildRow = {
   profile_id: string;
   display_name: string;
   avatar_color: string;
+  avatar_id: string | null;
   created_at: string;
   updated_at: string;
 };

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EasyQuest — карточки уровней (стиль Квестов)</title>
+<style>
+  @font-face{
+    font-family:'FranxurterTotallyFat';
+    src:url('../assets/fonts/FranxurterTotallyFat.ttf') format('truetype');
+    font-display:swap;
+  }
+  :root{
+    --bg:#0E2536; --ink:#061426; --ink2:#0A1A2F;
+    --card:#30364F; --cardFeatured:#343A55; --cardDone:#0F9D2A;
+    --blue:#19B8F2; --orange:#F36B1D; --purple:#C229E8;
+    --green:#35D638; --gold:#FFC400; --lime:#D8FF3E;
+    --track:#0E1D3C;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg);
+    font-family:'Exo 2',system-ui,sans-serif;color:#fff;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    gap:14px;padding:40px 18px 70px;
+  }
+  /* game font + outline (как gameText + OutlineText в приложении) */
+  .gt{
+    font-family:'FranxurterTotallyFat',sans-serif;text-transform:uppercase;
+    letter-spacing:.5px;color:#fff;
+    -webkit-text-stroke:2px var(--ink2);paint-order:stroke fill;
+    text-shadow:0 3px 0 var(--ink2);
+  }
+  .stage{width:100%;max-width:440px}
+  .sectionTitle{font-family:'FranxurterTotallyFat',sans-serif;text-transform:uppercase;
+    color:#fff;font-size:18px;letter-spacing:.5px;-webkit-text-stroke:2px var(--ink2);
+    paint-order:stroke fill;text-shadow:0 3px 0 var(--ink2);margin:6px 0 10px 2px}
+
+  /* ───────── CARD (точная копия таск-карточки) ───────── */
+  .card{
+    position:relative;display:flex;min-height:104px;margin-bottom:8px;
+    filter:drop-shadow(4px 4px 0 var(--ink));
+  }
+  .plate{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+  .leftBorder{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ink);z-index:3}
+
+  /* левый цветной блок + медальон со скосом */
+  .colorBlock{
+    position:relative;z-index:4;width:56px;flex:0 0 56px;
+    margin:10px 0 10px 8px;border-radius:2px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+  }
+  .medallion{
+    width:42px;height:42px;border:3px solid var(--ink);border-radius:3px;
+    background:rgba(255,255,255,.85);transform:skewX(3deg);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .medallion .num{font-family:'FranxurterTotallyFat',sans-serif;font-size:22px;color:#10233F;
+    -webkit-text-stroke:0;text-shadow:none;transform:skewX(-3deg)}
+  .medallion svg{width:26px;height:26px}
+
+  .content{position:relative;z-index:4;flex:1;min-width:0;padding:11px 12px;
+    display:flex;flex-direction:column;gap:3px;justify-content:center}
+  .title{font-size:17px;line-height:20px}
+  .desc{color:rgba(255,255,255,.82);font-size:12px;font-weight:700;line-height:16px}
+
+  /* футер: прогресс + значок */
+  .footer{display:flex;align-items:center;gap:8px;margin-top:6px}
+  .xpbar{position:relative;flex:1;height:18px;border-radius:3px;overflow:hidden;
+    background:var(--track);border:2px solid var(--ink)}
+  .xpfill{position:absolute;left:0;top:0;bottom:0;background:var(--blue)}
+  .xpfill::after{content:'';position:absolute;left:3px;right:3px;top:2px;height:3px;
+    border-radius:2px;background:rgba(255,255,255,.45)}
+  .xptext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'FranxurterTotallyFat',sans-serif;font-size:11px;letter-spacing:.5px;color:#fff;
+    -webkit-text-stroke:1.4px var(--ink2);paint-order:stroke fill;z-index:2}
+
+  .badge{flex:0 0 auto;border:3px solid var(--ink);border-radius:3px;
+    padding:4px 10px;font-family:'FranxurterTotallyFat',sans-serif;font-size:12px;
+    text-transform:uppercase;letter-spacing:.5px}
+  .badge.now{background:var(--lime);color:#264000;-webkit-text-stroke:0;text-shadow:none}
+  .badge.done{background:var(--green);color:#fff;-webkit-text-stroke:1.4px var(--ink2);paint-order:stroke fill}
+  .badge.lock{background:#243049;color:rgba(255,255,255,.75);border-color:var(--ink);
+    -webkit-text-stroke:0;text-shadow:none}
+
+  .card.locked{filter:drop-shadow(4px 4px 0 var(--ink));opacity:.62}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div class="stage">
+    <div class="sectionTitle">Уровни героя</div>
+
+    <!-- DONE -->
+    <div class="card">
+      <svg class="plate" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <polygon points="0,0 97,0 100,100 0,100" fill="#0F9D2A"/>
+        <polyline points="0,0 97,0 100,100 0,100" fill="none" stroke="#061426" stroke-width="5" stroke-linejoin="round"/>
+        <polyline points="22,8 64,8" fill="none" stroke="rgba(255,255,255,.34)" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <div class="leftBorder"></div>
+      <div class="colorBlock" style="background:#35D638">
+        <div class="medallion">
+          <svg viewBox="0 0 32 32"><path d="M8 16.5l5.2 5.2L24.5 9.5" fill="none" stroke="#0F9D2A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="content">
+        <div class="gt title">Новичок</div>
+        <div class="desc">0 — 200 XP · уровень пройден</div>
+        <div class="footer">
+          <div class="xpbar"><div class="xpfill" style="width:100%;background:#35D638"></div><div class="xptext">200 / 200 XP</div></div>
+          <div class="badge done">✓</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DONE -->
+    <div class="card">
+      <svg class="plate" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <polygon points="0,0 97,0 100,100 0,100" fill="#0F9D2A"/>
+        <polyline points="0,0 97,0 100,100 0,100" fill="none" stroke="#061426" stroke-width="5" stroke-linejoin="round"/>
+        <polyline points="22,8 64,8" fill="none" stroke="rgba(255,255,255,.34)" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <div class="leftBorder"></div>
+      <div class="colorBlock" style="background:#35D638">
+        <div class="medallion">
+          <svg viewBox="0 0 32 32"><path d="M8 16.5l5.2 5.2L24.5 9.5" fill="none" stroke="#0F9D2A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      </div>
+      <div class="content">
+        <div class="gt title">Искатель</div>
+        <div class="desc">200 — 1000 XP · уровень пройден</div>
+        <div class="footer">
+          <div class="xpbar"><div class="xpfill" style="width:100%;background:#35D638"></div><div class="xptext">1000 / 1000 XP</div></div>
+          <div class="badge done">✓</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CURRENT -->
+    <div class="card">
+      <svg class="plate" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <polygon points="0,0 97,0 100,100 0,100" fill="#343A55"/>
+        <polyline points="0,0 97,0 100,100 0,100" fill="none" stroke="#061426" stroke-width="5" stroke-linejoin="round"/>
+        <polyline points="22,8 64,8" fill="none" stroke="rgba(255,255,255,.34)" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <div class="leftBorder"></div>
+      <div class="colorBlock" style="background:#FFC400">
+        <div class="medallion"><span class="num">3</span></div>
+      </div>
+      <div class="content">
+        <div class="gt title">Герой</div>
+        <div class="desc">1000 — 3000 XP · текущий уровень</div>
+        <div class="footer">
+          <div class="xpbar"><div class="xpfill" style="width:62%"></div><div class="xptext">620 / 1000 XP</div></div>
+          <div class="badge now">Сейчас</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOCKED -->
+    <div class="card locked">
+      <svg class="plate" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <polygon points="0,0 97,0 100,100 0,100" fill="#30364F"/>
+        <polyline points="0,0 97,0 100,100 0,100" fill="none" stroke="#061426" stroke-width="5" stroke-linejoin="round"/>
+        <polyline points="22,8 64,8" fill="none" stroke="rgba(255,255,255,.34)" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <div class="leftBorder"></div>
+      <div class="colorBlock" style="background:#7557FF">
+        <div class="medallion">
+          <svg viewBox="0 0 32 32"><rect x="8" y="14" width="16" height="12" rx="2" fill="#10233F"/><path d="M11 14v-3a5 5 0 0110 0v3" fill="none" stroke="#10233F" stroke-width="3"/></svg>
+        </div>
+      </div>
+      <div class="content">
+        <div class="gt title">Легенда</div>
+        <div class="desc">3000+ XP · ещё закрыт</div>
+        <div class="footer">
+          <div class="xpbar"><div class="xpfill" style="width:0%"></div><div class="xptext">0 / 3000 XP</div></div>
+          <div class="badge lock">🔒</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
